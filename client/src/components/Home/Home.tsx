@@ -94,6 +94,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
     };
   }, []);
 
+  // Re-join room when socket reconnects
+  useEffect(() => {
+    if (socket && connected && selectedRoom) {
+      console.log('🔄 Socket connected, re-joining room:', selectedRoom.name);
+      socket.emit('join_room', {
+        roomId: selectedRoom.roomId,
+        userId: user.userId,
+        username: user.username
+      });
+
+      // Reload messages
+      socket.emit('get_room_messages', {
+        roomId: selectedRoom.roomId,
+        limit: 50
+      });
+    }
+  }, [socket, connected, selectedRoom]);
+
   // Socket connection and authentication
   useEffect(() => {
     if (socket) {
@@ -442,18 +460,18 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const selectRoom = (room: Room) => {
-    // Clear unread count for this room immediately (even if already selected)
+    // Clear unread count for this room immediately
     setRooms(prev => prev.map(r =>
       r.roomId === room.roomId ? { ...r, unreadCount: 0 } : r
     ));
 
-    // If we're already in this room, no need to rejoin
+    // If we're already in this room, just return (no need to rejoin)
     if (selectedRoom?.roomId === room.roomId) {
       return;
     }
 
-    // Leave previous room (this updates lastSeenAt in DB)
-    if (selectedRoom && socket) {
+    // Leave previous room if switching rooms (this updates lastSeenAt in DB)
+    if (selectedRoom && selectedRoom.roomId !== room.roomId && socket) {
       socket.emit('leave_room', {
         roomId: selectedRoom.roomId,
         userId: user.userId,
@@ -461,13 +479,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
     }
 
+    // Update state
     setSelectedRoom(room);
     setSelectedPrivateChat(null);
     setChatType('room');
     setMessages([]);
     setTypingUsers([]);
 
-    // Join new room
+    // Join new room and load messages
     if (socket) {
       socket.emit('join_room', {
         roomId: room.roomId,
