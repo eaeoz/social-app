@@ -62,6 +62,16 @@
   font-size: 1rem;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #333 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .form-group input:focus {
@@ -85,6 +95,8 @@
   box-sizing: border-box;
   background-color: white;
   cursor: pointer;
+  color: #333;
+  font-weight: 500;
 }
 
 .form-group select:focus {
@@ -98,51 +110,107 @@
   cursor: not-allowed;
 }
 
+.form-group select option {
+  padding: 8px;
+  font-weight: 500;
+}
+
 .radio-group {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   margin-top: 8px;
 }
 
 .radio-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   cursor: pointer;
-  padding: 10px 20px;
+  padding: 12px 20px;
   border: 2px solid #e1e8ed;
   border-radius: 10px;
   transition: all 0.3s ease;
   flex: 1;
   justify-content: center;
+  background: white !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.radio-label::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .radio-label:hover {
   border-color: #667eea;
-  background-color: rgba(102, 126, 234, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.radio-label:hover::before {
+  opacity: 0.05;
 }
 
 .radio-label input[type="radio"] {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+.radio-label input[type="radio"]::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #667eea;
+  border-radius: 50%;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.radio-label input[type="radio"]:checked::before {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px white inset;
 }
 
 .radio-label span {
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
   font-size: 0.95rem;
-}
-
-.radio-label input[type="radio"]:checked ~ span {
-  color: #667eea;
-  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s ease;
 }
 
 .radio-label:has(input[type="radio"]:checked) {
   border-color: #667eea;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.radio-label:has(input[type="radio"]:checked)::before {
+  opacity: 0.1;
+}
+
+.radio-label:has(input[type="radio"]:checked) span {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
 }
 
 .radio-label input[type="radio"]:disabled {
@@ -152,6 +220,11 @@
 .radio-label:has(input[type="radio"]:disabled) {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.radio-label:has(input[type="radio"]:disabled):hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .error-message {
