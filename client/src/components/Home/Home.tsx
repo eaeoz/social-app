@@ -433,6 +433,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
     });
   };
 
+  const handleMinAgeChange = (value: number) => {
+    // Ensure minimum stays at least 2 years below maximum
+    const newMin = Math.min(value, ageRange[1] - 2);
+    setAgeRange([newMin, ageRange[1]]);
+  };
+
+  const handleMaxAgeChange = (value: number) => {
+    // Ensure maximum stays at least 2 years above minimum
+    const newMax = Math.max(value, ageRange[0] + 2);
+    setAgeRange([ageRange[0], newMax]);
+  };
+
+  const clearFilters = () => {
+    setUserSearchText('');
+    setAgeRange([18, 100]);
+    setSelectedGenders(['Male', 'Female']);
+    setShowFilters(false);
+  };
+
   const getFilteredUsers = () => {
     return users
       .filter(u => u.userId !== user.userId)
@@ -984,15 +1003,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
               </div>
               {showFilters && (
                 <div className="filter-options">
-                  <div className="age-filter">
+                  <div className="filter-header">
                     <label className="filter-label">Age Range: {ageRange[0]} - {ageRange[1]}</label>
+                    <button 
+                      className="clear-filters-btn"
+                      onClick={clearFilters}
+                      title="Clear all filters"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="age-filter">
                     <div className="age-slider-container">
                       <input
                         type="range"
                         min="18"
                         max="100"
                         value={ageRange[0]}
-                        onChange={(e) => setAgeRange([parseInt(e.target.value), ageRange[1]])}
+                        onChange={(e) => handleMinAgeChange(parseInt(e.target.value))}
                         className="age-slider"
                       />
                       <input
@@ -1000,30 +1028,32 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         min="18"
                         max="100"
                         value={ageRange[1]}
-                        onChange={(e) => setAgeRange([ageRange[0], parseInt(e.target.value)])}
+                        onChange={(e) => handleMaxAgeChange(parseInt(e.target.value))}
                         className="age-slider"
                       />
                     </div>
                   </div>
                   <div className="gender-filter">
-                    <label className="filter-label">Gender:</label>
-                    <div className="gender-options">
-                      <label className="filter-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selectedGenders.includes('Male')}
-                          onChange={() => toggleGender('Male')}
-                        />
-                        <span>Male</span>
-                      </label>
-                      <label className="filter-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selectedGenders.includes('Female')}
-                          onChange={() => toggleGender('Female')}
-                        />
-                        <span>Female</span>
-                      </label>
+                    <div className="gender-filter-row">
+                      <label className="filter-label">Gender:</label>
+                      <div className="gender-options">
+                        <label className="filter-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedGenders.includes('Male')}
+                            onChange={() => toggleGender('Male')}
+                          />
+                          <span>Male</span>
+                        </label>
+                        <label className="filter-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedGenders.includes('Female')}
+                            onChange={() => toggleGender('Female')}
+                          />
+                          <span>Female</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
