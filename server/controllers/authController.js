@@ -8,7 +8,7 @@ const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 // Register new user
 export async function register(req, res) {
   try {
-    const { username, email, password, fullName } = req.body;
+    const { username, email, password, fullName, age, gender } = req.body;
 
     // Validation
     if (!username || !email || !password) {
@@ -17,6 +17,14 @@ export async function register(req, res) {
 
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    if (!age || age < 18 || age > 100) {
+      return res.status(400).json({ error: 'Age must be between 18 and 100' });
+    }
+
+    if (!gender || !['Male', 'Female'].includes(gender)) {
+      return res.status(400).json({ error: 'Gender must be Male or Female' });
     }
 
     const db = getDatabase();
@@ -43,6 +51,8 @@ export async function register(req, res) {
       email,
       passwordHash: hashedPassword,
       displayName: fullName || username,
+      age: parseInt(age),
+      gender,
       bio: '',
       status: 'offline',
       createdAt: new Date(),

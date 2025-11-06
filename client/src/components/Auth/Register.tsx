@@ -12,6 +12,8 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +34,18 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
       return;
     }
 
+    // Validate age
+    if (!age) {
+      setError('Please select your age');
+      return;
+    }
+
+    // Validate gender
+    if (!gender) {
+      setError('Please select your gender');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -40,7 +54,7 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, email, password, fullName }),
+        body: JSON.stringify({ username, email, password, fullName, age: parseInt(age), gender }),
       });
 
       const data = await response.json();
@@ -133,6 +147,54 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
               required
               disabled={loading}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="age">Age</label>
+            <select
+              id="age"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              required
+              disabled={loading}
+            >
+              <option value="">Select your age</option>
+              {Array.from({ length: 83 }, (_, i) => i + 18).map((ageValue) => (
+                <option key={ageValue} value={ageValue}>
+                  {ageValue}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Gender</label>
+            <div className="radio-group">
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="Male"
+                  checked={gender === 'Male'}
+                  onChange={(e) => setGender(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <span>Male</span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="Female"
+                  checked={gender === 'Female'}
+                  onChange={(e) => setGender(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <span>Female</span>
+              </label>
+            </div>
           </div>
 
           <button type="submit" className="auth-button" disabled={loading}>

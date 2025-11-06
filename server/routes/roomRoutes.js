@@ -78,7 +78,9 @@ router.get('/users', authenticateToken, async (req, res) => {
             username: 1, 
             displayName: 1, 
             status: 1,
-            bio: 1 
+            bio: 1,
+            age: 1,
+            gender: 1
           } 
         }
       )
@@ -90,7 +92,9 @@ router.get('/users', authenticateToken, async (req, res) => {
       username: user.username,
       displayName: user.displayName,
       status: user.status || 'offline',
-      bio: user.bio || ''
+      bio: user.bio || '',
+      age: user.age,
+      gender: user.gender
     }));
 
     res.json({ users: usersResponse });

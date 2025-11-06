@@ -11,6 +11,15 @@
             "email": { "bsonType": "string" },
             "passwordHash": { "bsonType": "string" },
             "displayName": { "bsonType": "string" },
+            "age": { 
+              "bsonType": "int",
+              "minimum": 18,
+              "maximum": 100
+            },
+            "gender": {
+              "bsonType": "string",
+              "enum": ["Male", "Female"]
+            },
             "profilePictureId": { "bsonType": "string" },
             "bio": { "bsonType": "string" },
             "status": {

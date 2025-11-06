@@ -31,6 +31,8 @@ interface User {
   username: string;
   displayName: string;
   status: string;
+  age?: number;
+  gender?: string;
 }
 
 interface PrivateChat {
@@ -994,7 +996,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   <div key={u.userId} className="user-item">
                     <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
                     <div className="user-details">
-                      <div className="user-name">{u.displayName}</div>
+                      <div className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>
+                        {u.displayName}
+                      </div>
+                      <div className="user-info-row">
+                        {u.age && u.gender && (
+                          <span className="user-demographics">
+                            {u.age} years old • {u.gender}
+                          </span>
+                        )}
+                      </div>
                       <div className="user-status">
                         <span className={`status-dot ${u.status}`}></span>
                         {u.status}

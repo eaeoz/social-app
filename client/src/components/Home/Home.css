@@ -830,6 +830,26 @@
   margin-bottom: 4px;
 }
 
+.user-item .user-name.male {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.user-item .user-name.female {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.user-info-row {
+  margin-bottom: 4px;
+}
+
+.user-demographics {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .user-item .user-status {
   display: flex;
   align-items: center;
