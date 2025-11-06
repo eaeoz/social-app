@@ -61,9 +61,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
-  const closedChatIdsRef = useRef<Set<string>>(new Set());
 
-  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -72,60 +70,33 @@ function Home({ user, socket, onLogout }: HomeProps) {
     scrollToBottom();
   }, [messages]);
 
-  // Load rooms and theme on mount
   useEffect(() => {
     loadRooms();
     loadUsers();
-    
-    // Load private chats from localStorage first (instant load)
-    const savedChats = localStorage.getItem(`privateChats_${user.userId}`);
-    if (savedChats) {
-      try {
-        const parsedChats = JSON.parse(savedChats);
-        setPrivateChats(parsedChats);
-      } catch (error) {
-        console.error('Failed to parse saved chats:', error);
-      }
-    }
-    
-    // Then load from server to get any updates
     loadPrivateChats();
     
-    // Load saved theme (default to dark)
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     const initialTheme = savedTheme || 'dark';
     setTheme(initialTheme);
     document.documentElement.setAttribute('data-theme', initialTheme);
 
-    // Poll for private chats only (rooms use real-time events)
     const pollInterval = setInterval(() => {
       loadPrivateChats();
     }, 5000);
 
-    // Cleanup interval on unmount
     return () => {
       clearInterval(pollInterval);
     };
   }, []);
 
-  // Save private chats to localStorage whenever they change
-  useEffect(() => {
-    if (privateChats.length > 0) {
-      localStorage.setItem(`privateChats_${user.userId}`, JSON.stringify(privateChats));
-    }
-  }, [privateChats, user.userId]);
-
-  // Re-join room when socket reconnects
   useEffect(() => {
     if (socket && connected && selectedRoom) {
-      console.log('🔄 Socket connected, re-joining room:', selectedRoom.name);
       socket.emit('join_room', {
         roomId: selectedRoom.roomId,
         userId: user.userId,
         username: user.username
       });
 
-      // Reload messages
       socket.emit('get_room_messages', {
         roomId: selectedRoom.roomId,
         limit: 50
@@ -133,16 +104,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   }, [socket, connected, selectedRoom]);
 
-  // Socket connection and authentication
   useEffect(() => {
     if (socket) {
       setConnected(socket.connected);
 
       socket.on('connect', () => {
         setConnected(true);
-        console.log('✅ Connected to server');
-        
-        // Authenticate socket
         socket.emit('authenticate', {
           userId: user.userId,
           username: user.username
@@ -151,16 +118,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       socket.on('disconnect', () => {
         setConnected(false);
-        console.log('❌ Disconnected from server');
       });
 
-      // Message events
       socket.on('room_message', (message: any) => {
-        console.log('📨 New room message:', message);
-        
-        // Only update if this message is for the current room
         if (selectedRoom?.roomId === message.roomId) {
-          // Add message to current view
           setMessages(prev => [...prev, {
             messageId: message.messageId,
             senderId: message.senderId,
@@ -170,16 +131,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
             messageType: message.messageType
           }]);
         }
-        
-        // Don't update room counts here - let polling handle it from server
-        // This prevents the "all rooms show 1" bug
       });
 
       socket.on('room_messages', (data: { roomId: string; messages: Message[] }) => {
-        console.log('📚 Room messages loaded:', data.messages.length);
         setMessages(data.messages);
-        
-        // Update message count for the room
         setRooms(prev => prev.map(room => 
           room.roomId === data.roomId 
             ? { ...room, messageCount: data.messages.length }
@@ -188,15 +143,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       socket.on('user_joined', (data: { username: string }) => {
-        console.log(`👋 ${data.username} joined the room`);
+        console.log(`👋 ${data.username} joined`);
       });
 
       socket.on('user_left', (data: { username: string }) => {
-        console.log(`👋 ${data.username} left the room`);
+        console.log(`👋 ${data.username} left`);
       });
 
       socket.on('user_typing', (data: { username: string }) => {
-        // Only show typing indicators in private chats, not in rooms
         if (chatType === 'private') {
           setTypingUsers(prev => {
             if (!prev.includes(data.username)) {
@@ -208,19 +162,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       socket.on('user_stop_typing', (data: { username: string }) => {
-        // Only process typing indicators in private chats, not in rooms
         if (chatType === 'private') {
           setTypingUsers(prev => prev.filter(u => u !== data.username));
         }
       });
 
-      // Real-time room notification for unread counts
       socket.on('room_message_notification', (data: { roomId: string; senderId: string; timestamp: Date }) => {
-        console.log('🔔 Room notification received:', data);
-        
-        // Only increment unread if:
-        // 1. Not currently in this room
-        // 2. Message is not from current user
         if (selectedRoom?.roomId !== data.roomId && data.senderId !== user.userId) {
           setRooms(prev => prev.map(room => {
             if (room.roomId === data.roomId) {
@@ -235,27 +182,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }
       });
 
-      // Private message events
       socket.on('private_message', async (message: any) => {
-        console.log('🔒 New private message:', message);
-        
-        // Determine the other user (who we're chatting with)
         const otherUserId = message.senderId === user.userId ? message.receiverId : message.senderId;
         const isCurrentChat = chatType === 'private' && selectedPrivateChat?.otherUser.userId === otherUserId;
         
-        console.log('📊 Notification Debug:', {
-          otherUserId,
-          isCurrentChat,
-          chatType,
-          selectedPrivateChatUserId: selectedPrivateChat?.otherUser.userId,
-          messageSenderId: message.senderId,
-          currentUserId: user.userId
-        });
-        
-        // If we're currently viewing this chat, add message to the list (but avoid duplicates)
         if (isCurrentChat) {
           setMessages(prev => {
-            // Check if this message already exists (avoid duplicates from temp messages)
             const messageExists = prev.some(m => 
               m.messageId === message.messageId || 
               (m.messageId.startsWith('temp_') && 
@@ -265,7 +197,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
             );
             
             if (messageExists) {
-              // Replace temp message with real one
               return prev.map(m => 
                 (m.messageId.startsWith('temp_') && 
                  m.senderId === message.senderId && 
@@ -283,7 +214,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
               );
             }
             
-            // Add new message
             return [...prev, {
               messageId: message.messageId,
               senderId: message.senderId,
@@ -294,81 +224,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
             }];
           });
           
-          // Mark as read if it's from the other user
           if (message.senderId !== user.userId && socket) {
             socket.emit('mark_as_read', { messageId: message.messageId });
           }
         }
         
-        // Update or create private chat in list
-        setPrivateChats(prev => {
-          const existingChat = prev.find(c => c.otherUser.userId === otherUserId);
-          
-          console.log('💬 Chat Update:', {
-            existingChat: !!existingChat,
-            existingChatId: existingChat?.chatId,
-            currentUnreadCount: existingChat?.unreadCount
-          });
-          
-          if (existingChat) {
-            // Update existing chat
-            return prev.map(c => {
-              if (c.chatId === existingChat.chatId) {
-                // Increment unread count only if not viewing and message is from other user
-                const shouldIncrement = !isCurrentChat && message.senderId !== user.userId;
-                const newUnreadCount = shouldIncrement ? c.unreadCount + 1 : c.unreadCount;
-                
-                console.log('✅ Updating existing chat:', {
-                  chatId: c.chatId,
-                  shouldIncrement,
-                  oldUnreadCount: c.unreadCount,
-                  newUnreadCount,
-                  isCurrentChat,
-                  messageSender: message.senderId,
-                  currentUser: user.userId
-                });
-                
-                return {
-                  ...c,
-                  lastMessage: message.content,
-                  lastMessageAt: message.timestamp,
-                  unreadCount: newUnreadCount
-                };
-              }
-              return c;
-            });
-          } else {
-            // Auto-create new chat for any message (both incoming and outgoing)
-            const otherUserInfo = users.find(u => u.userId === otherUserId);
-            console.log('🆕 Creating new chat:', {
-              otherUserInfo: !!otherUserInfo,
-              otherUserId: otherUserId,
-              availableUsers: users.length
-            });
-            
-            if (otherUserInfo) {
-              // Remove from closed list when new message arrives
-              closedChatIdsRef.current.delete(otherUserId);
-              
-              const newChat: PrivateChat = {
-                chatId: message.chatId || `temp_${Date.now()}`,
-                otherUser: otherUserInfo,
-                lastMessage: message.content,
-                lastMessageAt: message.timestamp,
-                unreadCount: isCurrentChat ? 0 : (message.senderId !== user.userId ? 1 : 0)
-              };
-              console.log('✅ New chat created with unread count:', newChat.unreadCount);
-              return [...prev, newChat];
-            } else {
-              console.warn('⚠️ Other user info not found for userId:', otherUserId);
-            }
-          }
-          return prev;
-        });
+        // Refresh to get updated list from server
+        loadPrivateChats();
       });
 
       socket.on('private_messages', (data: { otherUserId: string; messages: any[] }) => {
-        console.log('📚 Private messages loaded:', data.messages.length);
         setMessages(data.messages.map(msg => ({
           messageId: msg.messageId,
           senderId: msg.senderId,
@@ -412,9 +277,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
       if (response.ok) {
         const data = await response.json();
         
-        // Update rooms but preserve unreadCount=0 for currently selected room
         const updatedRooms = data.rooms.map((room: Room) => {
-          // If this is the currently selected room, keep unreadCount at 0
           if (selectedRoom?.roomId === room.roomId) {
             return { ...room, unreadCount: 0 };
           }
@@ -423,12 +286,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         setRooms(updatedRooms);
         
-        // Auto-select first room ONLY on initial load
         if (isInitialLoadRef.current && updatedRooms.length > 0) {
           selectRoom(updatedRooms[0]);
           isInitialLoadRef.current = false;
         } else if (selectedRoom) {
-          // If we already have a selected room, ensure its unread count is cleared
           setRooms(prev => prev.map(r =>
             r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
           ));
@@ -469,60 +330,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
       if (response.ok) {
         const data = await response.json();
         
-        // Clear closed chats list if chats come from server with new messages
-        // This allows chats to reappear if new messages arrive after being closed
-        const serverChatUserIds = new Set(data.privateChats.map((c: PrivateChat) => c.otherUser.userId));
-        const closedChatsArray = Array.from(closedChatIdsRef.current);
-        closedChatsArray.forEach(closedUserId => {
-          const serverChat = data.privateChats.find((c: PrivateChat) => c.otherUser.userId === closedUserId);
-          // If there's a new unread message, remove from closed list
-          if (serverChat && serverChat.unreadCount > 0) {
-            closedChatIdsRef.current.delete(closedUserId);
-          }
-        });
-        
-        // Filter out manually closed chats (only those without new messages)
-        const filteredChats = data.privateChats.filter(
-          (chat: PrivateChat) => !closedChatIdsRef.current.has(chat.otherUser.userId)
-        );
-        
-        // Merge with existing chats - preserve ALL existing chats and update with server data
-        setPrivateChats(prev => {
-          const serverChatsByUserId = new Map<string, PrivateChat>(
-            filteredChats.map((c: PrivateChat) => [c.otherUser.userId, c])
-          );
-          
-          // Start with all existing chats
-          const merged: PrivateChat[] = [];
-          
-          // Update existing chats with server data if available
-          for (const existingChat of prev) {
-            const serverChat = serverChatsByUserId.get(existingChat.otherUser.userId);
-            
-            if (serverChat) {
-              // Update with server data, but preserve unreadCount if viewing this chat
-              merged.push({
-                ...serverChat,
-                unreadCount: selectedPrivateChat?.otherUser.userId === serverChat.otherUser.userId 
-                  ? 0 
-                  : serverChat.unreadCount
-              });
-              // Remove from map so we know we've processed it
-              serverChatsByUserId.delete(existingChat.otherUser.userId);
-            } else {
-              // Keep existing chat even if not in server response yet
-              // This handles the case where a chat was just created and server hasn't caught up
-              merged.push(existingChat);
-            }
-          }
-          
-          // Add any new chats from server that we didn't have before
-          for (const serverChat of serverChatsByUserId.values()) {
-            merged.push(serverChat);
-          }
-          
-          return merged;
-        });
+        // Server decides what to show - no client filtering
+        setPrivateChats(data.privateChats.map((chat: PrivateChat) => ({
+          ...chat,
+          unreadCount: selectedPrivateChat?.otherUser.userId === chat.otherUser.userId ? 0 : chat.unreadCount
+        })));
       }
     } catch (error) {
       console.error('Failed to load private chats:', error);
@@ -530,12 +342,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const selectRoom = async (room: Room) => {
-    // Clear unread count for this room immediately
     setRooms(prev => prev.map(r =>
       r.roomId === room.roomId ? { ...r, unreadCount: 0 } : r
     ));
 
-    // Update server with lastSeenAt timestamp immediately when selecting room
     try {
       const token = localStorage.getItem('accessToken');
       await fetch(`${import.meta.env.VITE_API_URL}/rooms/mark-room-read`, {
@@ -550,12 +360,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
       console.error('Failed to mark room as read:', error);
     }
 
-    // If we're already in this room, just return (no need to rejoin)
     if (selectedRoom?.roomId === room.roomId) {
       return;
     }
 
-    // Leave previous room if switching rooms (this updates lastSeenAt in DB)
     if (selectedRoom && selectedRoom.roomId !== room.roomId && socket) {
       socket.emit('leave_room', {
         roomId: selectedRoom.roomId,
@@ -564,14 +372,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
     }
 
-    // Update state
     setSelectedRoom(room);
     setSelectedPrivateChat(null);
     setChatType('room');
     setMessages([]);
     setTypingUsers([]);
 
-    // Join new room and load messages
     if (socket) {
       socket.emit('join_room', {
         roomId: room.roomId,
@@ -579,7 +385,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         username: user.username
       });
 
-      // Load room messages
       socket.emit('get_room_messages', {
         roomId: room.roomId,
         limit: 50
@@ -588,13 +393,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const startPrivateChat = (selectedUser: User) => {
-    // Check if chat already exists
     const existingChat = privateChats.find(c => c.otherUser.userId === selectedUser.userId);
     
     if (existingChat) {
       selectPrivateChat(existingChat);
     } else {
-      // Create new private chat
       const newChat: PrivateChat = {
         chatId: `temp_${Date.now()}`,
         otherUser: selectedUser,
@@ -609,7 +412,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const selectPrivateChat = (chat: PrivateChat) => {
-    // Leave room if in one
     if (selectedRoom && socket) {
       socket.emit('leave_room', {
         roomId: selectedRoom.roomId,
@@ -618,7 +420,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
     }
     
-    // Reset unread count for this chat
     setPrivateChats(prev => prev.map(c =>
       c.chatId === chat.chatId ? { ...c, unreadCount: 0 } : c
     ));
@@ -629,7 +430,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
     setMessages([]);
     setTypingUsers([]);
     
-    // Load private messages
     if (socket) {
       socket.emit('get_private_messages', {
         userId: user.userId,
@@ -637,7 +437,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         limit: 50
       });
       
-      // Mark all messages from this user as read
       socket.emit('mark_chat_as_read', {
         userId: user.userId,
         otherUserId: chat.otherUser.userId
@@ -645,27 +444,38 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
-  const closePrivateChat = (chat: PrivateChat) => {
-    // Don't allow closing if there are unread messages
+  const closePrivateChat = async (chat: PrivateChat) => {
     if (chat.unreadCount > 0) {
       return;
     }
     
-    // Add to closed list (prevents it from reappearing on poll)
-    closedChatIdsRef.current.add(chat.otherUser.userId);
-    
-    // Remove chat from the list
-    setPrivateChats(prev => prev.filter(c => c.chatId !== chat.chatId));
-    
-    // If this was the selected chat, switch to first room
-    if (selectedPrivateChat?.chatId === chat.chatId) {
-      if (rooms.length > 0) {
-        selectRoom(rooms[0]);
-      } else {
-        setSelectedPrivateChat(null);
-        setChatType('room');
-        setMessages([]);
+    // Call server to mark as closed
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${import.meta.env.VITE_API_URL}/rooms/close-private-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ otherUserId: chat.otherUser.userId })
+      });
+      
+      // Remove from local list
+      setPrivateChats(prev => prev.filter(c => c.chatId !== chat.chatId));
+      
+      // If this was the selected chat, switch to first room
+      if (selectedPrivateChat?.chatId === chat.chatId) {
+        if (rooms.length > 0) {
+          selectRoom(rooms[0]);
+        } else {
+          setSelectedPrivateChat(null);
+          setChatType('room');
+          setMessages([]);
+        }
       }
+    } catch (error) {
+      console.error('Failed to close chat:', error);
     }
   };
 
@@ -673,7 +483,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
     if (!messageInput.trim() || !socket) return;
 
     if (chatType === 'private' && selectedPrivateChat) {
-      // Send private message
       socket.emit('send_private_message', {
         receiverId: selectedPrivateChat.otherUser.userId,
         senderId: user.userId,
@@ -682,7 +491,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         messageType: 'text'
       });
       
-      // Add message to UI immediately
       const tempMessage: Message = {
         messageId: `temp_${Date.now()}`,
         senderId: user.userId,
@@ -693,7 +501,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
       };
       setMessages(prev => [...prev, tempMessage]);
     } else if (selectedRoom) {
-      // Send room message
       socket.emit('send_room_message', {
         roomId: selectedRoom.roomId,
         senderId: user.userId,
@@ -718,14 +525,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
     const value = e.target.value;
     setMessageInput(value);
     
-    // Only handle typing for private chats
     if (chatType === 'private' && selectedPrivateChat && socket) {
-      // If input is empty, stop typing immediately
       if (value.trim() === '') {
         if (isTyping) {
           stopTyping();
         }
-        // Clear any pending timeout
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
           typingTimeoutRef.current = null;
@@ -733,7 +537,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         return;
       }
 
-      // Start typing if not already
       if (!isTyping) {
         setIsTyping(true);
         socket.emit('typing', {
@@ -744,12 +547,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
         });
       }
 
-      // Clear any existing timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
 
-      // Set new timeout to stop typing after 2 seconds
       typingTimeoutRef.current = window.setTimeout(() => {
         stopTyping();
       }, 2000);
@@ -761,7 +562,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
       setIsTyping(false);
       
       if (chatType === 'private' && selectedPrivateChat) {
-        // Private chat stop typing - ONLY send to the specific user
         socket.emit('stop_typing', {
           userId: user.userId,
           username: user.username,
@@ -769,7 +569,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
           targetId: selectedPrivateChat.otherUser.userId
         });
       }
-      // Room stop typing removed - no typing indicators in public rooms
     }
   };
 
@@ -993,13 +792,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
               <div 
                 className="messages-container"
                 onClick={async () => {
-                  // Clear notification when clicking anywhere in chat area
                   if (selectedRoom) {
                     setRooms(prev => prev.map(r =>
                       r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
                     ));
                     
-                    // Update server with lastSeenAt timestamp
                     try {
                       const token = localStorage.getItem('accessToken');
                       await fetch(`${import.meta.env.VITE_API_URL}/rooms/mark-room-read`, {
@@ -1060,13 +857,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
                   onFocus={async () => {
-                    // Clear notification when focusing input
                     if (selectedRoom) {
                       setRooms(prev => prev.map(r =>
                         r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
                       ));
                       
-                      // Update server with lastSeenAt timestamp
                       try {
                         const token = localStorage.getItem('accessToken');
                         await fetch(`${import.meta.env.VITE_API_URL}/rooms/mark-room-read`, {
@@ -1105,7 +900,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         </main>
       </div>
 
-      {/* User Selection Modal */}
       {showUserModal && (
         <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -1118,10 +912,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 {users
                   .filter(u => u.userId !== user.userId)
                   .sort((a, b) => {
-                    // First sort by online status (online first)
                     if (a.status === 'online' && b.status !== 'online') return -1;
                     if (a.status !== 'online' && b.status === 'online') return 1;
-                    // Then sort alphabetically by display name
                     return a.displayName.localeCompare(b.displayName);
                   })
                   .map(u => (

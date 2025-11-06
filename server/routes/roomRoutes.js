@@ -175,6 +175,9 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
           isRead: false
         });
 
+        // ONLY show chats with unread messages
+        if (unreadCount === 0) return null;
+
         // Get last message
         const lastMessage = await db.collection('messages')
           .findOne(
@@ -203,13 +206,46 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
       })
     );
 
-    // Filter out null values (in case some users were deleted)
+    // Filter out null values
     const validChats = chatsWithDetails.filter(chat => chat !== null);
 
     res.json({ privateChats: validChats });
   } catch (error) {
     console.error('Error getting private chats:', error);
     res.status(500).json({ error: 'Failed to get private chats' });
+  }
+});
+
+// Close a private chat (marks all messages as read, which removes it from the list)
+router.post('/close-private-chat', authenticateToken, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const userId = new ObjectId(req.user.userId);
+    const { otherUserId } = req.body;
+
+    if (!otherUserId) {
+      return res.status(400).json({ error: 'Other user ID is required' });
+    }
+
+    const otherUserObjectId = new ObjectId(otherUserId);
+
+    // Mark all messages from this user as read
+    await db.collection('messages').updateMany(
+      {
+        isPrivate: true,
+        receiverId: userId,
+        senderId: otherUserObjectId,
+        isRead: false
+      },
+      {
+        $set: { isRead: true }
+      }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error closing private chat:', error);
+    res.status(500).json({ error: 'Failed to close private chat' });
   }
 });
 
