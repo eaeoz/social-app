@@ -62,9 +62,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>(['Male', 'Female']);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedUserIndex, setSelectedUserIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,6 +104,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
       } else if (e.key === 'Escape' && showUserModal) {
         e.preventDefault();
         setShowUserModal(false);
+      } else if (e.altKey && e.key.toLowerCase() === 'x' && showUserModal) {
+        e.preventDefault();
+        setShowFilters(prev => !prev);
       }
     };
 
@@ -111,6 +116,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showUserModal]);
+
+  // Auto-focus search input when modal opens and reset selected index
+  useEffect(() => {
+    if (showUserModal) {
+      setSelectedUserIndex(0);
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [showUserModal]);
+
+  // Reset selected index when filter changes
+  useEffect(() => {
+    setSelectedUserIndex(0);
+  }, [userSearchText, ageRange, selectedGenders]);
 
   useEffect(() => {
     if (socket && connected && selectedRoom) {
@@ -944,11 +964,27 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <div className="modal-filters">
               <div className="filter-row">
                 <input
+                  ref={searchInputRef}
                   type="text"
                   className="search-input"
                   placeholder="🔍 Search users..."
                   value={userSearchText}
                   onChange={(e) => setUserSearchText(e.target.value)}
+                  onKeyDown={(e) => {
+                    const filteredUsers = getFilteredUsers();
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedUserIndex(prev => 
+                        prev < filteredUsers.length - 1 ? prev + 1 : prev
+                      );
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedUserIndex(prev => prev > 0 ? prev - 1 : 0);
+                    } else if (e.key === 'Enter' && filteredUsers.length > 0) {
+                      e.preventDefault();
+                      startPrivateChat(filteredUsers[selectedUserIndex]);
+                    }
+                  }}
                 />
                 <button 
                   className="filter-toggle-btn"
@@ -1018,10 +1054,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
             <div className="modal-body">
               <div className="user-list">
-                {getFilteredUsers().map(u => (
+                {getFilteredUsers().map((u, index) => (
                   <div 
                     key={u.userId} 
-                    className="user-item"
+                    className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''}`}
                     onClick={() => startPrivateChat(u)}
                   >
                     <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
