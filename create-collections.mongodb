@@ -1,0 +1,70 @@
+// MongoDB Playground
+// Use this script with VS Code MongoDB Extension
+// Press Ctrl+Shift+P and select "MongoDB: Run Selected Lines in Playground"
+
+// Connect to database
+use('social-app');
+
+// 1. Users Collection
+db.createCollection('users');
+db.users.createIndex({ username: 1 }, { unique: true });
+db.users.createIndex({ email: 1 }, { unique: true });
+db.users.createIndex({ createdAt: -1 });
+
+// 2. User Presence Collection
+db.createCollection('userpresence');
+db.userpresence.createIndex({ userId: 1 }, { unique: true });
+db.userpresence.createIndex({ isOnline: 1 });
+db.userpresence.createIndex({ lastSeen: -1 });
+
+// 3. Public Rooms Collection
+db.createCollection('publicrooms');
+db.publicrooms.createIndex({ name: 1 });
+db.publicrooms.createIndex({ createdBy: 1 });
+db.publicrooms.createIndex({ isActive: 1 });
+db.publicrooms.createIndex({ createdAt: -1 });
+
+// 4. Messages Collection
+db.createCollection('messages');
+db.messages.createIndex({ senderId: 1 });
+db.messages.createIndex({ receiverId: 1 });
+db.messages.createIndex({ roomId: 1 });
+db.messages.createIndex({ timestamp: -1 });
+db.messages.createIndex({ isPrivate: 1, senderId: 1, receiverId: 1 });
+db.messages.createIndex({ roomId: 1, timestamp: -1 });
+
+// 5. Private Chats Collection
+db.createCollection('privatechats');
+db.privatechats.createIndex({ participants: 1 });
+db.privatechats.createIndex({ lastMessageAt: -1 });
+db.privatechats.createIndex({ isActive: 1 });
+
+// 6. Banners Collection
+db.createCollection('banners');
+db.banners.createIndex({ active: 1 });
+db.banners.createIndex({ displayOrder: 1 });
+db.banners.createIndex({ startDate: 1, endDate: 1 });
+
+// 7. Password Resets Collection
+db.createCollection('passwordresets');
+db.passwordresets.createIndex({ userId: 1 });
+db.passwordresets.createIndex({ token: 1 }, { unique: true });
+db.passwordresets.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+// 8. Settings Collection
+db.createCollection('settings');
+db.settings.createIndex({ userId: 1 }, { unique: true });
+
+// 9. Typing Indicators Collection
+db.createCollection('typing');
+db.typing.createIndex({ targetId: 1, targetType: 1 });
+db.typing.createIndex({ timestamp: 1 }, { expireAfterSeconds: 10 });
+
+// 10. Notifications Collection
+db.createCollection('notifications');
+db.notifications.createIndex({ userId: 1, isRead: 1 });
+db.notifications.createIndex({ createdAt: -1 });
+db.notifications.createIndex({ createdAt: 1 }, { expireAfterSeconds: 2592000 });
+
+// Verify collections
+db.getCollectionNames();

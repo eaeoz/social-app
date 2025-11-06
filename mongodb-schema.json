@@ -1,0 +1,282 @@
+{
+  "database": "social-app",
+  "collections": {
+    "users": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["username", "email", "passwordHash", "createdAt"],
+          "properties": {
+            "username": { "bsonType": "string" },
+            "email": { "bsonType": "string" },
+            "passwordHash": { "bsonType": "string" },
+            "displayName": { "bsonType": "string" },
+            "profilePictureId": { "bsonType": "string" },
+            "bio": { "bsonType": "string" },
+            "status": {
+              "bsonType": "string",
+              "enum": ["online", "offline", "away", "busy"]
+            },
+            "createdAt": { "bsonType": "date" },
+            "updatedAt": { "bsonType": "date" },
+            "lastSeen": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "username": 1 }, "unique": true },
+        { "key": { "email": 1 }, "unique": true },
+        { "key": { "createdAt": -1 } }
+      ]
+    },
+    "userpresence": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["userId", "isOnline", "lastSeen"],
+          "properties": {
+            "userId": { "bsonType": "objectId" },
+            "isOnline": { "bsonType": "bool" },
+            "socketId": { "bsonType": "string" },
+            "lastSeen": { "bsonType": "date" },
+            "deviceInfo": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "userId": 1 }, "unique": true },
+        { "key": { "isOnline": 1 } },
+        { "key": { "lastSeen": -1 } }
+      ]
+    },
+    "publicrooms": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["name", "createdBy", "createdAt", "isActive"],
+          "properties": {
+            "name": { "bsonType": "string" },
+            "description": { "bsonType": "string" },
+            "createdBy": { "bsonType": "objectId" },
+            "participants": {
+              "bsonType": "array",
+              "items": { "bsonType": "objectId" }
+            },
+            "isActive": { "bsonType": "bool" },
+            "isPrivate": { "bsonType": "bool" },
+            "maxParticipants": { "bsonType": "int" },
+            "createdAt": { "bsonType": "date" },
+            "updatedAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "name": 1 } },
+        { "key": { "createdBy": 1 } },
+        { "key": { "isActive": 1 } },
+        { "key": { "createdAt": -1 } }
+      ]
+    },
+    "messages": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["senderId", "content", "timestamp", "isPrivate"],
+          "properties": {
+            "senderId": { "bsonType": "objectId" },
+            "receiverId": { "bsonType": "objectId" },
+            "roomId": { "bsonType": "objectId" },
+            "content": { "bsonType": "string" },
+            "messageType": {
+              "bsonType": "string",
+              "enum": ["text", "image", "file", "system"]
+            },
+            "isPrivate": { "bsonType": "bool" },
+            "isRead": { "bsonType": "bool" },
+            "isEdited": { "bsonType": "bool" },
+            "attachments": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object",
+                "properties": {
+                  "fileId": { "bsonType": "string" },
+                  "fileName": { "bsonType": "string" },
+                  "fileType": { "bsonType": "string" },
+                  "fileSize": { "bsonType": "int" }
+                }
+              }
+            },
+            "timestamp": { "bsonType": "date" },
+            "editedAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "senderId": 1 } },
+        { "key": { "receiverId": 1 } },
+        { "key": { "roomId": 1 } },
+        { "key": { "timestamp": -1 } },
+        { "key": { "isPrivate": 1, "senderId": 1, "receiverId": 1 } },
+        { "key": { "roomId": 1, "timestamp": -1 } }
+      ]
+    },
+    "privatechats": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["participants", "createdAt"],
+          "properties": {
+            "participants": {
+              "bsonType": "array",
+              "items": { "bsonType": "objectId" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "lastMessageId": { "bsonType": "objectId" },
+            "lastMessageAt": { "bsonType": "date" },
+            "isActive": { "bsonType": "bool" },
+            "unreadCount": {
+              "bsonType": "object",
+              "additionalProperties": { "bsonType": "int" }
+            },
+            "createdAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "participants": 1 } },
+        { "key": { "lastMessageAt": -1 } },
+        { "key": { "isActive": 1 } }
+      ]
+    },
+    "banners": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["title", "imageUrl", "active", "createdAt"],
+          "properties": {
+            "title": { "bsonType": "string" },
+            "imageUrl": { "bsonType": "string" },
+            "link": { "bsonType": "string" },
+            "description": { "bsonType": "string" },
+            "active": { "bsonType": "bool" },
+            "displayOrder": { "bsonType": "int" },
+            "startDate": { "bsonType": "date" },
+            "endDate": { "bsonType": "date" },
+            "createdAt": { "bsonType": "date" },
+            "updatedAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "active": 1 } },
+        { "key": { "displayOrder": 1 } },
+        { "key": { "startDate": 1, "endDate": 1 } }
+      ]
+    },
+    "passwordresets": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["userId", "token", "expiresAt", "createdAt"],
+          "properties": {
+            "userId": { "bsonType": "objectId" },
+            "token": { "bsonType": "string" },
+            "expiresAt": { "bsonType": "date" },
+            "used": { "bsonType": "bool" },
+            "createdAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "userId": 1 } },
+        { "key": { "token": 1 }, "unique": true },
+        { "key": { "expiresAt": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "settings": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["userId", "theme", "notifications", "language"],
+          "properties": {
+            "userId": { "bsonType": "objectId" },
+            "theme": {
+              "bsonType": "string",
+              "enum": ["dark", "light", "auto"]
+            },
+            "notifications": { "bsonType": "bool" },
+            "notificationSettings": {
+              "bsonType": "object",
+              "properties": {
+                "messageSound": { "bsonType": "bool" },
+                "privateChatNotifications": { "bsonType": "bool" },
+                "publicRoomNotifications": { "bsonType": "bool" },
+                "emailNotifications": { "bsonType": "bool" }
+              }
+            },
+            "language": { "bsonType": "string" },
+            "privacy": {
+              "bsonType": "object",
+              "properties": {
+                "showOnlineStatus": { "bsonType": "bool" },
+                "showLastSeen": { "bsonType": "bool" },
+                "allowPrivateMessages": { "bsonType": "bool" }
+              }
+            },
+            "updatedAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "userId": 1 }, "unique": true }
+      ]
+    },
+    "typing": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["userId", "targetId", "targetType", "timestamp"],
+          "properties": {
+            "userId": { "bsonType": "objectId" },
+            "targetId": { "bsonType": "objectId" },
+            "targetType": {
+              "bsonType": "string",
+              "enum": ["room", "private"]
+            },
+            "timestamp": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "targetId": 1, "targetType": 1 } },
+        { "key": { "timestamp": 1 }, "expireAfterSeconds": 10 }
+      ]
+    },
+    "notifications": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["userId", "type", "content", "createdAt"],
+          "properties": {
+            "userId": { "bsonType": "objectId" },
+            "type": {
+              "bsonType": "string",
+              "enum": ["message", "mention", "room_invite", "system"]
+            },
+            "content": { "bsonType": "string" },
+            "data": { "bsonType": "object" },
+            "isRead": { "bsonType": "bool" },
+            "createdAt": { "bsonType": "date" },
+            "readAt": { "bsonType": "date" }
+          }
+        }
+      },
+      "indexes": [
+        { "key": { "userId": 1, "isRead": 1 } },
+        { "key": { "createdAt": -1 } },
+        { "key": { "createdAt": 1 }, "expireAfterSeconds": 2592000 }
+      ]
+    }
+  }
+}

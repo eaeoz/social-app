@@ -1,0 +1,51 @@
+{
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": ["username", "email", "passwordHash", "createdAt"],
+      "properties": {
+        "username": {
+          "bsonType": "string",
+          "description": "Unique username for login"
+        },
+        "email": {
+          "bsonType": "string",
+          "description": "User email address"
+        },
+        "passwordHash": {
+          "bsonType": "string",
+          "description": "Bcrypt hashed password"
+        },
+        "displayName": {
+          "bsonType": "string",
+          "description": "Display name (can be different from username)"
+        },
+        "profilePictureId": {
+          "bsonType": "string",
+          "description": "Appwrite file ID for profile picture"
+        },
+        "bio": {
+          "bsonType": "string",
+          "description": "User biography/status message"
+        },
+        "status": {
+          "bsonType": "string",
+          "enum": ["online", "offline", "away", "busy"],
+          "description": "Current user presence status"
+        },
+        "createdAt": {
+          "bsonType": "date",
+          "description": "Account creation timestamp"
+        },
+        "updatedAt": {
+          "bsonType": "date",
+          "description": "Last profile update"
+        },
+        "lastSeen": {
+          "bsonType": "date",
+          "description": "Last activity timestamp"
+        }
+      }
+    }
+  }
+}
