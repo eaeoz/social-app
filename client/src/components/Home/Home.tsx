@@ -1079,9 +1079,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         </span>
                       </div>
                       <div className="user-line-2">
-                        {u.age && u.gender && (
+                        {u.age && (
                           <span className="user-demographics">
-                            {u.age} years old • {u.gender}
+                            {u.age} years old
                           </span>
                         )}
                       </div>
