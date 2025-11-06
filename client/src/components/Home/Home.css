@@ -760,6 +760,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  outline: none;
+}
+
+.theme-toggle:focus {
+  outline: none;
 }
 
 .toggle-track {
