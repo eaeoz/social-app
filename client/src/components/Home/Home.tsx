@@ -684,13 +684,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
       <header className="home-header">
         <div className="header-left">
           <button 
-            className="mobile-menu-button"
+            className={`mobile-menu-button ${rooms.reduce((total, room) => total + (room.unreadCount || 0), 0) > 0 ? 'has-unread' : ''}`}
             onClick={() => setSidebarOpen(!sidebarOpen)}
             title="Toggle menu"
           >
             <span className="hamburger-line"></span>
             <span className="hamburger-line"></span>
             <span className="hamburger-line"></span>
+            {rooms.reduce((total, room) => total + (room.unreadCount || 0), 0) > 0 && (
+              <span className="hamburger-notification-dot"></span>
+            )}
           </button>
           <h1>💬 {import.meta.env.VITE_APP_NAME || 'Chat App'}</h1>
         </div>
@@ -701,7 +704,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
             title="Start New Chat"
           >
             <span className="chat-icon">💬</span>
-            <span className="chat-text">New Chat</span>
           </button>
         </div>
         <div className="header-right">

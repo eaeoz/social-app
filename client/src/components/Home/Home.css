@@ -115,17 +115,16 @@
 }
 
 .new-chat-button {
-  padding: 10px 24px;
+  width: 50px;
+  height: 50px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   animation: pulse-glow 2s ease-in-out infinite;
@@ -153,7 +152,7 @@
 }
 
 .chat-icon {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   animation: bounce-icon 1s ease-in-out infinite;
 }
 
@@ -171,11 +170,6 @@
   transform: scale(1.1) rotate(10deg);
 }
 
-.chat-text {
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
 /* Hamburger Menu Button */
 .mobile-menu-button {
   display: none;
@@ -188,6 +182,7 @@
   cursor: pointer;
   padding: 0;
   z-index: 10;
+  position: relative;
 }
 
 .hamburger-line {
@@ -200,6 +195,46 @@
 
 .mobile-menu-button:hover .hamburger-line {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.mobile-menu-button.has-unread .hamburger-line {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: hamburger-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hamburger-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scaleX(0.95);
+  }
+}
+
+.hamburger-notification-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
+  animation: notification-pulse 2s ease-in-out infinite;
+  z-index: 11;
+}
+
+@keyframes notification-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
 }
 
 .header-right {
