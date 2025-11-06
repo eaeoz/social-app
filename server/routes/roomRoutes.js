@@ -100,4 +100,79 @@ router.get('/users', authenticateToken, async (req, res) => {
   }
 });
 
+// Get private chats with unread counts
+router.get('/private-chats', authenticateToken, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const userId = new ObjectId(req.user.userId);
+
+    // Find all private chats for this user
+    const privateChats = await db.collection('privatechats')
+      .find({
+        participants: userId,
+        isActive: true
+      })
+      .sort({ lastMessageAt: -1 })
+      .toArray();
+
+    // Get unread counts and other user info for each chat
+    const chatsWithDetails = await Promise.all(
+      privateChats.map(async (chat) => {
+        // Get the other participant's ID
+        const otherUserId = chat.participants.find(id => !id.equals(userId));
+
+        // Get other user's info
+        const otherUser = await db.collection('users').findOne(
+          { _id: otherUserId },
+          { projection: { username: 1, displayName: 1, status: 1 } }
+        );
+
+        if (!otherUser) return null;
+
+        // Count unread messages (messages sent by other user that we haven't read)
+        const unreadCount = await db.collection('messages').countDocuments({
+          isPrivate: true,
+          receiverId: userId,
+          senderId: otherUserId,
+          isRead: false
+        });
+
+        // Get last message
+        const lastMessage = await db.collection('messages')
+          .findOne(
+            {
+              isPrivate: true,
+              $or: [
+                { senderId: userId, receiverId: otherUserId },
+                { senderId: otherUserId, receiverId: userId }
+              ]
+            },
+            { sort: { timestamp: -1 } }
+          );
+
+        return {
+          chatId: chat._id.toString(),
+          otherUser: {
+            userId: otherUser._id.toString(),
+            username: otherUser.username,
+            displayName: otherUser.displayName,
+            status: otherUser.status || 'offline'
+          },
+          unreadCount,
+          lastMessage: lastMessage ? lastMessage.content : null,
+          lastMessageAt: chat.lastMessageAt
+        };
+      })
+    );
+
+    // Filter out null values (in case some users were deleted)
+    const validChats = chatsWithDetails.filter(chat => chat !== null);
+
+    res.json({ privateChats: validChats });
+  } catch (error) {
+    console.error('Error getting private chats:', error);
+    res.status(500).json({ error: 'Failed to get private chats' });
+  }
+});
+
 export default router;

@@ -239,6 +239,28 @@ export function setupMessageHandlers(io, socket, userSockets) {
     }
   });
 
+  // Mark entire chat as read
+  socket.on('mark_chat_as_read', async (data) => {
+    try {
+      const { userId, otherUserId } = data;
+      
+      // Mark all messages from the other user as read
+      const result = await db.collection('messages').updateMany(
+        {
+          isPrivate: true,
+          receiverId: new ObjectId(userId),
+          senderId: new ObjectId(otherUserId),
+          isRead: false
+        },
+        { $set: { isRead: true } }
+      );
+      
+      console.log(`✓ Marked ${result.modifiedCount} messages as read for chat between ${userId} and ${otherUserId}`);
+    } catch (error) {
+      console.error('Error marking chat as read:', error);
+    }
+  });
+
   // Get room messages (history)
   socket.on('get_room_messages', async (data) => {
     try {

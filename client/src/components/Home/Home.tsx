@@ -73,6 +73,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   useEffect(() => {
     loadRooms();
     loadUsers();
+    loadPrivateChats();
     
     // Load saved theme
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -84,6 +85,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     // Poll for unread counts every 5 seconds
     const pollInterval = setInterval(() => {
       loadRooms();
+      loadPrivateChats();
     }, 5000);
 
     // Cleanup interval on unmount
@@ -361,6 +363,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
+  const loadPrivateChats = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/rooms/private-chats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPrivateChats(data.privateChats);
+      }
+    } catch (error) {
+      console.error('Failed to load private chats:', error);
+    }
+  };
+
   const selectRoom = (room: Room) => {
     // Leave previous room (this updates lastSeenAt in DB)
     if (selectedRoom && socket) {
@@ -446,6 +466,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
         userId: user.userId,
         otherUserId: chat.otherUser.userId,
         limit: 50
+      });
+      
+      // Mark all messages from this user as read
+      socket.emit('mark_chat_as_read', {
+        userId: user.userId,
+        otherUserId: chat.otherUser.userId
       });
     }
   };
