@@ -83,9 +83,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    // Poll for unread counts every 5 seconds
+    // Poll for private chats only (rooms use real-time events)
     const pollInterval = setInterval(() => {
-      loadRooms();
       loadPrivateChats();
     }, 5000);
 
@@ -173,6 +172,27 @@ function Home({ user, socket, onLogout }: HomeProps) {
         // Only process typing indicators in private chats, not in rooms
         if (chatType === 'private') {
           setTypingUsers(prev => prev.filter(u => u !== data.username));
+        }
+      });
+
+      // Real-time room notification for unread counts
+      socket.on('room_message_notification', (data: { roomId: string; senderId: string; timestamp: Date }) => {
+        console.log('🔔 Room notification received:', data);
+        
+        // Only increment unread if:
+        // 1. Not currently in this room
+        // 2. Message is not from current user
+        if (selectedRoom?.roomId !== data.roomId && data.senderId !== user.userId) {
+          setRooms(prev => prev.map(room => {
+            if (room.roomId === data.roomId) {
+              return {
+                ...room,
+                unreadCount: (room.unreadCount || 0) + 1,
+                messageCount: (room.messageCount || 0) + 1
+              };
+            }
+            return room;
+          }));
         }
       });
 
@@ -297,6 +317,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('connect');
         socket.off('disconnect');
         socket.off('room_message');
+        socket.off('room_message_notification');
         socket.off('room_messages');
         socket.off('user_joined');
         socket.off('user_left');

@@ -91,8 +91,16 @@ export function setupMessageHandlers(io, socket, userSockets) {
         timestamp: message.timestamp
       };
 
-      // Broadcast to all users in the room (including sender)
+      // Broadcast message to all users in the room (including sender)
       io.to(roomId).emit('room_message', broadcastMessage);
+      
+      // Broadcast notification to all connected users (for unread count updates)
+      // This notifies users NOT in the room about new messages
+      io.emit('room_message_notification', {
+        roomId,
+        senderId,
+        timestamp: message.timestamp
+      });
       
       console.log(`💬 Message sent in room ${roomId} by ${senderName}`);
     } catch (error) {
