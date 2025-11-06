@@ -529,11 +529,26 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
-  const selectRoom = (room: Room) => {
+  const selectRoom = async (room: Room) => {
     // Clear unread count for this room immediately
     setRooms(prev => prev.map(r =>
       r.roomId === room.roomId ? { ...r, unreadCount: 0 } : r
     ));
+
+    // Update server with lastSeenAt timestamp immediately when selecting room
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${import.meta.env.VITE_API_URL}/rooms/mark-room-read`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ roomId: room.roomId })
+      });
+    } catch (error) {
+      console.error('Failed to mark room as read:', error);
+    }
 
     // If we're already in this room, just return (no need to rejoin)
     if (selectedRoom?.roomId === room.roomId) {
