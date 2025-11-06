@@ -378,11 +378,48 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       if (response.ok) {
         const data = await response.json();
+        
         // Filter out manually closed chats
         const filteredChats = data.privateChats.filter(
           (chat: PrivateChat) => !closedChatIdsRef.current.has(chat.otherUser.userId)
         );
-        setPrivateChats(filteredChats);
+        
+        // Merge with existing chats to preserve temp chats
+        setPrivateChats(prev => {
+          const serverUserIds = new Set(filteredChats.map((c: PrivateChat) => c.otherUser.userId));
+          
+          // Keep temp chats that aren't in server response
+          const tempChats = prev.filter(c => 
+            c.chatId.startsWith('temp_') && !serverUserIds.has(c.otherUser.userId)
+          );
+          
+          // Merge: use server data for existing chats, keep temp chats
+          const merged = [...tempChats];
+          
+          for (const serverChat of filteredChats) {
+            // Find if we already have this chat (including temp versions)
+            const existingIndex = prev.findIndex(p => 
+              p.otherUser.userId === serverChat.otherUser.userId
+            );
+            
+            if (existingIndex >= 0) {
+              // Update existing chat with server data, but keep local unreadCount if viewing
+              const existing = prev[existingIndex];
+              merged.push({
+                ...serverChat,
+                // If currently viewing this chat, keep unreadCount at 0
+                unreadCount: selectedPrivateChat?.otherUser.userId === serverChat.otherUser.userId 
+                  ? 0 
+                  : serverChat.unreadCount
+              });
+            } else {
+              // New chat from server
+              merged.push(serverChat);
+            }
+          }
+          
+          return merged;
+        });
       }
     } catch (error) {
       console.error('Failed to load private chats:', error);
@@ -751,7 +788,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         setSidebarOpen(false);
                       }}
                     >
-                      <div className="user-avatar" style={{ width: '35px', height: '35px', fontSize: '0.9rem' }}>
+                      <div className="user-avatar" style={{ width: '35px', height: '35px', fontSize: '0.9rem', marginRight: '10px' }}>
                         {chat.otherUser.displayName.charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
