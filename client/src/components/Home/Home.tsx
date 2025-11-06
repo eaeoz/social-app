@@ -1062,25 +1062,30 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <div className="modal-body">
               <div className="user-list">
                 {getFilteredUsers().map(u => (
-                  <div key={u.userId} className="user-item">
+                  <div 
+                    key={u.userId} 
+                    className="user-item"
+                    onClick={() => startPrivateChat(u)}
+                  >
                     <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
                     <div className="user-details">
-                      <div className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>
-                        {u.displayName}
+                      <div className="user-line-1">
+                        <span className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>
+                          {u.displayName}
+                        </span>
+                        <span className="user-status">
+                          <span className={`status-dot ${u.status}`}></span>
+                          {u.status}
+                        </span>
                       </div>
-                      <div className="user-info-row">
+                      <div className="user-line-2">
                         {u.age && u.gender && (
                           <span className="user-demographics">
                             {u.age} years old • {u.gender}
                           </span>
                         )}
                       </div>
-                      <div className="user-status">
-                        <span className={`status-dot ${u.status}`}></span>
-                        {u.status}
-                      </div>
                     </div>
-                    <button className="select-button" onClick={() => startPrivateChat(u)}>Chat</button>
                   </div>
                 ))}
                 {getFilteredUsers().length === 0 && (
