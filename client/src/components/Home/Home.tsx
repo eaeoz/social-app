@@ -233,16 +233,47 @@ function Home({ user, socket, onLogout }: HomeProps) {
           currentUserId: user.userId
         });
         
-        // If we're currently viewing this chat, add message to the list and mark as read
+        // If we're currently viewing this chat, add message to the list (but avoid duplicates)
         if (isCurrentChat) {
-          setMessages(prev => [...prev, {
-            messageId: message.messageId,
-            senderId: message.senderId,
-            senderName: message.senderName,
-            content: message.content,
-            timestamp: message.timestamp,
-            messageType: message.messageType
-          }]);
+          setMessages(prev => {
+            // Check if this message already exists (avoid duplicates from temp messages)
+            const messageExists = prev.some(m => 
+              m.messageId === message.messageId || 
+              (m.messageId.startsWith('temp_') && 
+               m.senderId === message.senderId && 
+               m.content === message.content &&
+               Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 2000)
+            );
+            
+            if (messageExists) {
+              // Replace temp message with real one
+              return prev.map(m => 
+                (m.messageId.startsWith('temp_') && 
+                 m.senderId === message.senderId && 
+                 m.content === message.content &&
+                 Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 2000)
+                  ? {
+                      messageId: message.messageId,
+                      senderId: message.senderId,
+                      senderName: message.senderName,
+                      content: message.content,
+                      timestamp: message.timestamp,
+                      messageType: message.messageType
+                    }
+                  : m
+              );
+            }
+            
+            // Add new message
+            return [...prev, {
+              messageId: message.messageId,
+              senderId: message.senderId,
+              senderName: message.senderName,
+              content: message.content,
+              timestamp: message.timestamp,
+              messageType: message.messageType
+            }];
+          });
           
           // Mark as read if it's from the other user
           if (message.senderId !== user.userId && socket) {
@@ -287,30 +318,30 @@ function Home({ user, socket, onLogout }: HomeProps) {
               }
               return c;
             });
-          } else if (message.senderId !== user.userId) {
-            // Auto-create new chat for incoming message from new user
-            const senderInfo = users.find(u => u.userId === otherUserId);
+          } else {
+            // Auto-create new chat for any message (both incoming and outgoing)
+            const otherUserInfo = users.find(u => u.userId === otherUserId);
             console.log('🆕 Creating new chat:', {
-              senderInfo: !!senderInfo,
-              senderUserId: otherUserId,
+              otherUserInfo: !!otherUserInfo,
+              otherUserId: otherUserId,
               availableUsers: users.length
             });
             
-            if (senderInfo) {
+            if (otherUserInfo) {
               // Remove from closed list when new message arrives
               closedChatIdsRef.current.delete(otherUserId);
               
               const newChat: PrivateChat = {
                 chatId: message.chatId || `temp_${Date.now()}`,
-                otherUser: senderInfo,
+                otherUser: otherUserInfo,
                 lastMessage: message.content,
                 lastMessageAt: message.timestamp,
-                unreadCount: isCurrentChat ? 0 : 1
+                unreadCount: isCurrentChat ? 0 : (message.senderId !== user.userId ? 1 : 0)
               };
               console.log('✅ New chat created with unread count:', newChat.unreadCount);
               return [...prev, newChat];
             } else {
-              console.warn('⚠️ Sender info not found for userId:', otherUserId);
+              console.warn('⚠️ Other user info not found for userId:', otherUserId);
             }
           }
           return prev;
