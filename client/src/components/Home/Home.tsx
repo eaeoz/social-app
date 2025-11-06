@@ -120,16 +120,22 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       socket.on('user_typing', (data: { username: string }) => {
-        setTypingUsers(prev => {
-          if (!prev.includes(data.username)) {
-            return [...prev, data.username];
-          }
-          return prev;
-        });
+        // Only show typing indicators in private chats, not in rooms
+        if (chatType === 'private') {
+          setTypingUsers(prev => {
+            if (!prev.includes(data.username)) {
+              return [...prev, data.username];
+            }
+            return prev;
+          });
+        }
       });
 
       socket.on('user_stop_typing', (data: { username: string }) => {
-        setTypingUsers(prev => prev.filter(u => u !== data.username));
+        // Only process typing indicators in private chats, not in rooms
+        if (chatType === 'private') {
+          setTypingUsers(prev => prev.filter(u => u !== data.username));
+        }
       });
 
       // Private message events
@@ -433,37 +439,45 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessageInput(e.target.value);
+    const value = e.target.value;
+    setMessageInput(value);
     
-    if (!isTyping && socket) {
-      setIsTyping(true);
-      
-      if (chatType === 'private' && selectedPrivateChat) {
-        // Private chat typing
+    // Only handle typing for private chats
+    if (chatType === 'private' && selectedPrivateChat && socket) {
+      // If input is empty, stop typing immediately
+      if (value.trim() === '') {
+        if (isTyping) {
+          stopTyping();
+        }
+        // Clear any pending timeout
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+        return;
+      }
+
+      // Start typing if not already
+      if (!isTyping) {
+        setIsTyping(true);
         socket.emit('typing', {
           userId: user.userId,
           username: user.username,
           isPrivate: true,
           targetId: selectedPrivateChat.otherUser.userId
         });
-      } else if (selectedRoom) {
-        // Room typing
-        socket.emit('typing', {
-          roomId: selectedRoom.roomId,
-          userId: user.userId,
-          username: user.username
-        });
       }
-    }
 
-    // Reset typing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
+      // Clear any existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
 
-    typingTimeoutRef.current = window.setTimeout(() => {
-      stopTyping();
-    }, 2000);
+      // Set new timeout to stop typing after 2 seconds
+      typingTimeoutRef.current = window.setTimeout(() => {
+        stopTyping();
+      }, 2000);
+    }
   };
 
   const stopTyping = () => {
@@ -471,21 +485,15 @@ function Home({ user, socket, onLogout }: HomeProps) {
       setIsTyping(false);
       
       if (chatType === 'private' && selectedPrivateChat) {
-        // Private chat stop typing
+        // Private chat stop typing - ONLY send to the specific user
         socket.emit('stop_typing', {
           userId: user.userId,
           username: user.username,
           isPrivate: true,
           targetId: selectedPrivateChat.otherUser.userId
         });
-      } else if (selectedRoom) {
-        // Room stop typing
-        socket.emit('stop_typing', {
-          roomId: selectedRoom.roomId,
-          userId: user.userId,
-          username: user.username
-        });
       }
+      // Room stop typing removed - no typing indicators in public rooms
     }
   };
 
