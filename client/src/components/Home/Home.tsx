@@ -36,7 +36,7 @@ interface PrivateChat {
   otherUser: User;
   lastMessage?: string;
   lastMessageAt?: Date;
-  unreadCount?: number;
+  unreadCount: number;
 }
 
 function Home({ user, socket, onLogout }: HomeProps) {
@@ -133,14 +133,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       // Private message events
-      socket.on('private_message', (message: any) => {
+      socket.on('private_message', async (message: any) => {
         console.log('🔒 New private message:', message);
         
         // Determine the other user (who we're chatting with)
         const otherUserId = message.senderId === user.userId ? message.receiverId : message.senderId;
+        const isCurrentChat = chatType === 'private' && selectedPrivateChat?.otherUser.userId === otherUserId;
         
-        // If we're currently viewing this chat, add message to the list
-        if (chatType === 'private' && selectedPrivateChat?.otherUser.userId === otherUserId) {
+        console.log('📊 Notification Debug:', {
+          otherUserId,
+          isCurrentChat,
+          chatType,
+          selectedPrivateChatUserId: selectedPrivateChat?.otherUser.userId,
+          messageSenderId: message.senderId,
+          currentUserId: user.userId
+        });
+        
+        // If we're currently viewing this chat, add message to the list and mark as read
+        if (isCurrentChat) {
           setMessages(prev => [...prev, {
             messageId: message.messageId,
             senderId: message.senderId,
@@ -149,17 +159,72 @@ function Home({ user, socket, onLogout }: HomeProps) {
             timestamp: message.timestamp,
             messageType: message.messageType
           }]);
+          
+          // Mark as read if it's from the other user
+          if (message.senderId !== user.userId && socket) {
+            socket.emit('mark_as_read', { messageId: message.messageId });
+          }
         }
         
-        // Update private chat list
+        // Update or create private chat in list
         setPrivateChats(prev => {
           const existingChat = prev.find(c => c.otherUser.userId === otherUserId);
+          
+          console.log('💬 Chat Update:', {
+            existingChat: !!existingChat,
+            existingChatId: existingChat?.chatId,
+            currentUnreadCount: existingChat?.unreadCount
+          });
+          
           if (existingChat) {
-            return prev.map(c => 
-              c.chatId === existingChat.chatId 
-                ? { ...c, lastMessage: message.content, lastMessageAt: message.timestamp }
-                : c
-            );
+            // Update existing chat
+            return prev.map(c => {
+              if (c.chatId === existingChat.chatId) {
+                // Increment unread count only if not viewing and message is from other user
+                const shouldIncrement = !isCurrentChat && message.senderId !== user.userId;
+                const newUnreadCount = shouldIncrement ? c.unreadCount + 1 : c.unreadCount;
+                
+                console.log('✅ Updating existing chat:', {
+                  chatId: c.chatId,
+                  shouldIncrement,
+                  oldUnreadCount: c.unreadCount,
+                  newUnreadCount,
+                  isCurrentChat,
+                  messageSender: message.senderId,
+                  currentUser: user.userId
+                });
+                
+                return {
+                  ...c,
+                  lastMessage: message.content,
+                  lastMessageAt: message.timestamp,
+                  unreadCount: newUnreadCount
+                };
+              }
+              return c;
+            });
+          } else if (message.senderId !== user.userId) {
+            // Auto-create new chat for incoming message from new user
+            const senderInfo = users.find(u => u.userId === otherUserId);
+            console.log('🆕 Creating new chat:', {
+              senderInfo: !!senderInfo,
+              senderUserId: otherUserId,
+              availableUsers: users.length
+            });
+            
+            if (senderInfo) {
+              const newChat: PrivateChat = {
+                chatId: message.chatId || `temp_${Date.now()}`,
+                otherUser: senderInfo,
+                lastMessage: message.content,
+                lastMessageAt: message.timestamp,
+                unreadCount: isCurrentChat ? 0 : 1
+              };
+              console.log('✅ New chat created with unread count:', newChat.unreadCount);
+              return [...prev, newChat];
+            } else {
+              console.warn('⚠️ Sender info not found for userId:', otherUserId);
+            }
           }
           return prev;
         });
@@ -195,7 +260,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('error');
       };
     }
-  }, [socket, user, chatType, selectedPrivateChat]);
+  }, [socket, user, chatType, selectedPrivateChat, users]);
 
   const loadRooms = async () => {
     try {
@@ -280,7 +345,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
       // Create new private chat
       const newChat: PrivateChat = {
         chatId: `temp_${Date.now()}`,
-        otherUser: selectedUser
+        otherUser: selectedUser,
+        unreadCount: 0
       };
       setPrivateChats(prev => [...prev, newChat]);
       selectPrivateChat(newChat);
@@ -299,6 +365,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
         username: user.username
       });
     }
+    
+    // Reset unread count for this chat
+    setPrivateChats(prev => prev.map(c =>
+      c.chatId === chat.chatId ? { ...c, unreadCount: 0 } : c
+    ));
     
     setSelectedRoom(null);
     setSelectedPrivateChat(chat);
@@ -558,6 +629,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         </div>
                       )}
                     </div>
+                    {chat.unreadCount > 0 && (
+                      <span className="room-badge unread">{chat.unreadCount}</span>
+                    )}
                   </div>
                 ))
               )}
