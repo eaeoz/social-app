@@ -5,25 +5,56 @@ import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 
-// Get all public rooms
+// Get all public rooms with unread counts
 router.get('/public', authenticateToken, async (req, res) => {
   try {
     const db = getDatabase();
+    const userId = new ObjectId(req.user.userId);
+    
     const rooms = await db.collection('publicrooms')
       .find({ isActive: true, isPrivate: false })
       .sort({ createdAt: 1 })
       .toArray();
 
-    const roomsResponse = rooms.map(room => ({
-      roomId: room._id.toString(),
-      name: room.name,
-      description: room.description,
-      participantCount: room.participants?.length || 0,
-      maxParticipants: room.maxParticipants,
-      createdAt: room.createdAt
-    }));
+    // Get unread counts for all rooms
+    const roomsWithUnread = await Promise.all(
+      rooms.map(async (room) => {
+        // Get user's last seen time for this room
+        const activity = await db.collection('userroomactivity').findOne({
+          userId: userId,
+          roomId: room._id
+        });
 
-    res.json({ rooms: roomsResponse });
+        const lastSeenAt = activity?.lastSeenAt || new Date(0); // If never visited, use epoch
+
+        // Count messages after last seen time (excluding user's own messages)
+        const unreadCount = await db.collection('messages').countDocuments({
+          roomId: room._id,
+          isPrivate: false,
+          timestamp: { $gt: lastSeenAt },
+          senderId: { $ne: userId }
+        });
+
+        // Get total message count for the room
+        const messageCount = await db.collection('messages').countDocuments({
+          roomId: room._id,
+          isPrivate: false
+        });
+
+        return {
+          roomId: room._id.toString(),
+          name: room.name,
+          description: room.description,
+          participantCount: room.participants?.length || 0,
+          maxParticipants: room.maxParticipants,
+          unreadCount: unreadCount,
+          messageCount: messageCount,
+          createdAt: room.createdAt
+        };
+      })
+    );
+
+    res.json({ rooms: roomsWithUnread });
   } catch (error) {
     console.error('Error getting public rooms:', error);
     res.status(500).json({ error: 'Failed to get rooms' });

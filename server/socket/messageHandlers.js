@@ -32,6 +32,25 @@ export function setupMessageHandlers(io, socket, userSockets) {
       socket.leave(roomId);
       console.log(`📤 ${username} left room: ${roomId}`);
       
+      // Update user's last seen time for this room
+      await db.collection('userroomactivity').updateOne(
+        { 
+          userId: new ObjectId(userId),
+          roomId: new ObjectId(roomId)
+        },
+        {
+          $set: {
+            lastSeenAt: new Date()
+          },
+          $setOnInsert: {
+            userId: new ObjectId(userId),
+            roomId: new ObjectId(roomId),
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+      
       // Notify others in the room
       socket.to(roomId).emit('user_left', {
         username,

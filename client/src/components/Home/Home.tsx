@@ -22,6 +22,8 @@ interface Room {
   name: string;
   description: string;
   participantCount: number;
+  unreadCount?: number;
+  messageCount?: number;
 }
 
 interface User {
@@ -56,6 +58,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [chatType, setChatType] = useState<'room' | 'private'>('room');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
+  const isInitialLoadRef = useRef(true);
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -77,6 +80,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
       setTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
+
+    // Poll for unread counts every 5 seconds
+    const pollInterval = setInterval(() => {
+      loadRooms();
+    }, 5000);
+
+    // Cleanup interval on unmount
+    return () => {
+      clearInterval(pollInterval);
+    };
   }, []);
 
   // Socket connection and authentication
@@ -103,12 +116,50 @@ function Home({ user, socket, onLogout }: HomeProps) {
       // Message events
       socket.on('room_message', (message: Message) => {
         console.log('📨 New room message:', message);
+        
+        // Add message to current view if we're in the room
         setMessages(prev => [...prev, message]);
+        
+        // Update room counts (simplified - server tracks unread properly)
+        setRooms(prev => prev.map(room => {
+          // Increment message count for all rooms
+          const newMessageCount = (room.messageCount || 0) + 1;
+          
+          // For the current room, don't increment unread
+          if (selectedRoom?.roomId === room.roomId) {
+            return {
+              ...room,
+              messageCount: newMessageCount
+            };
+          }
+          // For other rooms, increment unread only if not our message
+          else if (message.senderId !== user.userId) {
+            return {
+              ...room,
+              messageCount: newMessageCount,
+              unreadCount: (room.unreadCount || 0) + 1
+            };
+          }
+          // For our own messages in other rooms
+          else {
+            return {
+              ...room,
+              messageCount: newMessageCount
+            };
+          }
+        }));
       });
 
       socket.on('room_messages', (data: { roomId: string; messages: Message[] }) => {
         console.log('📚 Room messages loaded:', data.messages.length);
         setMessages(data.messages);
+        
+        // Update message count for the room
+        setRooms(prev => prev.map(room => 
+          room.roomId === data.roomId 
+            ? { ...room, messageCount: data.messages.length }
+            : room
+        ));
       });
 
       socket.on('user_joined', (data: { username: string }) => {
@@ -281,9 +332,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
         const data = await response.json();
         setRooms(data.rooms);
         
-        // Auto-select first room
-        if (data.rooms.length > 0 && !selectedRoom) {
+        // Auto-select first room ONLY on initial load
+        if (isInitialLoadRef.current && data.rooms.length > 0) {
           selectRoom(data.rooms[0]);
+          isInitialLoadRef.current = false;
         }
       }
     } catch (error) {
@@ -310,7 +362,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const selectRoom = (room: Room) => {
-    // Leave previous room
+    // Leave previous room (this updates lastSeenAt in DB)
     if (selectedRoom && socket) {
       socket.emit('leave_room', {
         roomId: selectedRoom.roomId,
@@ -318,6 +370,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
         username: user.username
       });
     }
+
+    // Clear unread count for this room locally
+    setRooms(prev => prev.map(r =>
+      r.roomId === room.roomId ? { ...r, unreadCount: 0 } : r
+    ));
 
     setSelectedRoom(room);
     setSelectedPrivateChat(null);
@@ -578,9 +635,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <div className="section-header">
               <h3>
                 🌍 Public Rooms
-                {rooms.reduce((total, room) => total + (room.participantCount > 0 ? room.participantCount : 0), 0) > 0 && (
+                {rooms.reduce((total, room) => total + (room.unreadCount || 0), 0) > 0 && (
                   <span className="section-unread-badge">
-                    {rooms.reduce((total, room) => total + room.participantCount, 0)}
+                    {rooms.reduce((total, room) => total + (room.unreadCount || 0), 0)}
                   </span>
                 )}
               </h3>
@@ -599,7 +656,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     {room.name === 'General' ? '💬' : room.name === 'Gaming' ? '🎮' : '💻'}
                   </span>
                   <span className="room-name">{room.name}</span>
-                  <span className="room-badge">{room.participantCount}</span>
+                  {room.unreadCount && room.unreadCount > 0 ? (
+                    <span className="room-badge unread">{room.unreadCount}</span>
+                  ) : (
+                    <span className="room-badge">{room.messageCount || 0}</span>
+                  )}
                 </div>
               ))}
             </div>
