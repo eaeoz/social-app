@@ -694,6 +694,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
           </button>
           <h1>💬 {import.meta.env.VITE_APP_NAME || 'Chat App'}</h1>
         </div>
+        <div className="header-center">
+          <button 
+            className="new-chat-button"
+            onClick={() => setShowUserModal(true)}
+            title="Start New Chat"
+          >
+            <span className="chat-icon">💬</span>
+            <span className="chat-text">New Chat</span>
+          </button>
+        </div>
         <div className="header-right">
           <button 
             onClick={toggleTheme} 
@@ -761,80 +771,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
           </div>
 
-          <div className="sidebar-section">
-            <div className="section-header">
-              <h3>👤 Private Chats</h3>
-              <button 
-                className="add-button" 
-                title="New Private Chat"
-                onClick={() => setShowUserModal(true)}
-              >
-                +
-              </button>
-            </div>
-            <div className="chat-list">
-              {privateChats.length === 0 ? (
-                <p className="empty-message">No private chats yet</p>
-              ) : (
-                privateChats.map(chat => (
-                  <div
-                    key={chat.chatId}
-                    className={`room-item ${selectedPrivateChat?.chatId === chat.chatId ? 'active' : ''}`}
-                  >
-                    <div 
-                      style={{ display: 'flex', flex: 1, alignItems: 'center', minWidth: 0, cursor: 'pointer' }}
-                      onClick={() => {
-                        selectPrivateChat(chat);
-                        setSidebarOpen(false);
-                      }}
-                    >
-                      <div className="user-avatar" style={{ width: '35px', height: '35px', fontSize: '0.9rem', marginRight: '10px' }}>
-                        {chat.otherUser.displayName.charAt(0).toUpperCase()}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="room-name">{chat.otherUser.displayName}</div>
-                        {chat.lastMessage && (
-                          <div style={{ 
-                            fontSize: '0.75rem', 
-                            color: 'var(--text-tertiary)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {chat.lastMessage}
-                          </div>
-                        )}
-                      </div>
-                      {chat.unreadCount > 0 && (
-                        <span className="room-badge unread">{chat.unreadCount}</span>
-                      )}
-                    </div>
-                    {chat.unreadCount === 0 && (
-                      <button
-                        className="close-chat-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          closePrivateChat(chat);
-                        }}
-                        title="Close chat"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--text-tertiary)',
-                          cursor: 'pointer',
-                          fontSize: '1.2rem',
-                          padding: '0 8px',
-                          marginLeft: '4px'
-                        }}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
         </aside>
 
         <main className="main-chat">
