@@ -427,6 +427,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
         if (isInitialLoadRef.current && updatedRooms.length > 0) {
           selectRoom(updatedRooms[0]);
           isInitialLoadRef.current = false;
+        } else if (selectedRoom) {
+          // If we already have a selected room, ensure its unread count is cleared
+          setRooms(prev => prev.map(r =>
+            r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
+          ));
         }
       }
     } catch (error) {
@@ -970,7 +975,32 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 </div>
               </div>
 
-              <div className="messages-container">
+              <div 
+                className="messages-container"
+                onClick={async () => {
+                  // Clear notification when clicking anywhere in chat area
+                  if (selectedRoom) {
+                    setRooms(prev => prev.map(r =>
+                      r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
+                    ));
+                    
+                    // Update server with lastSeenAt timestamp
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      await fetch(`${import.meta.env.VITE_API_URL}/rooms/mark-room-read`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ roomId: selectedRoom.roomId })
+                      });
+                    } catch (error) {
+                      console.error('Failed to mark room as read:', error);
+                    }
+                  }
+                }}
+              >
                 {messages.length === 0 ? (
                   <div className="welcome-message">
                     <h2>👋 {selectedRoom ? `Welcome to ${selectedRoom.name}!` : `Chat with ${selectedPrivateChat?.otherUser.displayName}`}</h2>
@@ -1014,12 +1044,27 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   value={messageInput}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
-                  onFocus={() => {
+                  onFocus={async () => {
                     // Clear notification when focusing input
                     if (selectedRoom) {
                       setRooms(prev => prev.map(r =>
                         r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
                       ));
+                      
+                      // Update server with lastSeenAt timestamp
+                      try {
+                        const token = localStorage.getItem('accessToken');
+                        await fetch(`${import.meta.env.VITE_API_URL}/rooms/mark-room-read`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({ roomId: selectedRoom.roomId })
+                        });
+                      } catch (error) {
+                        console.error('Failed to mark room as read:', error);
+                      }
                     }
                   }}
                   disabled={!connected}
@@ -1055,7 +1100,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
             <div className="modal-body">
               <div className="user-list">
-                {users.filter(u => u.userId !== user.userId).map(u => (
+                {users
+                  .filter(u => u.userId !== user.userId)
+                  .sort((a, b) => {
+                    // First sort by online status (online first)
+                    if (a.status === 'online' && b.status !== 'online') return -1;
+                    if (a.status !== 'online' && b.status === 'online') return 1;
+                    // Then sort alphabetically by display name
+                    return a.displayName.localeCompare(b.displayName);
+                  })
+                  .map(u => (
                   <div key={u.userId} className="user-item">
                     <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
                     <div className="user-details">

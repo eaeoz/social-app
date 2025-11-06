@@ -104,6 +104,40 @@ router.get('/users', authenticateToken, async (req, res) => {
   }
 });
 
+// Mark room as read (update lastSeenAt)
+router.post('/mark-room-read', authenticateToken, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const userId = new ObjectId(req.user.userId);
+    const { roomId } = req.body;
+
+    if (!roomId) {
+      return res.status(400).json({ error: 'Room ID is required' });
+    }
+
+    const roomObjectId = new ObjectId(roomId);
+
+    // Update or create user room activity with current timestamp
+    await db.collection('userroomactivity').updateOne(
+      {
+        userId: userId,
+        roomId: roomObjectId
+      },
+      {
+        $set: {
+          lastSeenAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking room as read:', error);
+    res.status(500).json({ error: 'Failed to mark room as read' });
+  }
+});
+
 // Get private chats with unread counts
 router.get('/private-chats', authenticateToken, async (req, res) => {
   try {
