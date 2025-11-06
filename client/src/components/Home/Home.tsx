@@ -117,40 +117,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       // Message events
-      socket.on('room_message', (message: Message) => {
+      socket.on('room_message', (message: any) => {
         console.log('📨 New room message:', message);
         
-        // Add message to current view if we're in the room
-        setMessages(prev => [...prev, message]);
+        // Only update if this message is for the current room
+        if (selectedRoom?.roomId === message.roomId) {
+          // Add message to current view
+          setMessages(prev => [...prev, {
+            messageId: message.messageId,
+            senderId: message.senderId,
+            senderName: message.senderName,
+            content: message.content,
+            timestamp: message.timestamp,
+            messageType: message.messageType
+          }]);
+        }
         
-        // Update room counts (simplified - server tracks unread properly)
-        setRooms(prev => prev.map(room => {
-          // Increment message count for all rooms
-          const newMessageCount = (room.messageCount || 0) + 1;
-          
-          // For the current room, don't increment unread
-          if (selectedRoom?.roomId === room.roomId) {
-            return {
-              ...room,
-              messageCount: newMessageCount
-            };
-          }
-          // For other rooms, increment unread only if not our message
-          else if (message.senderId !== user.userId) {
-            return {
-              ...room,
-              messageCount: newMessageCount,
-              unreadCount: (room.unreadCount || 0) + 1
-            };
-          }
-          // For our own messages in other rooms
-          else {
-            return {
-              ...room,
-              messageCount: newMessageCount
-            };
-          }
-        }));
+        // Don't update room counts here - let polling handle it from server
+        // This prevents the "all rooms show 1" bug
       });
 
       socket.on('room_messages', (data: { roomId: string; messages: Message[] }) => {
@@ -336,11 +320,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setRooms(data.rooms);
+        
+        // Update rooms but preserve unreadCount=0 for currently selected room
+        const updatedRooms = data.rooms.map((room: Room) => {
+          // If this is the currently selected room, keep unreadCount at 0
+          if (selectedRoom?.roomId === room.roomId) {
+            return { ...room, unreadCount: 0 };
+          }
+          return room;
+        });
+        
+        setRooms(updatedRooms);
         
         // Auto-select first room ONLY on initial load
-        if (isInitialLoadRef.current && data.rooms.length > 0) {
-          selectRoom(data.rooms[0]);
+        if (isInitialLoadRef.current && updatedRooms.length > 0) {
+          selectRoom(updatedRooms[0]);
           isInitialLoadRef.current = false;
         }
       }
@@ -427,6 +421,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const selectRoom = (room: Room) => {
+    // Clear unread count for this room immediately (even if already selected)
+    setRooms(prev => prev.map(r =>
+      r.roomId === room.roomId ? { ...r, unreadCount: 0 } : r
+    ));
+
+    // If we're already in this room, no need to rejoin
+    if (selectedRoom?.roomId === room.roomId) {
+      return;
+    }
+
     // Leave previous room (this updates lastSeenAt in DB)
     if (selectedRoom && socket) {
       socket.emit('leave_room', {
@@ -435,11 +439,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         username: user.username
       });
     }
-
-    // Clear unread count for this room locally
-    setRooms(prev => prev.map(r =>
-      r.roomId === room.roomId ? { ...r, unreadCount: 0 } : r
-    ));
 
     setSelectedRoom(room);
     setSelectedPrivateChat(null);
@@ -910,6 +909,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   value={messageInput}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
+                  onFocus={() => {
+                    // Clear notification when focusing input
+                    if (selectedRoom) {
+                      setRooms(prev => prev.map(r =>
+                        r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
+                      ));
+                    }
+                  }}
                   disabled={!connected}
                 />
                 <button 
