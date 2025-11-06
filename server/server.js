@@ -49,15 +49,23 @@ import { seedDefaultRooms } from './utils/seedRooms.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 
+// Store user socket connections
+const userSockets = new Map(); // userId -> socketId
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ Client connected: ${socket.id}`);
 
   // Set up message handlers
-  setupMessageHandlers(io, socket);
+  setupMessageHandlers(io, socket, userSockets);
 
   socket.on('disconnect', () => {
     console.log(`❌ Client disconnected: ${socket.id}`);
+    // Remove user from userSockets map
+    if (socket.userId) {
+      userSockets.delete(socket.userId);
+      console.log(`🗑️ Removed user ${socket.userId} from active connections`);
+    }
   });
 
   // Authentication
@@ -65,6 +73,10 @@ io.on('connection', (socket) => {
     console.log('🔐 User authenticated:', data.username);
     socket.userId = data.userId;
     socket.username = data.username;
+    
+    // Store user socket mapping
+    userSockets.set(data.userId, socket.id);
+    console.log(`📍 User ${data.username} mapped to socket ${socket.id}`);
   });
 });
 

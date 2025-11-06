@@ -1,7 +1,7 @@
 import { getDatabase } from '../config/database.js';
 import { ObjectId } from 'mongodb';
 
-export function setupMessageHandlers(io, socket) {
+export function setupMessageHandlers(io, socket, userSockets) {
   const db = getDatabase();
 
   // Join a room
@@ -146,13 +146,17 @@ export function setupMessageHandlers(io, socket) {
         timestamp: message.timestamp
       };
 
-      // Send to sender
+      // Send to sender (confirmation)
       socket.emit('private_message', broadcastMessage);
 
       // Send to receiver (if they're online)
-      socket.to(receiverId).emit('private_message', broadcastMessage);
-      
-      console.log(`🔒 Private message sent from ${senderName} to ${receiverId}`);
+      const receiverSocketId = userSockets.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('private_message', broadcastMessage);
+        console.log(`🔒 Private message sent from ${senderName} to ${receiverId} (socket: ${receiverSocketId})`);
+      } else {
+        console.log(`⚠️ Receiver ${receiverId} is not online`);
+      }
     } catch (error) {
       console.error('Error sending private message:', error);
       socket.emit('error', { message: 'Failed to send private message' });
@@ -165,8 +169,12 @@ export function setupMessageHandlers(io, socket) {
       const { roomId, userId, username, isPrivate, targetId } = data;
       
       if (isPrivate && targetId) {
-        // Send typing to specific user
-        socket.to(targetId).emit('user_typing', { userId, username });
+        // Send typing to specific user (private chat)
+        const targetSocketId = userSockets.get(targetId);
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('user_typing', { userId, username });
+          console.log(`⌨️ ${username} is typing to ${targetId}`);
+        }
       } else if (roomId) {
         // Send typing to room
         socket.to(roomId).emit('user_typing', { userId, username });
@@ -182,7 +190,12 @@ export function setupMessageHandlers(io, socket) {
       const { roomId, userId, username, isPrivate, targetId } = data;
       
       if (isPrivate && targetId) {
-        socket.to(targetId).emit('user_stop_typing', { userId, username });
+        // Send stop typing to specific user (private chat)
+        const targetSocketId = userSockets.get(targetId);
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('user_stop_typing', { userId, username });
+          console.log(`⌨️ ${username} stopped typing to ${targetId}`);
+        }
       } else if (roomId) {
         socket.to(roomId).emit('user_stop_typing', { userId, username });
       }

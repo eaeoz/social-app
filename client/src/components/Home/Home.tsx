@@ -31,6 +31,14 @@ interface User {
   status: string;
 }
 
+interface PrivateChat {
+  chatId: string;
+  otherUser: User;
+  lastMessage?: string;
+  lastMessageAt?: Date;
+  unreadCount?: number;
+}
+
 function Home({ user, socket, onLogout }: HomeProps) {
   const [connected, setConnected] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -43,6 +51,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [privateChats, setPrivateChats] = useState<PrivateChat[]>([]);
+  const [selectedPrivateChat, setSelectedPrivateChat] = useState<PrivateChat | null>(null);
+  const [chatType, setChatType] = useState<'room' | 'private'>('room');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
 
@@ -121,6 +132,51 @@ function Home({ user, socket, onLogout }: HomeProps) {
         setTypingUsers(prev => prev.filter(u => u !== data.username));
       });
 
+      // Private message events
+      socket.on('private_message', (message: any) => {
+        console.log('🔒 New private message:', message);
+        
+        // Determine the other user (who we're chatting with)
+        const otherUserId = message.senderId === user.userId ? message.receiverId : message.senderId;
+        
+        // If we're currently viewing this chat, add message to the list
+        if (chatType === 'private' && selectedPrivateChat?.otherUser.userId === otherUserId) {
+          setMessages(prev => [...prev, {
+            messageId: message.messageId,
+            senderId: message.senderId,
+            senderName: message.senderName,
+            content: message.content,
+            timestamp: message.timestamp,
+            messageType: message.messageType
+          }]);
+        }
+        
+        // Update private chat list
+        setPrivateChats(prev => {
+          const existingChat = prev.find(c => c.otherUser.userId === otherUserId);
+          if (existingChat) {
+            return prev.map(c => 
+              c.chatId === existingChat.chatId 
+                ? { ...c, lastMessage: message.content, lastMessageAt: message.timestamp }
+                : c
+            );
+          }
+          return prev;
+        });
+      });
+
+      socket.on('private_messages', (data: { otherUserId: string; messages: any[] }) => {
+        console.log('📚 Private messages loaded:', data.messages.length);
+        setMessages(data.messages.map(msg => ({
+          messageId: msg.messageId,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          messageType: msg.messageType
+        })));
+      });
+
       socket.on('error', (error: { message: string }) => {
         console.error('Socket error:', error.message);
       });
@@ -134,10 +190,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('user_left');
         socket.off('user_typing');
         socket.off('user_stop_typing');
+        socket.off('private_message');
+        socket.off('private_messages');
         socket.off('error');
       };
     }
-  }, [socket, user]);
+  }, [socket, user, chatType, selectedPrivateChat]);
 
   const loadRooms = async () => {
     try {
@@ -191,7 +249,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
 
     setSelectedRoom(room);
+    setSelectedPrivateChat(null);
+    setChatType('room');
     setMessages([]);
+    setTypingUsers([]);
 
     // Join new room
     if (socket) {
@@ -209,16 +270,85 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
-  const sendMessage = () => {
-    if (!messageInput.trim() || !socket || !selectedRoom) return;
+  const startPrivateChat = (selectedUser: User) => {
+    // Check if chat already exists
+    const existingChat = privateChats.find(c => c.otherUser.userId === selectedUser.userId);
+    
+    if (existingChat) {
+      selectPrivateChat(existingChat);
+    } else {
+      // Create new private chat
+      const newChat: PrivateChat = {
+        chatId: `temp_${Date.now()}`,
+        otherUser: selectedUser
+      };
+      setPrivateChats(prev => [...prev, newChat]);
+      selectPrivateChat(newChat);
+    }
+    
+    setShowUserModal(false);
+    setSidebarOpen(false);
+  };
 
-    socket.emit('send_room_message', {
-      roomId: selectedRoom.roomId,
-      senderId: user.userId,
-      senderName: user.fullName || user.username,
-      content: messageInput.trim(),
-      messageType: 'text'
-    });
+  const selectPrivateChat = (chat: PrivateChat) => {
+    // Leave room if in one
+    if (selectedRoom && socket) {
+      socket.emit('leave_room', {
+        roomId: selectedRoom.roomId,
+        userId: user.userId,
+        username: user.username
+      });
+    }
+    
+    setSelectedRoom(null);
+    setSelectedPrivateChat(chat);
+    setChatType('private');
+    setMessages([]);
+    setTypingUsers([]);
+    
+    // Load private messages
+    if (socket) {
+      socket.emit('get_private_messages', {
+        userId: user.userId,
+        otherUserId: chat.otherUser.userId,
+        limit: 50
+      });
+    }
+  };
+
+  const sendMessage = () => {
+    if (!messageInput.trim() || !socket) return;
+
+    if (chatType === 'private' && selectedPrivateChat) {
+      // Send private message
+      socket.emit('send_private_message', {
+        receiverId: selectedPrivateChat.otherUser.userId,
+        senderId: user.userId,
+        senderName: user.fullName || user.username,
+        content: messageInput.trim(),
+        messageType: 'text'
+      });
+      
+      // Add message to UI immediately
+      const tempMessage: Message = {
+        messageId: `temp_${Date.now()}`,
+        senderId: user.userId,
+        senderName: user.fullName || user.username,
+        content: messageInput.trim(),
+        timestamp: new Date(),
+        messageType: 'text'
+      };
+      setMessages(prev => [...prev, tempMessage]);
+    } else if (selectedRoom) {
+      // Send room message
+      socket.emit('send_room_message', {
+        roomId: selectedRoom.roomId,
+        senderId: user.userId,
+        senderName: user.fullName || user.username,
+        content: messageInput.trim(),
+        messageType: 'text'
+      });
+    }
 
     setMessageInput('');
     stopTyping();
@@ -234,13 +364,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessageInput(e.target.value);
     
-    if (!isTyping && socket && selectedRoom) {
+    if (!isTyping && socket) {
       setIsTyping(true);
-      socket.emit('typing', {
-        roomId: selectedRoom.roomId,
-        userId: user.userId,
-        username: user.username
-      });
+      
+      if (chatType === 'private' && selectedPrivateChat) {
+        // Private chat typing
+        socket.emit('typing', {
+          userId: user.userId,
+          username: user.username,
+          isPrivate: true,
+          targetId: selectedPrivateChat.otherUser.userId
+        });
+      } else if (selectedRoom) {
+        // Room typing
+        socket.emit('typing', {
+          roomId: selectedRoom.roomId,
+          userId: user.userId,
+          username: user.username
+        });
+      }
     }
 
     // Reset typing timeout
@@ -254,13 +396,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const stopTyping = () => {
-    if (isTyping && socket && selectedRoom) {
+    if (isTyping && socket) {
       setIsTyping(false);
-      socket.emit('stop_typing', {
-        roomId: selectedRoom.roomId,
-        userId: user.userId,
-        username: user.username
-      });
+      
+      if (chatType === 'private' && selectedPrivateChat) {
+        // Private chat stop typing
+        socket.emit('stop_typing', {
+          userId: user.userId,
+          username: user.username,
+          isPrivate: true,
+          targetId: selectedPrivateChat.otherUser.userId
+        });
+      } else if (selectedRoom) {
+        // Room stop typing
+        socket.emit('stop_typing', {
+          roomId: selectedRoom.roomId,
+          userId: user.userId,
+          username: user.username
+        });
+      }
     }
   };
 
@@ -375,30 +529,75 @@ function Home({ user, socket, onLogout }: HomeProps) {
               </button>
             </div>
             <div className="chat-list">
-              <p className="empty-message">No private chats yet</p>
+              {privateChats.length === 0 ? (
+                <p className="empty-message">No private chats yet</p>
+              ) : (
+                privateChats.map(chat => (
+                  <div
+                    key={chat.chatId}
+                    className={`room-item ${selectedPrivateChat?.chatId === chat.chatId ? 'active' : ''}`}
+                    onClick={() => {
+                      selectPrivateChat(chat);
+                      setSidebarOpen(false);
+                    }}
+                  >
+                    <div className="user-avatar" style={{ width: '35px', height: '35px', fontSize: '0.9rem' }}>
+                      {chat.otherUser.displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="room-name">{chat.otherUser.displayName}</div>
+                      {chat.lastMessage && (
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          color: 'var(--text-tertiary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {chat.lastMessage}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </aside>
 
         <main className="main-chat">
-          {selectedRoom ? (
+          {selectedRoom || selectedPrivateChat ? (
             <>
               <div className="chat-header">
                 <div className="chat-title">
-                  <span className="room-icon">
-                    {selectedRoom.name === 'General' ? '💬' : selectedRoom.name === 'Gaming' ? '🎮' : '💻'}
-                  </span>
-                  <div>
-                    <h2>{selectedRoom.name}</h2>
-                    <p className="chat-description">{selectedRoom.description}</p>
-                  </div>
+                  {selectedRoom ? (
+                    <>
+                      <span className="room-icon">
+                        {selectedRoom.name === 'General' ? '💬' : selectedRoom.name === 'Gaming' ? '🎮' : '💻'}
+                      </span>
+                      <div>
+                        <h2>{selectedRoom.name}</h2>
+                        <p className="chat-description">{selectedRoom.description}</p>
+                      </div>
+                    </>
+                  ) : selectedPrivateChat ? (
+                    <>
+                      <div className="user-avatar" style={{ width: '45px', height: '45px', fontSize: '1.1rem' }}>
+                        {selectedPrivateChat.otherUser.displayName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h2>{selectedPrivateChat.otherUser.displayName}</h2>
+                        <p className="chat-description">Private conversation</p>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
 
               <div className="messages-container">
                 {messages.length === 0 ? (
                   <div className="welcome-message">
-                    <h2>👋 Welcome to {selectedRoom.name}!</h2>
+                    <h2>👋 {selectedRoom ? `Welcome to ${selectedRoom.name}!` : `Chat with ${selectedPrivateChat?.otherUser.displayName}`}</h2>
                     <p>Start chatting by typing a message below</p>
                   </div>
                 ) : (
@@ -472,7 +671,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
             <div className="modal-body">
               <div className="user-list">
-                {users.map(u => (
+                {users.filter(u => u.userId !== user.userId).map(u => (
                   <div key={u.userId} className="user-item">
                     <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
                     <div className="user-details">
@@ -482,7 +681,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         {u.status}
                       </div>
                     </div>
-                    <button className="select-button">Chat</button>
+                    <button className="select-button" onClick={() => startPrivateChat(u)}>Chat</button>
                   </div>
                 ))}
               </div>
