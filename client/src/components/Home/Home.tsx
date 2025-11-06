@@ -53,7 +53,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showUserModal, setShowUserModal] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [privateChats, setPrivateChats] = useState<PrivateChat[]>([]);
   const [selectedPrivateChat, setSelectedPrivateChat] = useState<PrivateChat | null>(null);
@@ -76,14 +76,26 @@ function Home({ user, socket, onLogout }: HomeProps) {
   useEffect(() => {
     loadRooms();
     loadUsers();
+    
+    // Load private chats from localStorage first (instant load)
+    const savedChats = localStorage.getItem(`privateChats_${user.userId}`);
+    if (savedChats) {
+      try {
+        const parsedChats = JSON.parse(savedChats);
+        setPrivateChats(parsedChats);
+      } catch (error) {
+        console.error('Failed to parse saved chats:', error);
+      }
+    }
+    
+    // Then load from server to get any updates
     loadPrivateChats();
     
-    // Load saved theme
+    // Load saved theme (default to dark)
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    }
+    const initialTheme = savedTheme || 'dark';
+    setTheme(initialTheme);
+    document.documentElement.setAttribute('data-theme', initialTheme);
 
     // Poll for private chats only (rooms use real-time events)
     const pollInterval = setInterval(() => {
@@ -95,6 +107,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
       clearInterval(pollInterval);
     };
   }, []);
+
+  // Save private chats to localStorage whenever they change
+  useEffect(() => {
+    if (privateChats.length > 0) {
+      localStorage.setItem(`privateChats_${user.userId}`, JSON.stringify(privateChats));
+    }
+  }, [privateChats, user.userId]);
 
   // Re-join room when socket reconnects
   useEffect(() => {
@@ -445,7 +464,19 @@ function Home({ user, socket, onLogout }: HomeProps) {
       if (response.ok) {
         const data = await response.json();
         
-        // Filter out manually closed chats
+        // Clear closed chats list if chats come from server with new messages
+        // This allows chats to reappear if new messages arrive after being closed
+        const serverChatUserIds = new Set(data.privateChats.map((c: PrivateChat) => c.otherUser.userId));
+        const closedChatsArray = Array.from(closedChatIdsRef.current);
+        closedChatsArray.forEach(closedUserId => {
+          const serverChat = data.privateChats.find((c: PrivateChat) => c.otherUser.userId === closedUserId);
+          // If there's a new unread message, remove from closed list
+          if (serverChat && serverChat.unreadCount > 0) {
+            closedChatIdsRef.current.delete(closedUserId);
+          }
+        });
+        
+        // Filter out manually closed chats (only those without new messages)
         const filteredChats = data.privateChats.filter(
           (chat: PrivateChat) => !closedChatIdsRef.current.has(chat.otherUser.userId)
         );
