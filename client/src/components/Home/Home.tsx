@@ -117,8 +117,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
         });
       });
 
-      socket.on('user_stop_typing', (data: { userId: string }) => {
-        setTypingUsers(prev => prev.filter(u => u !== data.userId));
+      socket.on('user_stop_typing', (data: { username: string }) => {
+        setTypingUsers(prev => prev.filter(u => u !== data.username));
       });
 
       socket.on('error', (error: { message: string }) => {
@@ -258,7 +258,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
       setIsTyping(false);
       socket.emit('stop_typing', {
         roomId: selectedRoom.roomId,
-        userId: user.userId
+        userId: user.userId,
+        username: user.username
       });
     }
   };

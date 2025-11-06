@@ -179,12 +179,12 @@ export function setupMessageHandlers(io, socket) {
   // User stopped typing
   socket.on('stop_typing', (data) => {
     try {
-      const { roomId, userId, isPrivate, targetId } = data;
+      const { roomId, userId, username, isPrivate, targetId } = data;
       
       if (isPrivate && targetId) {
-        socket.to(targetId).emit('user_stop_typing', { userId });
+        socket.to(targetId).emit('user_stop_typing', { userId, username });
       } else if (roomId) {
-        socket.to(roomId).emit('user_stop_typing', { userId });
+        socket.to(roomId).emit('user_stop_typing', { userId, username });
       }
     } catch (error) {
       console.error('Error handling stop typing:', error);
