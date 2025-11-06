@@ -93,6 +93,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
     };
   }, []);
 
+  // Add keyboard shortcut listener for Alt+M to toggle user modal and Escape to close it
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setShowUserModal(prev => !prev);
+      } else if (e.key === 'Escape' && showUserModal) {
+        e.preventDefault();
+        setShowUserModal(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showUserModal]);
+
   useEffect(() => {
     if (socket && connected && selectedRoom) {
       socket.emit('join_room', {
