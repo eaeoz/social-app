@@ -450,38 +450,39 @@ function Home({ user, socket, onLogout }: HomeProps) {
           (chat: PrivateChat) => !closedChatIdsRef.current.has(chat.otherUser.userId)
         );
         
-        // Merge with existing chats to preserve temp chats
+        // Merge with existing chats - preserve ALL existing chats and update with server data
         setPrivateChats(prev => {
-          const serverUserIds = new Set(filteredChats.map((c: PrivateChat) => c.otherUser.userId));
-          
-          // Keep temp chats that aren't in server response
-          const tempChats = prev.filter(c => 
-            c.chatId.startsWith('temp_') && !serverUserIds.has(c.otherUser.userId)
+          const serverChatsByUserId = new Map<string, PrivateChat>(
+            filteredChats.map((c: PrivateChat) => [c.otherUser.userId, c])
           );
           
-          // Merge: use server data for existing chats, keep temp chats
-          const merged = [...tempChats];
+          // Start with all existing chats
+          const merged: PrivateChat[] = [];
           
-          for (const serverChat of filteredChats) {
-            // Find if we already have this chat (including temp versions)
-            const existingIndex = prev.findIndex(p => 
-              p.otherUser.userId === serverChat.otherUser.userId
-            );
+          // Update existing chats with server data if available
+          for (const existingChat of prev) {
+            const serverChat = serverChatsByUserId.get(existingChat.otherUser.userId);
             
-            if (existingIndex >= 0) {
-              // Update existing chat with server data, but keep local unreadCount if viewing
-              const existing = prev[existingIndex];
+            if (serverChat) {
+              // Update with server data, but preserve unreadCount if viewing this chat
               merged.push({
                 ...serverChat,
-                // If currently viewing this chat, keep unreadCount at 0
                 unreadCount: selectedPrivateChat?.otherUser.userId === serverChat.otherUser.userId 
                   ? 0 
                   : serverChat.unreadCount
               });
+              // Remove from map so we know we've processed it
+              serverChatsByUserId.delete(existingChat.otherUser.userId);
             } else {
-              // New chat from server
-              merged.push(serverChat);
+              // Keep existing chat even if not in server response yet
+              // This handles the case where a chat was just created and server hasn't caught up
+              merged.push(existingChat);
             }
+          }
+          
+          // Add any new chats from server that we didn't have before
+          for (const serverChat of serverChatsByUserId.values()) {
+            merged.push(serverChat);
           }
           
           return merged;
