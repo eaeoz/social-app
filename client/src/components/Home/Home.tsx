@@ -58,6 +58,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [privateChats, setPrivateChats] = useState<PrivateChat[]>([]);
   const [selectedPrivateChat, setSelectedPrivateChat] = useState<PrivateChat | null>(null);
   const [chatType, setChatType] = useState<'room' | 'private'>('room');
+  const [userSearchText, setUserSearchText] = useState('');
+  const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>(['Male', 'Female']);
+  const [showFilters, setShowFilters] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
@@ -409,6 +413,60 @@ function Home({ user, socket, onLogout }: HomeProps) {
     
     setShowUserModal(false);
     setSidebarOpen(false);
+    setUserSearchText('');
+    setAgeRange([18, 100]);
+    setSelectedGenders(['Male', 'Female']);
+    setShowFilters(false);
+  };
+
+  const toggleGender = (gender: string) => {
+    setSelectedGenders(prev => {
+      if (prev.includes(gender)) {
+        // Remove gender if already selected
+        const newSelection = prev.filter(g => g !== gender);
+        // If both are unchecked, keep at least one or show all
+        return newSelection.length === 0 ? ['Male', 'Female'] : newSelection;
+      } else {
+        // Add gender
+        return [...prev, gender];
+      }
+    });
+  };
+
+  const getFilteredUsers = () => {
+    return users
+      .filter(u => u.userId !== user.userId)
+      .filter(u => {
+        // Text search filter
+        if (userSearchText.trim()) {
+          const searchLower = userSearchText.toLowerCase();
+          return u.displayName.toLowerCase().includes(searchLower) ||
+                 u.username.toLowerCase().includes(searchLower);
+        }
+        return true;
+      })
+      .filter(u => {
+        // Age range filter - only show users within age range who have age data
+        if (u.age) {
+          return u.age >= ageRange[0] && u.age <= ageRange[1];
+        }
+        // Show users without age data if range is at maximum
+        return ageRange[0] === 18 && ageRange[1] === 100;
+      })
+      .filter(u => {
+        // Gender filter - show users matching selected genders
+        // If both genders selected, show all (including users without gender)
+        if (selectedGenders.length === 2) {
+          return true;
+        }
+        // If one gender selected, only show users with that gender
+        return u.gender && selectedGenders.includes(u.gender);
+      })
+      .sort((a, b) => {
+        if (a.status === 'online' && b.status !== 'online') return -1;
+        if (a.status !== 'online' && b.status === 'online') return 1;
+        return a.displayName.localeCompare(b.displayName);
+      });
   };
 
   const selectPrivateChat = (chat: PrivateChat) => {
@@ -907,16 +965,73 @@ function Home({ user, socket, onLogout }: HomeProps) {
               <h2>Select User</h2>
               <button className="modal-close" onClick={() => setShowUserModal(false)}>×</button>
             </div>
+            <div className="modal-filters">
+              <div className="filter-row">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="🔍 Search users..."
+                  value={userSearchText}
+                  onChange={(e) => setUserSearchText(e.target.value)}
+                />
+                <button 
+                  className="filter-toggle-btn"
+                  onClick={() => setShowFilters(!showFilters)}
+                  title="Toggle filters"
+                >
+                  🔧 Filters
+                </button>
+              </div>
+              {showFilters && (
+                <div className="filter-options">
+                  <div className="age-filter">
+                    <label className="filter-label">Age Range: {ageRange[0]} - {ageRange[1]}</label>
+                    <div className="age-slider-container">
+                      <input
+                        type="range"
+                        min="18"
+                        max="100"
+                        value={ageRange[0]}
+                        onChange={(e) => setAgeRange([parseInt(e.target.value), ageRange[1]])}
+                        className="age-slider"
+                      />
+                      <input
+                        type="range"
+                        min="18"
+                        max="100"
+                        value={ageRange[1]}
+                        onChange={(e) => setAgeRange([ageRange[0], parseInt(e.target.value)])}
+                        className="age-slider"
+                      />
+                    </div>
+                  </div>
+                  <div className="gender-filter">
+                    <label className="filter-label">Gender:</label>
+                    <div className="gender-options">
+                      <label className="filter-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedGenders.includes('Male')}
+                          onChange={() => toggleGender('Male')}
+                        />
+                        <span>Male</span>
+                      </label>
+                      <label className="filter-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedGenders.includes('Female')}
+                          onChange={() => toggleGender('Female')}
+                        />
+                        <span>Female</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="modal-body">
               <div className="user-list">
-                {users
-                  .filter(u => u.userId !== user.userId)
-                  .sort((a, b) => {
-                    if (a.status === 'online' && b.status !== 'online') return -1;
-                    if (a.status !== 'online' && b.status === 'online') return 1;
-                    return a.displayName.localeCompare(b.displayName);
-                  })
-                  .map(u => (
+                {getFilteredUsers().map(u => (
                   <div key={u.userId} className="user-item">
                     <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
                     <div className="user-details">
@@ -938,6 +1053,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     <button className="select-button" onClick={() => startPrivateChat(u)}>Chat</button>
                   </div>
                 ))}
+                {getFilteredUsers().length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>
+                    No users found matching your filters
+                  </div>
+                )}
               </div>
             </div>
           </div>
