@@ -41,21 +41,30 @@ app.get('/api', (req, res) => {
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
+import roomRoutes from './routes/roomRoutes.js';
+import { setupMessageHandlers } from './socket/messageHandlers.js';
+import { seedDefaultRooms } from './utils/seedRooms.js';
 
 // Use routes
 app.use('/api/auth', authRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ Client connected: ${socket.id}`);
 
+  // Set up message handlers
+  setupMessageHandlers(io, socket);
+
   socket.on('disconnect', () => {
     console.log(`❌ Client disconnected: ${socket.id}`);
   });
 
-  // Placeholder for socket events
+  // Authentication
   socket.on('authenticate', (data) => {
-    console.log('🔐 Authentication request:', data);
+    console.log('🔐 User authenticated:', data.username);
+    socket.userId = data.userId;
+    socket.username = data.username;
   });
 });
 
@@ -75,6 +84,9 @@ async function startServer() {
   try {
     // Connect to MongoDB
     await connectToDatabase();
+    
+    // Seed default rooms
+    await seedDefaultRooms();
     
     // Start HTTP server
     httpServer.listen(PORT, () => {
