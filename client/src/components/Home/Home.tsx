@@ -59,6 +59,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
+  const closedChatIdsRef = useRef<Set<string>>(new Set());
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -272,6 +273,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
             });
             
             if (senderInfo) {
+              // Remove from closed list when new message arrives
+              closedChatIdsRef.current.delete(otherUserId);
+              
               const newChat: PrivateChat = {
                 chatId: message.chatId || `temp_${Date.now()}`,
                 otherUser: senderInfo,
@@ -374,7 +378,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setPrivateChats(data.privateChats);
+        // Filter out manually closed chats
+        const filteredChats = data.privateChats.filter(
+          (chat: PrivateChat) => !closedChatIdsRef.current.has(chat.otherUser.userId)
+        );
+        setPrivateChats(filteredChats);
       }
     } catch (error) {
       console.error('Failed to load private chats:', error);
@@ -473,6 +481,30 @@ function Home({ user, socket, onLogout }: HomeProps) {
         userId: user.userId,
         otherUserId: chat.otherUser.userId
       });
+    }
+  };
+
+  const closePrivateChat = (chat: PrivateChat) => {
+    // Don't allow closing if there are unread messages
+    if (chat.unreadCount > 0) {
+      return;
+    }
+    
+    // Add to closed list (prevents it from reappearing on poll)
+    closedChatIdsRef.current.add(chat.otherUser.userId);
+    
+    // Remove chat from the list
+    setPrivateChats(prev => prev.filter(c => c.chatId !== chat.chatId));
+    
+    // If this was the selected chat, switch to first room
+    if (selectedPrivateChat?.chatId === chat.chatId) {
+      if (rooms.length > 0) {
+        selectRoom(rooms[0]);
+      } else {
+        setSelectedPrivateChat(null);
+        setChatType('room');
+        setMessages([]);
+      }
     }
   };
 
@@ -711,30 +743,55 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   <div
                     key={chat.chatId}
                     className={`room-item ${selectedPrivateChat?.chatId === chat.chatId ? 'active' : ''}`}
-                    onClick={() => {
-                      selectPrivateChat(chat);
-                      setSidebarOpen(false);
-                    }}
                   >
-                    <div className="user-avatar" style={{ width: '35px', height: '35px', fontSize: '0.9rem' }}>
-                      {chat.otherUser.displayName.charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="room-name">{chat.otherUser.displayName}</div>
-                      {chat.lastMessage && (
-                        <div style={{ 
-                          fontSize: '0.75rem', 
-                          color: 'var(--text-tertiary)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {chat.lastMessage}
-                        </div>
+                    <div 
+                      style={{ display: 'flex', flex: 1, alignItems: 'center', minWidth: 0, cursor: 'pointer' }}
+                      onClick={() => {
+                        selectPrivateChat(chat);
+                        setSidebarOpen(false);
+                      }}
+                    >
+                      <div className="user-avatar" style={{ width: '35px', height: '35px', fontSize: '0.9rem' }}>
+                        {chat.otherUser.displayName.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="room-name">{chat.otherUser.displayName}</div>
+                        {chat.lastMessage && (
+                          <div style={{ 
+                            fontSize: '0.75rem', 
+                            color: 'var(--text-tertiary)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {chat.lastMessage}
+                          </div>
+                        )}
+                      </div>
+                      {chat.unreadCount > 0 && (
+                        <span className="room-badge unread">{chat.unreadCount}</span>
                       )}
                     </div>
-                    {chat.unreadCount > 0 && (
-                      <span className="room-badge unread">{chat.unreadCount}</span>
+                    {chat.unreadCount === 0 && (
+                      <button
+                        className="close-chat-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closePrivateChat(chat);
+                        }}
+                        title="Close chat"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-tertiary)',
+                          cursor: 'pointer',
+                          fontSize: '1.2rem',
+                          padding: '0 8px',
+                          marginLeft: '4px'
+                        }}
+                      >
+                        ×
+                      </button>
                     )}
                   </div>
                 ))
