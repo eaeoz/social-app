@@ -575,7 +575,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
         {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
         <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-section">
-            <h3>🌍 Public Rooms</h3>
+            <div className="section-header">
+              <h3>
+                🌍 Public Rooms
+                {rooms.reduce((total, room) => total + (room.participantCount > 0 ? room.participantCount : 0), 0) > 0 && (
+                  <span className="section-unread-badge">
+                    {rooms.reduce((total, room) => total + room.participantCount, 0)}
+                  </span>
+                )}
+              </h3>
+            </div>
             <div className="room-list">
               {rooms.map(room => (
                 <div
