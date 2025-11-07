@@ -532,10 +532,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
         return u.gender && selectedGenders.includes(u.gender);
       })
       .sort((a, b) => {
+        // First priority: Users with unread messages
+        const aUnread = getUserUnreadCount(a.userId);
+        const bUnread = getUserUnreadCount(b.userId);
+        if (aUnread > 0 && bUnread === 0) return -1;
+        if (aUnread === 0 && bUnread > 0) return 1;
+        
+        // Second priority: Online status
         if (a.status === 'online' && b.status !== 'online') return -1;
         if (a.status !== 'online' && b.status === 'online') return 1;
+        
+        // Third priority: Alphabetical by display name
         return a.displayName.localeCompare(b.displayName);
       });
+  };
+
+  const getUserUnreadCount = (userId: string): number => {
+    const chat = privateChats.find(c => c.otherUser.userId === userId);
+    return chat?.unreadCount || 0;
   };
 
   const selectPrivateChat = (chat: PrivateChat) => {
@@ -1065,34 +1079,40 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
             <div className="modal-body">
               <div className="user-list">
-                {getFilteredUsers().map((u, index) => (
-                  <div 
-                    key={u.userId}
-                    ref={(el) => { userItemsRef.current[index] = el; }}
-                    className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''}`}
-                    onClick={() => startPrivateChat(u)}
-                  >
-                    <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
-                    <div className="user-details">
-                      <div className="user-line-1">
-                        <span className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>
-                          {u.displayName}
-                        </span>
-                        <span className="user-status">
-                          <span className={`status-dot ${u.status}`}></span>
-                          {u.status}
-                        </span>
-                      </div>
-                      <div className="user-line-2">
-                        {u.age && (
-                          <span className="user-demographics">
-                            {u.age} years old
+                {getFilteredUsers().map((u, index) => {
+                  const unreadCount = getUserUnreadCount(u.userId);
+                  return (
+                    <div 
+                      key={u.userId}
+                      ref={(el) => { userItemsRef.current[index] = el; }}
+                      className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''}`}
+                      onClick={() => startPrivateChat(u)}
+                    >
+                      <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
+                      <div className="user-details">
+                        <div className="user-line-1">
+                          <span className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>
+                            {u.displayName}
                           </span>
-                        )}
+                          <span className="user-status">
+                            <span className={`status-dot ${u.status}`}></span>
+                            {u.status}
+                          </span>
+                        </div>
+                        <div className="user-line-2">
+                          {u.age && (
+                            <span className="user-demographics">
+                              {u.age} years old
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {unreadCount > 0 && (
+                        <span className="room-badge unread">{unreadCount}</span>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {getFilteredUsers().length === 0 && (
                   <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>
                     No users found matching your filters
