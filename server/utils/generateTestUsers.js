@@ -12,14 +12,18 @@ const firstNames = [
   'Alex', 'Jordan', 'Taylor', 'Morgan', 'Casey',
   'Riley', 'Cameron', 'Avery', 'Quinn', 'Reese',
   'Parker', 'Skylar', 'Rowan', 'Sage', 'River',
-  'Phoenix', 'Dakota', 'Jamie', 'Blake', 'Drew'
+  'Phoenix', 'Dakota', 'Jamie', 'Blake', 'Drew',
+  'Sam', 'Charlie', 'Emerson', 'Logan', 'Hayden',
+  'Peyton', 'Angel', 'Ashton', 'Bailey', 'Brooklyn'
 ];
 
 const adjectives = [
   'Cool', 'Fast', 'Smart', 'Brave', 'Swift',
   'Bright', 'Bold', 'Quick', 'Wild', 'Sharp',
   'Lucky', 'Happy', 'Clever', 'Strong', 'Free',
-  'True', 'Pure', 'Kind', 'Wise', 'Noble'
+  'True', 'Pure', 'Kind', 'Wise', 'Noble',
+  'Silver', 'Golden', 'Mystic', 'Cosmic', 'Solar',
+  'Lunar', 'Storm', 'Ocean', 'Forest', 'Mountain'
 ];
 
 function generateUsername(index) {
@@ -46,10 +50,10 @@ async function generateTestUsers() {
     console.log('🔐 Hashing password...');
     const passwordHash = await bcrypt.hash('testtest', 10);
     
-    console.log('👥 Generating 20 test users...\n');
+    console.log('👥 Generating 60 test users...\n');
     
     const users = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 60; i++) {
       const username = generateUsername(i);
       const displayName = generateDisplayName(i);
       const email = `${username}@test.com`;
@@ -60,7 +64,7 @@ async function generateTestUsers() {
       });
       
       if (existingUser) {
-        console.log(`⚠️  User ${i + 1}/20: ${username} already exists, skipping...`);
+        console.log(`⚠️  User ${i + 1}/60: ${username} already exists, skipping...`);
         continue;
       }
       
@@ -82,7 +86,7 @@ async function generateTestUsers() {
         _id: result.insertedId
       });
       
-      console.log(`✅ User ${i + 1}/20: ${username} (${displayName}) - ${email}`);
+      console.log(`✅ User ${i + 1}/60: ${username} (${displayName}) - ${email}`);
     }
     
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

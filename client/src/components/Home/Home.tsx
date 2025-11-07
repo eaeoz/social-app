@@ -156,6 +156,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
     setSelectedUserIndex(0);
   }, [userSearchText, ageRange, selectedGenders]);
 
+  // Reload users from backend when search text changes
+  useEffect(() => {
+    if (showUserModal) {
+      loadUsers(userSearchText);
+    }
+  }, [userSearchText, showUserModal]);
+
   // Scroll to selected user when index changes
   useEffect(() => {
     if (showUserModal && userItemsRef.current[selectedUserIndex]) {
@@ -405,10 +412,17 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
-  const loadUsers = async () => {
+  const loadUsers = async (searchText: string = '') => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/rooms/users`, {
+      const url = new URL(`${import.meta.env.VITE_API_URL}/rooms/users`);
+      
+      // Only add search parameter if there's actual search text
+      if (searchText && searchText.trim()) {
+        url.searchParams.append('search', searchText.trim());
+      }
+      
+      const response = await fetch(url.toString(), {
         headers: {
           'Authorization': `Bearer ${token}`
         }

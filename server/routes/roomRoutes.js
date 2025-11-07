@@ -116,10 +116,36 @@ router.get('/users', authenticateToken, async (req, res) => {
   try {
     const db = getDatabase();
     const currentUserId = req.user.userId;
+    const { search } = req.query; // Check if this is a search request
 
-    // Get site settings to check if we should show profile pictures
+    // Get site settings to check if we should show profile pictures and user limit
     const siteSettings = await getSiteSettings();
     const showPictures = siteSettings.showuserlistpicture === 1;
+    const searchUserCount = siteSettings.searchUserCount || 50;
+    const defaultUsersDisplayCount = siteSettings.defaultUsersDisplayCount || 20;
+
+    // Determine filter and limit based on whether it's a search or default view
+    const isSearching = search && search.trim().length > 0;
+    const filter = {
+      _id: { $ne: currentUserId },
+      username: { $ne: 'system' }
+    };
+
+    // If not searching, show only online users
+    if (!isSearching) {
+      filter.status = 'online';
+    }
+
+    // If searching, add search filter
+    if (isSearching) {
+      filter.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { displayName: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Choose limit based on mode
+    const limit = isSearching ? searchUserCount : defaultUsersDisplayCount;
 
     // Build projection dynamically based on settings
     const projection = { 
@@ -128,7 +154,8 @@ router.get('/users', authenticateToken, async (req, res) => {
       status: 1,
       bio: 1,
       age: 1,
-      gender: 1
+      gender: 1,
+      lastSeen: 1
     };
 
     // Only include profilePictureId if pictures should be shown
@@ -137,14 +164,9 @@ router.get('/users', authenticateToken, async (req, res) => {
     }
 
     const users = await db.collection('users')
-      .find(
-        { 
-          _id: { $ne: currentUserId },
-          username: { $ne: 'system' }
-        },
-        { projection }
-      )
+      .find(filter, { projection })
       .sort({ displayName: 1 })
+      .limit(limit)
       .toArray();
 
     const usersResponse = users.map(user => {
