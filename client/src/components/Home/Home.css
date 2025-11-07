@@ -222,6 +222,15 @@
   padding: 0;
   z-index: 10;
   position: relative;
+  outline: none;
+}
+
+.mobile-menu-button:focus {
+  outline: none;
+}
+
+.mobile-menu-button:active {
+  outline: none;
 }
 
 .hamburger-line {
