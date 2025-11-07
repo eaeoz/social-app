@@ -115,7 +115,7 @@ router.get('/user-profile/:userId', authenticateToken, async (req, res) => {
 router.get('/users', authenticateToken, async (req, res) => {
   try {
     const db = getDatabase();
-    const currentUserId = req.user.userId;
+    const currentUserId = new ObjectId(req.user.userId);
     const { search } = req.query; // Check if this is a search request
 
     // Get site settings to check if we should show profile pictures and user limit
@@ -125,7 +125,8 @@ router.get('/users', authenticateToken, async (req, res) => {
     const defaultUsersDisplayCount = siteSettings.defaultUsersDisplayCount || 20;
 
     // Determine filter and limit based on whether it's a search or default view
-    const isSearching = search && search.trim().length > 0;
+    // Search requires at least 3 characters
+    const isSearching = search && search.trim().length >= 3;
     const filter = {
       _id: { $ne: currentUserId },
       username: { $ne: 'system' }
@@ -136,7 +137,7 @@ router.get('/users', authenticateToken, async (req, res) => {
       filter.status = 'online';
     }
 
-    // If searching, add search filter
+    // If searching (3+ characters), add search filter
     if (isSearching) {
       filter.$or = [
         { username: { $regex: search, $options: 'i' } },
@@ -155,7 +156,8 @@ router.get('/users', authenticateToken, async (req, res) => {
       bio: 1,
       age: 1,
       gender: 1,
-      lastSeen: 1
+      lastSeen: 1,
+      lastActiveAt: 1
     };
 
     // Only include profilePictureId if pictures should be shown
@@ -163,13 +165,38 @@ router.get('/users', authenticateToken, async (req, res) => {
       projection.profilePictureId = 1;
     }
 
+    // Fetch more users than the limit to allow proper sorting
     const users = await db.collection('users')
       .find(filter, { projection })
-      .sort({ displayName: 1 })
-      .limit(limit)
       .toArray();
 
-    const usersResponse = users.map(user => {
+    // Sort by activity: online first, then by lastActiveAt (most recent first)
+    users.sort((a, b) => {
+      // First priority: Online users come first
+      if (a.status === 'online' && b.status !== 'online') return -1;
+      if (a.status !== 'online' && b.status === 'online') return 1;
+      
+      // Second priority: For offline users, sort by lastActiveAt (most recent first)
+      if (a.status !== 'online' && b.status !== 'online') {
+        const aTime = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
+        const bTime = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0;
+        return bTime - aTime; // Most recent first
+      }
+      
+      // Third priority: For online users, sort by lastActiveAt (most recent first)
+      if (a.status === 'online' && b.status === 'online') {
+        const aTime = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
+        const bTime = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0;
+        return bTime - aTime; // Most recent first
+      }
+      
+      return 0;
+    });
+
+    // Apply limit after sorting
+    const limitedUsers = users.slice(0, limit);
+
+    const usersResponse = limitedUsers.map(user => {
       const userObj = {
         userId: user._id.toString(),
         username: user.username,

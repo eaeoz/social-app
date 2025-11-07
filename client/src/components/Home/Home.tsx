@@ -1003,7 +1003,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
         const data = await response.json();
         user.age = data.user.age;
         user.gender = data.user.gender;
-        user.profilePicture = data.user.profilePicture;
+        
+        // Add cache-busting timestamp to force browser to reload the image
+        const newProfilePicture = data.user.profilePicture 
+          ? `${data.user.profilePicture}${data.user.profilePicture.includes('?') ? '&' : '?'}t=${Date.now()}`
+          : null;
+        
+        user.profilePicture = newProfilePicture;
+        
+        // Update the profilePicture state to reflect in header immediately
+        setProfilePicture(newProfilePicture);
         
         localStorage.setItem('user', JSON.stringify(user));
 
