@@ -449,6 +449,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
         limit: 50
       });
     }
+    
+    // Focus chat input after selecting room
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 100);
   };
 
   const startPrivateChat = (selectedUser: User) => {
