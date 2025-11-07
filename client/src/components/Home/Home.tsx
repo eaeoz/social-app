@@ -33,6 +33,7 @@ interface User {
   status: string;
   age?: number;
   gender?: string;
+  profilePicture?: string | null;
 }
 
 interface PrivateChat {
@@ -811,7 +812,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
           </button>
           <div className="user-info">
             <div className="user-avatar">
-              {user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+              {user.profilePicture ? (
+                <img src={user.profilePicture} alt={user.fullName || user.username} />
+              ) : (
+                user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="user-details">
               <span className="user-name">{user.fullName || user.username}</span>
@@ -884,7 +889,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   ) : selectedPrivateChat ? (
                     <>
                       <div className="user-avatar" style={{ width: '45px', height: '45px', fontSize: '1.1rem' }}>
-                        {selectedPrivateChat.otherUser.displayName.charAt(0).toUpperCase()}
+                        {selectedPrivateChat.otherUser.profilePicture ? (
+                          <img src={selectedPrivateChat.otherUser.profilePicture} alt={selectedPrivateChat.otherUser.displayName} />
+                        ) : (
+                          selectedPrivateChat.otherUser.displayName.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div>
                         <h2>{selectedPrivateChat.otherUser.displayName}</h2>
@@ -932,7 +941,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         className={`message ${msg.senderId === user.userId ? 'own-message' : ''}`}
                       >
                         <div className="message-avatar">
-                          {msg.senderName.charAt(0).toUpperCase()}
+                          {msg.senderId === user.userId && user.profilePicture ? (
+                            <img src={user.profilePicture} alt={msg.senderName} />
+                          ) : msg.senderId !== user.userId && selectedPrivateChat?.otherUser.profilePicture ? (
+                            <img src={selectedPrivateChat.otherUser.profilePicture} alt={msg.senderName} />
+                          ) : (
+                            msg.senderName.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div className="message-content">
                           <div className="message-header">
@@ -1136,7 +1151,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''}`}
                       onClick={() => startPrivateChat(u)}
                     >
-                      <div className="user-avatar">{u.displayName.charAt(0).toUpperCase()}</div>
+                      <div className="user-avatar">
+                        {u.profilePicture ? (
+                          <img src={u.profilePicture} alt={u.displayName} />
+                        ) : (
+                          u.displayName.charAt(0).toUpperCase()
+                        )}
+                      </div>
                       <div className="user-details">
                         <div className="user-line-1">
                           <span className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>

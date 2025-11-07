@@ -80,22 +80,31 @@ router.get('/users', authenticateToken, async (req, res) => {
             status: 1,
             bio: 1,
             age: 1,
-            gender: 1
+            gender: 1,
+            profilePictureId: 1
           } 
         }
       )
       .sort({ displayName: 1 })
       .toArray();
 
-    const usersResponse = users.map(user => ({
-      userId: user._id.toString(),
-      username: user.username,
-      displayName: user.displayName,
-      status: user.status || 'offline',
-      bio: user.bio || '',
-      age: user.age,
-      gender: user.gender
-    }));
+    const usersResponse = users.map(user => {
+      let profilePictureUrl = null;
+      if (user.profilePictureId) {
+        profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+      }
+      
+      return {
+        userId: user._id.toString(),
+        username: user.username,
+        displayName: user.displayName,
+        status: user.status || 'offline',
+        bio: user.bio || '',
+        age: user.age,
+        gender: user.gender,
+        profilePicture: profilePictureUrl
+      };
+    });
 
     res.json({ users: usersResponse });
   } catch (error) {
@@ -162,10 +171,16 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
         // Get other user's info
         const otherUser = await db.collection('users').findOne(
           { _id: otherUserId },
-          { projection: { username: 1, displayName: 1, status: 1 } }
+          { projection: { username: 1, displayName: 1, status: 1, profilePictureId: 1 } }
         );
 
         if (!otherUser) return null;
+
+        // Get profile picture URL if available
+        let profilePictureUrl = null;
+        if (otherUser.profilePictureId) {
+          profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${otherUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+        }
 
         // Count unread messages (messages sent by other user that we haven't read)
         const unreadCount = await db.collection('messages').countDocuments({
@@ -197,7 +212,8 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
             userId: otherUser._id.toString(),
             username: otherUser.username,
             displayName: otherUser.displayName,
-            status: otherUser.status || 'offline'
+            status: otherUser.status || 'offline',
+            profilePicture: profilePictureUrl
           },
           unreadCount,
           lastMessage: lastMessage ? lastMessage.content : null,
