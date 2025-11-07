@@ -173,14 +173,16 @@ export function setupMessageHandlers(io, socket, userSockets) {
         timestamp: message.timestamp
       };
 
-      // Send to sender (confirmation)
+      // Send to sender (confirmation) - only to the sender's socket
       socket.emit('private_message', broadcastMessage);
 
-      // Send to receiver (if they're online)
+      // Send to receiver (if they're online and not the sender)
       const receiverSocketId = userSockets.get(receiverId);
-      if (receiverSocketId) {
+      if (receiverSocketId && receiverSocketId !== socket.id) {
         io.to(receiverSocketId).emit('private_message', broadcastMessage);
         console.log(`🔒 Private message sent from ${senderName} to ${receiverId} (socket: ${receiverSocketId})`);
+      } else if (receiverSocketId === socket.id) {
+        console.log(`⚠️ Sender and receiver are the same user (self-message)`);
       } else {
         console.log(`⚠️ Receiver ${receiverId} is not online`);
       }
