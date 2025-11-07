@@ -67,6 +67,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const typingTimeoutRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const userItemsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -131,6 +132,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
   useEffect(() => {
     setSelectedUserIndex(0);
   }, [userSearchText, ageRange, selectedGenders]);
+
+  // Scroll to selected user when index changes
+  useEffect(() => {
+    if (showUserModal && userItemsRef.current[selectedUserIndex]) {
+      userItemsRef.current[selectedUserIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [selectedUserIndex, showUserModal]);
 
   useEffect(() => {
     if (socket && connected && selectedRoom) {
@@ -1056,7 +1067,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
               <div className="user-list">
                 {getFilteredUsers().map((u, index) => (
                   <div 
-                    key={u.userId} 
+                    key={u.userId}
+                    ref={(el) => { userItemsRef.current[index] = el; }}
                     className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''}`}
                     onClick={() => startPrivateChat(u)}
                   >
