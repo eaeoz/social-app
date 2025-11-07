@@ -4,7 +4,6 @@ import './Call.css';
 
 interface CallProps {
   socket: Socket | null;
-  user: any;
   otherUser: {
     userId: string;
     username: string;
@@ -16,7 +15,7 @@ interface CallProps {
   onCallEnd: () => void;
 }
 
-function Call({ socket, user, otherUser, callType, isInitiator, onCallEnd }: CallProps) {
+function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps) {
   const [callState, setCallState] = useState<'ringing' | 'connecting' | 'connected' | 'ended'>('ringing');
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
