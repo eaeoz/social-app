@@ -173,7 +173,7 @@
 .new-chat-hint {
   position: absolute;
   top: 50%;
-  right: -2px;
+  right: 8px;
   transform: translateY(-50%);
   font-size: 0.55rem;
   padding: 2px 4px;
