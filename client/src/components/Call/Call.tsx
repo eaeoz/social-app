@@ -474,6 +474,20 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsCameraOff(!videoTrack.enabled);
+        
+        // Force video element to refresh when turning camera back on
+        if (videoTrack.enabled && localVideoRef.current) {
+          console.log('📹 Refreshing local video element');
+          // Temporarily clear and reset srcObject to force refresh
+          const currentStream = localVideoRef.current.srcObject;
+          localVideoRef.current.srcObject = null;
+          setTimeout(() => {
+            if (localVideoRef.current && currentStream) {
+              localVideoRef.current.srcObject = currentStream;
+              localVideoRef.current.play().catch(err => console.error('Error replaying video:', err));
+            }
+          }, 10);
+        }
       }
     }
   };
