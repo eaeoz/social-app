@@ -5,6 +5,40 @@
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  position: relative;
+}
+
+.auth-container[data-theme="dark"] {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.auth-theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  z-index: 10;
+}
+
+.auth-theme-toggle:hover {
+  transform: scale(1.1) rotate(15deg);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.auth-theme-toggle:active {
+  transform: scale(1.05) rotate(15deg);
 }
 
 .auth-card {
@@ -15,6 +49,12 @@
   max-width: 450px;
   width: 100%;
   animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .auth-card {
+  background: #1e1e2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes slideIn {
@@ -33,6 +73,11 @@
   color: #333;
   font-size: 2rem;
   text-align: center;
+  transition: color 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .auth-card h1 {
+  color: #e0e0e0;
 }
 
 .subtitle {
@@ -40,6 +85,11 @@
   color: #666;
   margin: 0 0 30px 0;
   font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .subtitle {
+  color: #a0a0a0;
 }
 
 .form-group {
@@ -52,6 +102,11 @@
   color: #333;
   font-weight: 600;
   font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .form-group label {
+  color: #d0d0d0;
 }
 
 .form-group:has(.profile-picture-upload) label {
@@ -70,12 +125,30 @@
   color: #333 !important;
 }
 
+.auth-container[data-theme="dark"] .form-group input {
+  background-color: #2a2a3e !important;
+  border-color: #3a3a4e !important;
+  color: #e0e0e0 !important;
+}
+
+.auth-container[data-theme="dark"] .form-group input::placeholder {
+  color: #808090 !important;
+  opacity: 1;
+}
+
 .form-group input:-webkit-autofill,
 .form-group input:-webkit-autofill:hover,
 .form-group input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px white inset !important;
   -webkit-text-fill-color: #333 !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+.auth-container[data-theme="dark"] .form-group input:-webkit-autofill,
+.auth-container[data-theme="dark"] .form-group input:-webkit-autofill:hover,
+.auth-container[data-theme="dark"] .form-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #2a2a3e inset !important;
+  -webkit-text-fill-color: #e0e0e0 !important;
 }
 
 .form-group input:focus {
@@ -87,6 +160,11 @@
 .form-group input:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
+}
+
+.auth-container[data-theme="dark"] .form-group input:disabled {
+  background-color: #1a1a2a !important;
+  color: #606070 !important;
 }
 
 .form-group select {
@@ -101,6 +179,17 @@
   cursor: pointer;
   color: #333;
   font-weight: 500;
+}
+
+.auth-container[data-theme="dark"] .form-group select {
+  background-color: #2a2a3e;
+  border-color: #3a3a4e;
+  color: #e0e0e0;
+}
+
+.auth-container[data-theme="dark"] .form-group select option {
+  background-color: #2a2a3e;
+  color: #e0e0e0;
 }
 
 .form-group select:focus {
@@ -313,6 +402,11 @@
   overflow: hidden;
 }
 
+.auth-container[data-theme="dark"] .radio-label {
+  background: #2a2a3e !important;
+  border-color: #3a3a4e;
+}
+
 .radio-label::before {
   content: '';
   position: absolute;
@@ -370,6 +464,10 @@
   z-index: 1;
   transition: color 0.3s ease;
   margin-left: 8px;
+}
+
+.auth-container[data-theme="dark"] .radio-label span {
+  color: #d0d0d0;
 }
 
 .radio-label:has(input[type="radio"]:checked) {
@@ -447,12 +545,22 @@
   text-align: center;
   padding-top: 20px;
   border-top: 1px solid #e1e8ed;
+  transition: border-color 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .auth-footer {
+  border-top-color: #3a3a4e;
 }
 
 .auth-footer p {
   margin: 0;
   color: #666;
   font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .auth-footer p {
+  color: #a0a0a0;
 }
 
 .link-button {

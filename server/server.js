@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import { ObjectId } from 'mongodb';
 import { connectToDatabase } from './config/database.js';
 
 dotenv.config();
@@ -52,8 +53,56 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
 
-// Store user socket connections
+// Store user socket connections and activity timestamps
 const userSockets = new Map(); // userId -> socketId
+const userActivity = new Map(); // userId -> { lastActivity: Date, timeoutId: NodeJS.Timeout }
+
+// Function to update user status in database
+async function updateUserStatus(userId, status) {
+  try {
+    const { getDatabase } = await import('./config/database.js');
+    const db = getDatabase();
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: { 
+          status: status,
+          lastActiveAt: new Date()
+        }
+      }
+    );
+    console.log(`🔄 User ${userId} status updated to: ${status}`);
+  } catch (error) {
+    console.error('Error updating user status:', error);
+  }
+}
+
+// Function to handle user activity
+function handleUserActivity(userId) {
+  const activity = userActivity.get(userId);
+  
+  // Clear existing timeout if any
+  if (activity?.timeoutId) {
+    clearTimeout(activity.timeoutId);
+  }
+  
+  // Set user as online
+  updateUserStatus(userId, 'online');
+  
+  // Set new timeout for 5 minutes (300000ms)
+  const timeoutId = setTimeout(() => {
+    // Mark user as offline after 5 minutes of inactivity
+    updateUserStatus(userId, 'offline');
+    userActivity.delete(userId);
+    console.log(`⏰ User ${userId} marked as offline due to inactivity`);
+  }, 300000); // 5 minutes
+  
+  // Update activity record
+  userActivity.set(userId, {
+    lastActivity: new Date(),
+    timeoutId: timeoutId
+  });
+}
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -66,7 +115,17 @@ io.on('connection', (socket) => {
     console.log(`❌ Client disconnected: ${socket.id}`);
     // Remove user from userSockets map
     if (socket.userId) {
+      // Clear activity timeout
+      const activity = userActivity.get(socket.userId);
+      if (activity?.timeoutId) {
+        clearTimeout(activity.timeoutId);
+      }
+      
+      // Mark as offline immediately on disconnect
+      updateUserStatus(socket.userId, 'offline');
+      
       userSockets.delete(socket.userId);
+      userActivity.delete(socket.userId);
       console.log(`🗑️ Removed user ${socket.userId} from active connections`);
     }
   });
@@ -79,7 +138,18 @@ io.on('connection', (socket) => {
     
     // Store user socket mapping
     userSockets.set(data.userId, socket.id);
+    
+    // Mark user as online and start activity tracking
+    handleUserActivity(data.userId);
+    
     console.log(`📍 User ${data.username} mapped to socket ${socket.id}`);
+  });
+
+  // Activity heartbeat - client sends this periodically to indicate user is active
+  socket.on('activity', (data) => {
+    if (socket.userId) {
+      handleUserActivity(socket.userId);
+    }
   });
 });
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Auth.css';
 
 interface LoginProps {
@@ -11,8 +11,22 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('authTheme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('authTheme', newTheme);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +62,10 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container" data-theme={theme}>
+      <button className="auth-theme-toggle" onClick={toggleTheme} title="Toggle theme">
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
       <div className="auth-card">
         <h1>🚀 Welcome Back!</h1>
         <p className="subtitle">Sign in to your account</p>

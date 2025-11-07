@@ -192,6 +192,34 @@ function Home({ user, socket, onLogout }: HomeProps) {
         });
       });
 
+      // Send activity heartbeat every 2 minutes to keep user online
+      const activityInterval = setInterval(() => {
+        if (socket.connected) {
+          socket.emit('activity', { userId: user.userId });
+        }
+      }, 120000); // 2 minutes
+
+      // Track user activity (mouse movement, keyboard, clicks)
+      const sendActivity = () => {
+        if (socket.connected) {
+          socket.emit('activity', { userId: user.userId });
+        }
+      };
+
+      // Throttle activity updates to once per minute
+      let lastActivitySent = 0;
+      const throttledActivity = () => {
+        const now = Date.now();
+        if (now - lastActivitySent > 60000) { // 1 minute
+          sendActivity();
+          lastActivitySent = now;
+        }
+      };
+
+      window.addEventListener('mousemove', throttledActivity);
+      window.addEventListener('keydown', throttledActivity);
+      window.addEventListener('click', throttledActivity);
+
       socket.on('disconnect', () => {
         setConnected(false);
       });
@@ -321,6 +349,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       return () => {
+        clearInterval(activityInterval);
+        window.removeEventListener('mousemove', throttledActivity);
+        window.removeEventListener('keydown', throttledActivity);
+        window.removeEventListener('click', throttledActivity);
         socket.off('connect');
         socket.off('disconnect');
         socket.off('room_message');

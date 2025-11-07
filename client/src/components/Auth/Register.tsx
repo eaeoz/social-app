@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Auth.css';
 
 interface RegisterProps {
@@ -18,8 +18,22 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('authTheme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('authTheme', newTheme);
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,7 +135,10 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container" data-theme={theme}>
+      <button className="auth-theme-toggle" onClick={toggleTheme} title="Toggle theme">
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
       <div className="auth-card">
         <h1>🎉 Create Account</h1>
         <p className="subtitle">Join the chat community</p>
