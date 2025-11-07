@@ -604,12 +604,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
     return users
       .filter(u => u.userId !== user.userId)
       .filter(u => {
-        // Text search filter
-        if (userSearchText.trim()) {
+        // Text search filter - only apply if 3 or more characters
+        if (userSearchText.trim() && userSearchText.trim().length >= 3) {
           const searchLower = userSearchText.toLowerCase();
           return u.displayName.toLowerCase().includes(searchLower) ||
                  u.username.toLowerCase().includes(searchLower);
         }
+        // If less than 3 characters, show all users (no filtering)
         return true;
       })
       .filter(u => {
@@ -1107,7 +1108,28 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       </div>
                       <div>
                         <h2>{selectedPrivateChat.otherUser.displayName}</h2>
-                        <p className="chat-description">Private conversation</p>
+                        <p className="chat-description">
+                          {selectedPrivateChat.otherUser.age && (
+                            <span className="chat-header-info">{selectedPrivateChat.otherUser.age} years old</span>
+                          )}
+                          {selectedPrivateChat.otherUser.gender && (
+                            <>
+                              {selectedPrivateChat.otherUser.age && <span className="chat-header-separator"> • </span>}
+                              <span className={`chat-header-info chat-header-gender ${selectedPrivateChat.otherUser.gender.toLowerCase()}`}>
+                                {selectedPrivateChat.otherUser.gender}
+                              </span>
+                            </>
+                          )}
+                          {selectedPrivateChat.otherUser.status && (
+                            <>
+                              {(selectedPrivateChat.otherUser.age || selectedPrivateChat.otherUser.gender) && <span className="chat-header-separator"> • </span>}
+                              <span className="chat-header-info chat-header-status">
+                                <span className={`status-dot ${selectedPrivateChat.otherUser.status}`}></span>
+                                {selectedPrivateChat.otherUser.status}
+                              </span>
+                            </>
+                          )}
+                        </p>
                       </div>
                     </>
                   ) : null}

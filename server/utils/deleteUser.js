@@ -1,10 +1,25 @@
-import { getDatabase } from '../config/database.js';
-import { connectToDatabase } from '../config/database.js';
+import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+// Load environment variables from the root .env file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const envPath = resolve(__dirname, '../../.env');
+
+dotenv.config({ path: envPath });
 
 async function deleteUser(username) {
+  let client;
   try {
-    await connectToDatabase();
-    const db = getDatabase();
+    const uri = process.env.MONGODB_URI;
+    const dbName = process.env.MONGODB_DB_NAME || 'social-app';
+    
+    // Connect to MongoDB
+    client = new MongoClient(uri);
+    await client.connect();
+    const db = client.db(dbName);
     
     console.log(`🔍 Looking for user: ${username}`);
     

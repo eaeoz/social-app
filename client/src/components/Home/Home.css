@@ -917,6 +917,45 @@
   margin: 5px 0 0 0;
   color: var(--text-secondary);
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chat-header-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.chat-header-separator {
+  color: var(--text-tertiary);
+  font-weight: 300;
+  margin: 0 2px;
+}
+
+.chat-header-gender.male {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.chat-header-gender.female {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.chat-header-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-header-status .status-dot {
+  width: 8px;
+  height: 8px;
 }
 
 .messages-container {
