@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
+import Call from '../Call/Call';
 import './Home.css';
 
 interface HomeProps {
@@ -71,6 +72,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [profileGender, setProfileGender] = useState(user.gender || 'Male');
   const [profilePicture, setProfilePicture] = useState(user.profilePicture);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [inCall, setInCall] = useState(false);
+  const [callType, setCallType] = useState<'voice' | 'video' | null>(null);
+  const [isCallInitiator, setIsCallInitiator] = useState(false);
+  const [callPartner, setCallPartner] = useState<{
+    userId: string;
+    username: string;
+    displayName: string;
+    profilePicture?: string | null;
+  } | null>(null);
+  const [incomingCall, setIncomingCall] = useState<{
+    from: string;
+    fromName: string;
+    fromPicture?: string;
+    callType: 'voice' | 'video';
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
@@ -358,6 +374,15 @@ function Home({ user, socket, onLogout }: HomeProps) {
         })));
       });
 
+      socket.on('incoming-call', (data: {
+        from: string;
+        fromName: string;
+        fromPicture?: string;
+        callType: 'voice' | 'video';
+      }) => {
+        setIncomingCall(data);
+      });
+
       socket.on('error', (error: { message: string }) => {
         console.error('Socket error:', error.message);
       });
@@ -378,6 +403,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('user_stop_typing');
         socket.off('private_message');
         socket.off('private_messages');
+        socket.off('incoming-call');
         socket.off('error');
       };
     }
@@ -971,6 +997,109 @@ function Home({ user, socket, onLogout }: HomeProps) {
     reader.readAsDataURL(file);
   };
 
+  const startCall = (type: 'voice' | 'video') => {
+    if (!selectedPrivateChat) return;
+    
+    // Store call partner info separately to prevent unmounting issues
+    setCallPartner({
+      userId: selectedPrivateChat.otherUser.userId,
+      username: selectedPrivateChat.otherUser.username,
+      displayName: selectedPrivateChat.otherUser.displayName,
+      profilePicture: selectedPrivateChat.otherUser.profilePicture
+    });
+    
+    setCallType(type);
+    setIsCallInitiator(true);
+    setInCall(true);
+    
+    if (socket) {
+      socket.emit('initiate-call', {
+        to: selectedPrivateChat.otherUser.userId,
+        callType: type,
+        from: user.userId,
+        fromName: user.fullName || user.username,
+        fromPicture: user.profilePicture
+      });
+    }
+  };
+
+  const handleCallEnd = () => {
+    setInCall(false);
+    setCallType(null);
+    setIsCallInitiator(false);
+    setCallPartner(null);
+    setIncomingCall(null);
+  };
+
+  const acceptIncomingCall = async () => {
+    if (!incomingCall) return;
+    
+    // Find or create private chat with the caller
+    let chat = privateChats.find(c => c.otherUser.userId === incomingCall.from);
+    
+    if (!chat) {
+      // Fetch user info if not in chat list
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/rooms/user-profile/${incomingCall.from}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          chat = {
+            chatId: `temp_${Date.now()}`,
+            otherUser: data.user,
+            unreadCount: 0
+          };
+          setPrivateChats(prev => [...prev, chat!]);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    }
+    
+    // Set the private chat as selected
+    if (chat) {
+      setSelectedPrivateChat(chat);
+      setChatType('private');
+      setSelectedRoom(null);
+      
+      // Store call partner info separately
+      setCallPartner({
+        userId: chat.otherUser.userId,
+        username: chat.otherUser.username,
+        displayName: chat.otherUser.displayName,
+        profilePicture: chat.otherUser.profilePicture
+      });
+    }
+    
+    // Start the call
+    setCallType(incomingCall.callType);
+    setIsCallInitiator(false);
+    setInCall(true);
+    setIncomingCall(null);
+    
+    // Notify caller that call was accepted
+    if (socket) {
+      socket.emit('call-accepted', {
+        to: incomingCall.from
+      });
+    }
+  };
+
+  const declineIncomingCall = () => {
+    if (!incomingCall || !socket) return;
+    
+    socket.emit('call-rejected', {
+      to: incomingCall.from
+    });
+    
+    setIncomingCall(null);
+  };
+
   const handleUpdateProfile = async () => {
     setIsUpdatingProfile(true);
 
@@ -1176,7 +1305,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           selectedPrivateChat.otherUser.displayName.charAt(0).toUpperCase()
                         )}
                       </div>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <h2>{selectedPrivateChat.otherUser.username}</h2>
                         <p className="chat-description">
                           {selectedPrivateChat.otherUser.age && (
@@ -1200,6 +1329,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
                             </>
                           )}
                         </p>
+                      </div>
+                      <div className="call-buttons">
+                        <button
+                          className="call-action-button voice-call-button"
+                          onClick={() => startCall('voice')}
+                          title="Voice Call"
+                          aria-label="Start voice call"
+                        >
+                          📞
+                        </button>
+                        <button
+                          className="call-action-button video-call-button"
+                          onClick={() => startCall('video')}
+                          title="Video Call"
+                          aria-label="Start video call"
+                        >
+                          📹
+                        </button>
                       </div>
                     </>
                   ) : null}
@@ -1499,6 +1646,53 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     No users found matching your filters
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {inCall && socket && callType && callPartner && (
+        <div className="call-overlay">
+          <Call
+            socket={socket}
+            user={user}
+            isInitiator={isCallInitiator}
+            callType={callType}
+            otherUser={callPartner}
+            onCallEnd={handleCallEnd}
+          />
+        </div>
+      )}
+
+      {incomingCall && (
+        <div className="modal-overlay">
+          <div className="modal-content incoming-call-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="incoming-call-content">
+              <div className="incoming-call-avatar">
+                {incomingCall.fromPicture ? (
+                  <img src={incomingCall.fromPicture} alt={incomingCall.fromName} />
+                ) : (
+                  <span>{incomingCall.fromName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <h2>{incomingCall.fromName}</h2>
+              <p className="incoming-call-type">
+                {incomingCall.callType === 'video' ? '📹 Video' : '📞 Voice'} Call
+              </p>
+              <div className="incoming-call-actions">
+                <button
+                  className="call-action-button decline-button"
+                  onClick={declineIncomingCall}
+                >
+                  ❌ Decline
+                </button>
+                <button
+                  className="call-action-button accept-button"
+                  onClick={acceptIncomingCall}
+                >
+                  ✅ Accept
+                </button>
               </div>
             </div>
           </div>

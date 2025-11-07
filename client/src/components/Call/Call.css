@@ -1,0 +1,559 @@
+/* Call Container - Fullscreen overlay */
+.call-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Video Container */
+.call-video-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Remote Video */
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+/* Avatar Container for Voice Calls or During Ringing */
+.call-avatar-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  animation: avatar-pulse 3s ease-in-out infinite;
+}
+
+@keyframes avatar-pulse {
+  0%, 100% {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  50% {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  }
+}
+
+.call-avatar-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: avatar-float 3s ease-in-out infinite;
+}
+
+@keyframes avatar-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.02);
+  }
+}
+
+.call-avatar-fallback {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  font-weight: bold;
+  color: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: avatar-float 3s ease-in-out infinite;
+}
+
+/* Local Video Preview */
+.local-video-preview {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 180px;
+  height: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: #000;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.local-video-preview:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+}
+
+.local-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror effect for selfie */
+}
+
+.local-video-preview.camera-off {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+}
+
+.camera-off-indicator {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  gap: 10px;
+}
+
+.camera-off-indicator span:first-child {
+  font-size: 3rem;
+  opacity: 0.6;
+}
+
+.camera-off-indicator span:last-child {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Call Header */
+.call-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 30px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  z-index: 20;
+  animation: slideInTop 0.4s ease;
+}
+
+@keyframes slideInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.call-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.call-user-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.5s ease;
+}
+
+.call-status {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Call Controls */
+.call-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  z-index: 20;
+  animation: slideInBottom 0.4s ease;
+}
+
+@keyframes slideInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Call Buttons */
+.call-button {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: buttonAppear 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes buttonAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.call-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.call-button:hover::before {
+  opacity: 1;
+  animation: ripple 0.6s ease;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.call-button:hover {
+  transform: translateY(-5px) scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.call-button:active {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.button-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  color: white;
+  fill: white;
+}
+
+.call-button svg.button-icon {
+  flex-shrink: 0;
+}
+
+.button-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Accept Button */
+.call-button-accept {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  animation: acceptPulse 2s ease-in-out infinite, buttonAppear 0.5s ease;
+}
+
+@keyframes acceptPulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4), 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6), 0 0 0 12px rgba(16, 185, 129, 0);
+  }
+}
+
+.call-button-accept:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Reject/Hangup Button */
+.call-button-reject,
+.call-button-hangup {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: rejectPulse 2s ease-in-out infinite, buttonAppear 0.5s ease 0.1s backwards;
+}
+
+@keyframes rejectPulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6), 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+}
+
+.call-button-reject:hover,
+.call-button-hangup:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+/* Muted State */
+.call-button-muted {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: mutedPulse 2s ease-in-out infinite;
+}
+
+@keyframes mutedPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Camera Off State */
+.call-button-camera-off {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .call-header {
+    padding: 20px;
+  }
+
+  .call-user-name {
+    font-size: 1.3rem;
+  }
+
+  .call-status {
+    font-size: 0.9rem;
+  }
+
+  .local-video-preview {
+    width: 120px;
+    height: 160px;
+    top: 15px;
+    right: 15px;
+  }
+
+  .call-controls {
+    padding: 30px 20px;
+    gap: 15px;
+  }
+
+  .call-button {
+    width: 60px;
+    height: 60px;
+  }
+
+  .button-icon {
+    font-size: 1.5rem;
+  }
+
+  .button-label {
+    font-size: 0.6rem;
+  }
+
+  .call-avatar-image,
+  .call-avatar-fallback {
+    width: 150px;
+    height: 150px;
+  }
+
+  .call-avatar-fallback {
+    font-size: 4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .call-header {
+    padding: 15px;
+  }
+
+  .call-user-name {
+    font-size: 1.1rem;
+  }
+
+  .call-status {
+    font-size: 0.85rem;
+  }
+
+  .local-video-preview {
+    width: 100px;
+    height: 133px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .call-controls {
+    padding: 25px 15px;
+    gap: 12px;
+  }
+
+  .call-button {
+    width: 55px;
+    height: 55px;
+  }
+
+  .button-icon {
+    font-size: 1.3rem;
+  }
+
+  .button-label {
+    font-size: 0.55rem;
+  }
+
+  .call-avatar-image,
+  .call-avatar-fallback {
+    width: 120px;
+    height: 120px;
+  }
+
+  .call-avatar-fallback {
+    font-size: 3rem;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .call-header {
+    padding: 10px 20px;
+  }
+
+  .call-user-name {
+    font-size: 1rem;
+  }
+
+  .call-status {
+    font-size: 0.8rem;
+  }
+
+  .local-video-preview {
+    width: 80px;
+    height: 107px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .call-controls {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .call-button {
+    width: 50px;
+    height: 50px;
+  }
+
+  .button-icon {
+    font-size: 1.2rem;
+  }
+
+  .button-label {
+    font-size: 0.5rem;
+  }
+
+  .call-avatar-image,
+  .call-avatar-fallback {
+    width: 100px;
+    height: 100px;
+  }
+
+  .call-avatar-fallback {
+    font-size: 2.5rem;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .call-container {
+    /* Fix for iOS Safari address bar */
+    height: -webkit-fill-available;
+  }
+
+  .call-video-container {
+    /* Prevent overscrolling */
+    overscroll-behavior: none;
+  }
+
+  .remote-video,
+  .local-video {
+    /* Hardware acceleration for smoother video */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* Accessibility - Focus states */
+.call-button:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 3px;
+}
+
+/* Loading/Connecting Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Smooth transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

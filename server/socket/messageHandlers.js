@@ -361,4 +361,149 @@ export function setupMessageHandlers(io, socket, userSockets) {
       socket.emit('error', { message: 'Failed to load messages' });
     }
   });
+
+  // WebRTC Call Signaling Handlers
+  
+  // Initiate a call
+  socket.on('initiate-call', (data) => {
+    try {
+      const { to, callType, from, fromName, fromPicture } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('incoming-call', {
+          from,
+          fromName,
+          fromPicture,
+          callType
+        });
+        console.log(`📞 Call initiated from ${fromName} to ${to} (${callType})`);
+      } else {
+        socket.emit('error', { message: 'User is not online' });
+        console.log(`⚠️ User ${to} is not online for call`);
+      }
+    } catch (error) {
+      console.error('Error initiating call:', error);
+      socket.emit('error', { message: 'Failed to initiate call' });
+    }
+  });
+
+  // Call accepted
+  socket.on('call-accepted', (data) => {
+    try {
+      const { to } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('call-accepted');
+        console.log(`✅ Call accepted by user, notifying ${to}`);
+      }
+    } catch (error) {
+      console.error('Error handling call acceptance:', error);
+    }
+  });
+
+  // Call rejected
+  socket.on('call-rejected', (data) => {
+    try {
+      const { to } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('call-rejected');
+        console.log(`❌ Call rejected by user, notifying ${to}`);
+      }
+    } catch (error) {
+      console.error('Error handling call rejection:', error);
+    }
+  });
+
+  // WebRTC offer
+  socket.on('call-offer', (data) => {
+    try {
+      const { to, offer, callType } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('call-offer', { offer, callType });
+        console.log(`📡 Call offer sent to ${to}`);
+      }
+    } catch (error) {
+      console.error('Error sending call offer:', error);
+    }
+  });
+
+  // WebRTC answer
+  socket.on('call-answer', (data) => {
+    try {
+      const { to, answer } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('call-answer', { answer });
+        console.log(`📡 Call answer sent to ${to}`);
+      }
+    } catch (error) {
+      console.error('Error sending call answer:', error);
+    }
+  });
+
+  // ICE candidate exchange
+  socket.on('ice-candidate', (data) => {
+    try {
+      const { to, candidate } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('ice-candidate', { candidate });
+        console.log(`🧊 ICE candidate sent to ${to}`);
+      }
+    } catch (error) {
+      console.error('Error sending ICE candidate:', error);
+    }
+  });
+
+  // End call
+  socket.on('end-call', (data) => {
+    try {
+      const { to } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('call-ended');
+        console.log(`📴 Call ended, notifying ${to}`);
+      }
+    } catch (error) {
+      console.error('Error ending call:', error);
+    }
+  });
+
+  // Log call ended (for message history)
+  socket.on('call-ended-log', async (data) => {
+    try {
+      const { receiverId, callType, duration } = data;
+      const userId = socket.userId;
+      
+      if (!userId) return;
+
+      // Store call log as a special message
+      const message = {
+        senderId: new ObjectId(userId),
+        receiverId: new ObjectId(receiverId),
+        content: `${callType === 'video' ? '📹' : '📞'} ${callType.charAt(0).toUpperCase() + callType.slice(1)} call - ${Math.floor(duration / 60)}m ${duration % 60}s`,
+        messageType: 'call-log',
+        isPrivate: true,
+        isRead: false,
+        isEdited: false,
+        timestamp: new Date(),
+        callDuration: duration,
+        callType
+      };
+
+      await db.collection('messages').insertOne(message);
+      console.log(`📝 Call log saved: ${callType} call, ${duration}s`);
+    } catch (error) {
+      console.error('Error logging call:', error);
+    }
+  });
 }
