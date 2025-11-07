@@ -591,16 +591,16 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
         
         {/* Local video preview for video calls */}
         {callType === 'video' && callState !== 'ringing' && (
-          <div className={`local-video-preview ${isCameraOff ? 'camera-off' : ''}`}>
-            {!isCameraOff ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="local-video"
-              />
-            ) : (
+          <div className="local-video-preview">
+            <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="local-video"
+              style={{ display: isCameraOff ? 'none' : 'block' }}
+            />
+            {isCameraOff && (
               <div className="camera-off-indicator">
                 <span>📷</span>
                 <span>Camera Off</span>

@@ -225,19 +225,17 @@
   border-radius: 50%;
   border: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   animation: buttonAppear 0.5s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 @keyframes buttonAppear {
@@ -254,45 +252,37 @@
 .call-button::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
   opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.call-button:hover::before {
-  opacity: 1;
-  animation: ripple 0.6s ease;
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+  transition: opacity 0.4s ease;
+  z-index: -1;
+  filter: blur(10px);
 }
 
 .call-button:hover {
-  transform: translateY(-5px) scale(1.1);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.call-button:hover::before {
+  opacity: 0.7;
 }
 
 .call-button:active {
   transform: translateY(-2px) scale(1.05);
+  transition: all 0.1s ease;
 }
 
 .button-icon {
-  font-size: 1.8rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   color: white;
   fill: white;
+  line-height: 1;
 }
 
 .call-button svg.button-icon {
@@ -300,52 +290,88 @@
 }
 
 .button-label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  display: none;
 }
 
 /* Accept Button */
 .call-button-accept {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
+  box-shadow: 
+    0 4px 15px rgba(16, 185, 129, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   animation: acceptPulse 2s ease-in-out infinite, buttonAppear 0.5s ease;
+}
+
+.call-button-accept::before {
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
 }
 
 @keyframes acceptPulse {
   0%, 100% {
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    box-shadow: 
+      0 4px 15px rgba(16, 185, 129, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   }
   50% {
-    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6), 0 0 25px 8px rgba(16, 185, 129, 0.3);
+    box-shadow: 
+      0 6px 25px rgba(16, 185, 129, 0.6),
+      0 0 40px rgba(16, 185, 129, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   }
 }
 
 .call-button-accept:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(145deg, #059669 0%, #047857 100%);
+  box-shadow: 
+    0 10px 30px rgba(16, 185, 129, 0.6),
+    0 0 50px rgba(16, 185, 129, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Reject/Hangup Button */
 .call-button-reject,
 .call-button-hangup {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 
+    0 4px 15px rgba(239, 68, 68, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   animation: rejectPulse 2s ease-in-out infinite, buttonAppear 0.5s ease 0.1s backwards;
+}
+
+.call-button-reject::before,
+.call-button-hangup::before {
+  background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
 }
 
 @keyframes rejectPulse {
   0%, 100% {
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    box-shadow: 
+      0 4px 15px rgba(239, 68, 68, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   }
   50% {
-    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6), 0 0 25px 8px rgba(239, 68, 68, 0.3);
+    box-shadow: 
+      0 6px 25px rgba(239, 68, 68, 0.6),
+      0 0 40px rgba(239, 68, 68, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   }
 }
 
 .call-button-reject:hover,
 .call-button-hangup:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  background: linear-gradient(145deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 
+    0 10px 30px rgba(239, 68, 68, 0.6),
+    0 0 50px rgba(239, 68, 68, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Muted State */
