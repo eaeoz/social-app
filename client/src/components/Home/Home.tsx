@@ -383,6 +383,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
         setIncomingCall(data);
       });
 
+      socket.on('call-cancelled', () => {
+        setIncomingCall(null);
+      });
+
+      socket.on('call-rejected', () => {
+        setInCall(false);
+        setCallType(null);
+        setIsCallInitiator(false);
+        setCallPartner(null);
+      });
+
+      socket.on('call-ended', () => {
+        setInCall(false);
+        setCallType(null);
+        setIsCallInitiator(false);
+        setCallPartner(null);
+        setIncomingCall(null);
+      });
+
       socket.on('error', (error: { message: string }) => {
         console.error('Socket error:', error.message);
       });
@@ -404,6 +423,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('private_message');
         socket.off('private_messages');
         socket.off('incoming-call');
+        socket.off('call-cancelled');
+        socket.off('call-rejected');
+        socket.off('call-ended');
         socket.off('error');
       };
     }
