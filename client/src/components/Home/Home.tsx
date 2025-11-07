@@ -622,6 +622,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const getFilteredUsers = () => {
+    // Backend already provides users sorted properly by activity
+    // We only need to apply client-side filters and unread message priority
     return users
       .filter(u => u.userId !== user.userId)
       .filter(u => {
@@ -652,27 +654,15 @@ function Home({ user, socket, onLogout }: HomeProps) {
         return u.gender && selectedGenders.includes(u.gender);
       })
       .sort((a, b) => {
-        // First priority: Users with unread messages
+        // Only priority: Users with unread messages come first
+        // Backend already sorted by online status and recent activity
         const aUnread = getUserUnreadCount(a.userId);
         const bUnread = getUserUnreadCount(b.userId);
         if (aUnread > 0 && bUnread === 0) return -1;
         if (aUnread === 0 && bUnread > 0) return 1;
         
-        // Second priority: Online status
-        if (a.status === 'online' && b.status !== 'online') return -1;
-        if (a.status !== 'online' && b.status === 'online') return 1;
-        
-        // Third priority: Most recently online (for offline users)
-        if (a.status !== 'online' && b.status !== 'online') {
-          if (a.lastSeen && b.lastSeen) {
-            return new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime();
-          }
-          if (a.lastSeen && !b.lastSeen) return -1;
-          if (!a.lastSeen && b.lastSeen) return 1;
-        }
-        
-        // Fourth priority: Alphabetical by display name
-        return a.displayName.localeCompare(b.displayName);
+        // Otherwise maintain backend's sorting order (which is by online status and lastActiveAt)
+        return 0;
       });
   };
 
@@ -933,6 +923,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const handleLogout = () => {
+    // Close all modals before logout
+    setShowUserModal(false);
+    setShowProfileModal(false);
+    setSidebarOpen(false);
+    
     if (socket && selectedRoom) {
       socket.emit('leave_room', {
         roomId: selectedRoom.roomId,
