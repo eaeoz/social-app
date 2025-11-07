@@ -1018,7 +1018,7 @@
   width: 32px;
   height: 32px;
   border: none;
-  background: var(--bg-hover);
+  background: transparent;
   border-radius: 50%;
   font-size: 1.5rem;
   cursor: pointer;
@@ -1030,11 +1030,20 @@
   line-height: 1;
   padding: 0;
   padding-bottom: 3px;
+  outline: none;
 }
 
 .modal-close:hover {
   background: var(--bg-active);
   color: white;
+}
+
+.modal-close:focus {
+  outline: none;
+}
+
+.modal-close:active {
+  outline: none;
 }
 
 .modal-filters {
