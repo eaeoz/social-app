@@ -226,20 +226,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       socket.on('user_typing', (data: { username: string }) => {
-        if (chatType === 'private') {
-          setTypingUsers(prev => {
-            if (!prev.includes(data.username)) {
-              return [...prev, data.username];
-            }
-            return prev;
-          });
-        }
+        setTypingUsers(prev => {
+          if (!prev.includes(data.username)) {
+            return [...prev, data.username];
+          }
+          return prev;
+        });
       });
 
       socket.on('user_stop_typing', (data: { username: string }) => {
-        if (chatType === 'private') {
-          setTypingUsers(prev => prev.filter(u => u !== data.username));
-        }
+        setTypingUsers(prev => prev.filter(u => u !== data.username));
       });
 
       socket.on('room_message_notification', (data: { roomId: string; senderId: string; timestamp: Date }) => {
@@ -697,35 +693,67 @@ function Home({ user, socket, onLogout }: HomeProps) {
     const value = e.target.value;
     setMessageInput(value);
     
-    if (chatType === 'private' && selectedPrivateChat && socket) {
-      if (value.trim() === '') {
-        if (isTyping) {
-          stopTyping();
+    if (socket) {
+      if (chatType === 'private' && selectedPrivateChat) {
+        if (value.trim() === '') {
+          if (isTyping) {
+            stopTyping();
+          }
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
+          }
+          return;
         }
+
+        if (!isTyping) {
+          setIsTyping(true);
+          socket.emit('typing', {
+            userId: user.userId,
+            username: user.username,
+            isPrivate: true,
+            targetId: selectedPrivateChat.otherUser.userId
+          });
+        }
+
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
-          typingTimeoutRef.current = null;
         }
-        return;
-      }
 
-      if (!isTyping) {
-        setIsTyping(true);
-        socket.emit('typing', {
-          userId: user.userId,
-          username: user.username,
-          isPrivate: true,
-          targetId: selectedPrivateChat.otherUser.userId
-        });
-      }
+        typingTimeoutRef.current = window.setTimeout(() => {
+          stopTyping();
+        }, 2000);
+      } else if (chatType === 'room' && selectedRoom) {
+        // Handle typing indicator for room chats
+        if (value.trim() === '') {
+          if (isTyping) {
+            stopTyping();
+          }
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
+          }
+          return;
+        }
 
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
+        if (!isTyping) {
+          setIsTyping(true);
+          socket.emit('typing', {
+            roomId: selectedRoom.roomId,
+            userId: user.userId,
+            username: user.username,
+            isPrivate: false
+          });
+        }
 
-      typingTimeoutRef.current = window.setTimeout(() => {
-        stopTyping();
-      }, 2000);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = window.setTimeout(() => {
+          stopTyping();
+        }, 2000);
+      }
     }
   };
 
@@ -739,6 +767,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
           username: user.username,
           isPrivate: true,
           targetId: selectedPrivateChat.otherUser.userId
+        });
+      } else if (chatType === 'room' && selectedRoom) {
+        socket.emit('stop_typing', {
+          roomId: selectedRoom.roomId,
+          userId: user.userId,
+          username: user.username,
+          isPrivate: false
         });
       }
     }
