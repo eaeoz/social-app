@@ -187,6 +187,8 @@ export async function register(req, res) {
       username,
       email,
       fullName: newUser.displayName,
+      age: newUser.age,
+      gender: newUser.gender,
       profilePicture: profilePictureUrl,
       profilePictureId: profilePictureId,
       bio: ''
@@ -262,6 +264,8 @@ export async function login(req, res) {
       username: user.username,
       email: user.email,
       fullName: user.displayName,
+      age: user.age,
+      gender: user.gender,
       profilePicture: profilePictureUrl,
       profilePictureId: user.profilePictureId,
       bio: user.bio || ''
@@ -307,6 +311,8 @@ export async function getCurrentUser(req, res) {
       username: user.username,
       email: user.email,
       fullName: user.displayName,
+      age: user.age,
+      gender: user.gender,
       profilePicture: profilePictureUrl,
       profilePictureId: user.profilePictureId,
       bio: user.bio || '',
