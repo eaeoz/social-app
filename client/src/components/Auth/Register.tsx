@@ -14,10 +14,44 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB');
+        return;
+      }
+
+      setProfilePicture(file);
+      setError('');
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setProfilePicture(null);
+    setPreviewUrl('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,12 +83,22 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     setLoading(true);
 
     try {
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('fullName', fullName);
+      formData.append('age', age);
+      formData.append('gender', gender);
+      
+      if (profilePicture) {
+        formData.append('profilePicture', profilePicture);
+      }
+
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password, fullName, age: parseInt(age), gender }),
+        body: formData, // Don't set Content-Type, browser will set it with boundary
       });
 
       const data = await response.json();
@@ -84,6 +128,36 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
 
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
+
+          {/* Profile Picture Upload */}
+          <div className="form-group">
+            <label>Profile Picture (Optional)</label>
+            <div className="profile-picture-upload">
+              {previewUrl ? (
+                <div className="profile-preview-container">
+                  <img src={previewUrl} alt="Profile preview" className="profile-preview" />
+                  <button type="button" onClick={removeImage} className="remove-image-btn" disabled={loading}>
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <label htmlFor="profilePicture" className="upload-label">
+                  <div className="upload-placeholder">
+                    <span className="upload-icon">📷</span>
+                    <span className="upload-text">Click to upload photo</span>
+                  </div>
+                  <input
+                    type="file"
+                    id="profilePicture"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={loading}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
 
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>

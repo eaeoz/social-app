@@ -2,8 +2,72 @@ import bcrypt from 'bcrypt';
 import { getDatabase } from '../config/database.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
 import { ObjectId } from 'mongodb';
+import multer from 'multer';
+import sharp from 'sharp';
+import { InputFile } from 'node-appwrite';
+import { storage, BUCKET_ID } from '../config/appwrite.js';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+
+// Configure multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// Export multer middleware
+export const uploadMiddleware = upload.single('profilePicture');
+
+// Helper function to sanitize username for filename
+function sanitizeUsername(username) {
+  // Remove all non-alphanumeric characters and convert to lowercase
+  return username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+// Helper function to process and upload image
+async function processAndUploadImage(buffer, username) {
+  try {
+    // Process image: resize to 60x60 and convert to JPG
+    const processedBuffer = await sharp(buffer)
+      .resize(60, 60, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .jpeg({
+        quality: 90,
+        mozjpeg: true
+      })
+      .toBuffer();
+
+    // Create filename using sanitized username
+    const sanitizedUsername = sanitizeUsername(username);
+    const filename = `${sanitizedUsername}.jpg`;
+
+    // Upload to Appwrite
+    const file = InputFile.fromBuffer(processedBuffer, filename);
+    
+    const result = await storage.createFile(
+      BUCKET_ID,
+      filename, // Use sanitized username as file ID
+      file
+    );
+
+    console.log(`✅ Profile picture uploaded: ${result.$id}`);
+    return result.$id;
+  } catch (error) {
+    console.error('❌ Error processing/uploading image:', error);
+    throw error;
+  }
+}
 
 // Register new user
 export async function register(req, res) {
@@ -45,6 +109,17 @@ export async function register(req, res) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+    // Process and upload profile picture if provided
+    let profilePictureId = null;
+    if (req.file) {
+      try {
+        profilePictureId = await processAndUploadImage(req.file.buffer, username);
+      } catch (uploadError) {
+        console.error('Failed to upload profile picture:', uploadError);
+        // Continue with registration even if image upload fails
+      }
+    }
+
     // Create user (matching MongoDB schema)
     const newUser = {
       username,
@@ -55,6 +130,7 @@ export async function register(req, res) {
       gender,
       bio: '',
       status: 'offline',
+      profilePictureId: profilePictureId,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSeen: new Date()
@@ -94,13 +170,20 @@ export async function register(req, res) {
     const accessToken = generateAccessToken(userId, username);
     const refreshToken = generateRefreshToken(userId);
 
+    // Get profile picture URL if available
+    let profilePictureUrl = null;
+    if (profilePictureId) {
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+    }
+
     // Return user data (without password)
     const userResponse = {
       userId,
       username,
       email,
       fullName: newUser.displayName,
-      profilePicture: null,
+      profilePicture: profilePictureUrl,
+      profilePictureId: profilePictureId,
       bio: ''
     };
 
@@ -162,13 +245,20 @@ export async function login(req, res) {
     const accessToken = generateAccessToken(userId, user.username);
     const refreshToken = generateRefreshToken(userId);
 
+    // Get profile picture URL if available
+    let profilePictureUrl = null;
+    if (user.profilePictureId) {
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+    }
+
     // Return user data (without password)
     const userResponse = {
       userId,
       username: user.username,
       email: user.email,
       fullName: user.displayName,
-      profilePicture: user.profilePictureId,
+      profilePicture: profilePictureUrl,
+      profilePictureId: user.profilePictureId,
       bio: user.bio || ''
     };
 
@@ -201,12 +291,19 @@ export async function getCurrentUser(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Get profile picture URL if available
+    let profilePictureUrl = null;
+    if (user.profilePictureId) {
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+    }
+
     const userResponse = {
       userId: user._id.toString(),
       username: user.username,
       email: user.email,
       fullName: user.displayName,
-      profilePicture: user.profilePictureId,
+      profilePicture: profilePictureUrl,
+      profilePictureId: user.profilePictureId,
       bio: user.bio || '',
       createdAt: user.createdAt
     };
