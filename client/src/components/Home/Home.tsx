@@ -68,6 +68,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const isInitialLoadRef = useRef(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const userItemsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const messageInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -105,6 +106,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
       } else if (e.key === 'Escape' && showUserModal) {
         e.preventDefault();
         setShowUserModal(false);
+        // Focus chat input after closing modal
+        setTimeout(() => {
+          messageInputRef.current?.focus();
+        }, 100);
       } else if (e.altKey && e.key.toLowerCase() === 'x' && showUserModal) {
         e.preventDefault();
         setShowFilters(prev => !prev);
@@ -467,6 +472,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
     setAgeRange([18, 100]);
     setSelectedGenders(['Male', 'Female']);
     setShowFilters(false);
+    
+    // Focus chat input after selecting user
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 100);
   };
 
   const toggleGender = (gender: string) => {
@@ -929,6 +939,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
               <div className="message-input-container">
                 <input
+                  ref={messageInputRef}
                   type="text"
                   className="message-input"
                   placeholder="Type a message..."
@@ -980,11 +991,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
       </div>
 
       {showUserModal && (
-        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowUserModal(false);
+          setTimeout(() => {
+            messageInputRef.current?.focus();
+          }, 100);
+        }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Select User</h2>
-              <button className="modal-close" onClick={() => setShowUserModal(false)}>×</button>
+              <button className="modal-close" onClick={() => {
+                setShowUserModal(false);
+                setTimeout(() => {
+                  messageInputRef.current?.focus();
+                }, 100);
+              }}>×</button>
             </div>
             <div className="modal-filters">
               <div className="filter-row">
