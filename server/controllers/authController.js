@@ -253,10 +253,10 @@ export async function login(req, res) {
     const accessToken = generateAccessToken(userId, user.username);
     const refreshToken = generateRefreshToken(userId);
 
-    // Get profile picture URL if available
+    // Get profile picture URL if available (with cache-busting timestamp)
     let profilePictureUrl = null;
     if (user.profilePictureId) {
-      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
     }
 
     // Return user data (without password)
@@ -301,10 +301,10 @@ export async function getCurrentUser(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get profile picture URL if available
+    // Get profile picture URL if available (with cache-busting timestamp)
     let profilePictureUrl = null;
     if (user.profilePictureId) {
-      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
     }
 
     const userResponse = {
@@ -409,10 +409,10 @@ export async function updateProfile(req, res) {
     // Get updated user
     const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
-    // Get profile picture URL if available
+    // Get profile picture URL if available (with cache-busting timestamp)
     let profilePictureUrl = null;
     if (updatedUser.profilePictureId) {
-      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${updatedUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${updatedUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
     }
 
     const userResponse = {

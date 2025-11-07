@@ -87,10 +87,10 @@ router.get('/user-profile/:userId', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Always include profile picture for individual user profile
+    // Always include profile picture for individual user profile (with cache-busting timestamp)
     let profilePictureUrl = null;
     if (user.profilePictureId) {
-      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
     }
 
     const userResponse = {
@@ -208,11 +208,11 @@ router.get('/users', authenticateToken, async (req, res) => {
         lastSeen: user.lastSeen // Include lastSeen for offline users
       };
 
-      // Only add profilePicture field if pictures should be shown
+      // Only add profilePicture field if pictures should be shown (with cache-busting timestamp)
       if (showPictures) {
         let profilePictureUrl = null;
         if (user.profilePictureId) {
-          profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+          profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
         }
         userObj.profilePicture = profilePictureUrl;
       }
@@ -293,10 +293,10 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
 
         if (!otherUser) return null;
 
-        // Get profile picture URL if available
+        // Get profile picture URL if available (with cache-busting timestamp)
         let profilePictureUrl = null;
         if (otherUser.profilePictureId) {
-          profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${otherUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+          profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${otherUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
         }
 
         // Count unread messages (messages sent by other user that we haven't read)
