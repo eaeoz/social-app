@@ -78,6 +78,7 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    setAuthView('login'); // Always redirect to login page after logout
     if (socket) {
       socket.close();
       setSocket(null);

@@ -34,11 +34,11 @@ function sanitizeUsername(username) {
 }
 
 // Helper function to process and upload image
-async function processAndUploadImage(buffer, username) {
+async function processAndUploadImage(buffer, username, userId) {
   try {
-    // Process image: resize to 60x60 and convert to JPG
+    // Process image: resize to 80x80 and convert to JPG
     const processedBuffer = await sharp(buffer)
-      .resize(60, 60, {
+      .resize(80, 80, {
         fit: 'cover',
         position: 'center'
       })
@@ -48,16 +48,16 @@ async function processAndUploadImage(buffer, username) {
       })
       .toBuffer();
 
-    // Create filename using sanitized username
+    // Create filename using sanitized username and userId
     const sanitizedUsername = sanitizeUsername(username);
-    const filename = `${sanitizedUsername}.jpg`;
+    const filename = `${sanitizedUsername}_${userId}.jpg`;
 
     // Upload to Appwrite
     const file = InputFile.fromBuffer(processedBuffer, filename);
     
     const result = await storage.createFile(
       BUCKET_ID,
-      filename, // Use sanitized username as file ID
+      filename, // Use sanitized username_userId as file ID
       file
     );
 
@@ -109,18 +109,7 @@ export async function register(req, res) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Process and upload profile picture if provided
-    let profilePictureId = null;
-    if (req.file) {
-      try {
-        profilePictureId = await processAndUploadImage(req.file.buffer, username);
-      } catch (uploadError) {
-        console.error('Failed to upload profile picture:', uploadError);
-        // Continue with registration even if image upload fails
-      }
-    }
-
-    // Create user (matching MongoDB schema)
+    // Create user first (matching MongoDB schema)
     const newUser = {
       username,
       email,
@@ -130,7 +119,7 @@ export async function register(req, res) {
       gender,
       bio: '',
       status: 'offline',
-      profilePictureId: profilePictureId,
+      profilePictureId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSeen: new Date()
@@ -138,6 +127,22 @@ export async function register(req, res) {
 
     const result = await usersCollection.insertOne(newUser);
     const userId = result.insertedId.toString();
+
+    // Process and upload profile picture if provided (now we have userId)
+    let profilePictureId = null;
+    if (req.file) {
+      try {
+        profilePictureId = await processAndUploadImage(req.file.buffer, username, userId);
+        // Update user with profilePictureId
+        await usersCollection.updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { profilePictureId: profilePictureId } }
+        );
+      } catch (uploadError) {
+        console.error('Failed to upload profile picture:', uploadError);
+        // Continue with registration even if image upload fails
+      }
+    }
 
     // Create user presence record (matching schema)
     await db.collection('userpresence').insertOne({
