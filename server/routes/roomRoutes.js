@@ -62,6 +62,55 @@ router.get('/public', authenticateToken, async (req, res) => {
   }
 });
 
+// Get single user profile (always includes profile picture)
+router.get('/user-profile/:userId', authenticateToken, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const { userId } = req.params;
+
+    const user = await db.collection('users').findOne(
+      { _id: new ObjectId(userId) },
+      { 
+        projection: { 
+          username: 1, 
+          displayName: 1, 
+          status: 1,
+          bio: 1,
+          age: 1,
+          gender: 1,
+          profilePictureId: 1
+        }
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Always include profile picture for individual user profile
+    let profilePictureUrl = null;
+    if (user.profilePictureId) {
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+    }
+
+    const userResponse = {
+      userId: user._id.toString(),
+      username: user.username,
+      displayName: user.displayName,
+      status: user.status || 'offline',
+      bio: user.bio || '',
+      age: user.age,
+      gender: user.gender,
+      profilePicture: profilePictureUrl
+    };
+
+    res.json({ user: userResponse });
+  } catch (error) {
+    console.error('Error getting user profile:', error);
+    res.status(500).json({ error: 'Failed to get user profile' });
+  }
+});
+
 // Get all users (for private chat selection)
 router.get('/users', authenticateToken, async (req, res) => {
   try {

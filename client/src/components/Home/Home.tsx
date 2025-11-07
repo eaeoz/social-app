@@ -473,19 +473,53 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }, 100);
   };
 
-  const startPrivateChat = (selectedUser: User) => {
+  const startPrivateChat = async (selectedUser: User) => {
     const existingChat = privateChats.find(c => c.otherUser.userId === selectedUser.userId);
     
     if (existingChat) {
       selectPrivateChat(existingChat);
     } else {
-      const newChat: PrivateChat = {
-        chatId: `temp_${Date.now()}`,
-        otherUser: selectedUser,
-        unreadCount: 0
-      };
-      setPrivateChats(prev => [...prev, newChat]);
-      selectPrivateChat(newChat);
+      // Fetch complete user info including profile picture
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/rooms/user-profile/${selectedUser.userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const completeUserData = data.user;
+          
+          const newChat: PrivateChat = {
+            chatId: `temp_${Date.now()}`,
+            otherUser: completeUserData,
+            unreadCount: 0
+          };
+          setPrivateChats(prev => [...prev, newChat]);
+          selectPrivateChat(newChat);
+        } else {
+          // Fallback: use the data we have
+          const newChat: PrivateChat = {
+            chatId: `temp_${Date.now()}`,
+            otherUser: selectedUser,
+            unreadCount: 0
+          };
+          setPrivateChats(prev => [...prev, newChat]);
+          selectPrivateChat(newChat);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Fallback: use the data we have
+        const newChat: PrivateChat = {
+          chatId: `temp_${Date.now()}`,
+          otherUser: selectedUser,
+          unreadCount: 0
+        };
+        setPrivateChats(prev => [...prev, newChat]);
+        selectPrivateChat(newChat);
+      }
     }
     
     setShowUserModal(false);
