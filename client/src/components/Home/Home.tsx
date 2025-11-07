@@ -52,6 +52,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [messageInput, setMessageInput] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showUserPictures, setShowUserPictures] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -383,6 +384,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users);
+        // Update showUserPictures based on backend response
+        if (data.showPictures !== undefined) {
+          setShowUserPictures(data.showPictures);
+        }
       }
     } catch (error) {
       console.error('Failed to load users:', error);
@@ -1287,16 +1292,18 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     <div 
                       key={u.userId}
                       ref={(el) => { userItemsRef.current[index] = el; }}
-                      className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''}`}
+                      className={`user-item ${index === selectedUserIndex ? 'keyboard-selected' : ''} ${!showUserPictures ? 'no-picture' : ''}`}
                       onClick={() => startPrivateChat(u)}
                     >
-                      <div className="user-avatar">
-                        {u.profilePicture ? (
-                          <img src={u.profilePicture} alt={u.displayName} />
-                        ) : (
-                          u.displayName.charAt(0).toUpperCase()
-                        )}
-                      </div>
+                      {showUserPictures && (
+                        <div className="user-avatar">
+                          {u.profilePicture ? (
+                            <img src={u.profilePicture} alt={u.displayName} />
+                          ) : (
+                            u.displayName.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                      )}
                       <div className="user-details">
                         <div className="user-line-1">
                           <span className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>

@@ -1557,6 +1557,11 @@
   flex-shrink: 0;
 }
 
+/* When no pictures are shown, adjust user item layout */
+.user-item.no-picture {
+  padding-left: 12px;
+}
+
 .user-item .user-details {
   flex: 1;
   display: flex;

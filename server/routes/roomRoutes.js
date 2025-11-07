@@ -2,6 +2,7 @@ import express from 'express';
 import { getDatabase } from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { ObjectId } from 'mongodb';
+import { getSiteSettings } from '../utils/initializeSiteSettings.js';
 
 const router = express.Router();
 
@@ -67,46 +68,63 @@ router.get('/users', authenticateToken, async (req, res) => {
     const db = getDatabase();
     const currentUserId = req.user.userId;
 
+    // Get site settings to check if we should show profile pictures
+    const siteSettings = await getSiteSettings();
+    const showPictures = siteSettings.showuserlistpicture === 1;
+
+    // Build projection dynamically based on settings
+    const projection = { 
+      username: 1, 
+      displayName: 1, 
+      status: 1,
+      bio: 1,
+      age: 1,
+      gender: 1
+    };
+
+    // Only include profilePictureId if pictures should be shown
+    if (showPictures) {
+      projection.profilePictureId = 1;
+    }
+
     const users = await db.collection('users')
       .find(
         { 
           _id: { $ne: currentUserId },
           username: { $ne: 'system' }
         },
-        { 
-          projection: { 
-            username: 1, 
-            displayName: 1, 
-            status: 1,
-            bio: 1,
-            age: 1,
-            gender: 1,
-            profilePictureId: 1
-          } 
-        }
+        { projection }
       )
       .sort({ displayName: 1 })
       .toArray();
 
     const usersResponse = users.map(user => {
-      let profilePictureUrl = null;
-      if (user.profilePictureId) {
-        profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
-      }
-      
-      return {
+      const userObj = {
         userId: user._id.toString(),
         username: user.username,
         displayName: user.displayName,
         status: user.status || 'offline',
         bio: user.bio || '',
         age: user.age,
-        gender: user.gender,
-        profilePicture: profilePictureUrl
+        gender: user.gender
       };
+
+      // Only add profilePicture field if pictures should be shown
+      if (showPictures) {
+        let profilePictureUrl = null;
+        if (user.profilePictureId) {
+          profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+        }
+        userObj.profilePicture = profilePictureUrl;
+      }
+      
+      return userObj;
     });
 
-    res.json({ users: usersResponse });
+    res.json({ 
+      users: usersResponse,
+      showPictures // Send this info to frontend so it knows whether to display picture areas
+    });
   } catch (error) {
     console.error('Error getting users:', error);
     res.status(500).json({ error: 'Failed to get users' });

@@ -42,12 +42,15 @@ app.get('/api', (req, res) => {
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
+import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Store user socket connections
 const userSockets = new Map(); // userId -> socketId
@@ -96,6 +99,9 @@ async function startServer() {
   try {
     // Connect to MongoDB
     await connectToDatabase();
+    
+    // Initialize site settings
+    await initializeSiteSettings();
     
     // Seed default rooms
     await seedDefaultRooms();
