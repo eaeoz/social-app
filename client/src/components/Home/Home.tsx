@@ -786,13 +786,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
           <h1>💬 {import.meta.env.VITE_APP_NAME || 'Chat App'}</h1>
         </div>
         <div className="header-center">
-          <button 
-            className="new-chat-button"
-            onClick={() => setShowUserModal(true)}
-            title="Start New Chat"
-          >
-            <span className="chat-icon">💬</span>
-          </button>
+          <div className="new-chat-wrapper">
+            <button 
+              className="new-chat-button"
+              onClick={() => setShowUserModal(true)}
+              title="Start New Chat (Alt+M)"
+            >
+              <span className="chat-icon">💬</span>
+            </button>
+            <span className="hint new-chat-hint">Alt+M</span>
+          </div>
         </div>
         <div className="header-right">
           <button 
