@@ -865,13 +865,56 @@
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-header-left {
+  flex: 1;
+}
+
+.modal-title-row {
+  display: flex;
   align-items: center;
+  gap: 15px;
+  margin-bottom: 8px;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.3rem;
   color: var(--text-primary);
+}
+
+.esc-hint {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+.keyboard-hints {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.keyboard-hints .hint {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
 }
 
 .modal-close {

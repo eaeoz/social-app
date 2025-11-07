@@ -1013,7 +1013,17 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Select User</h2>
+              <div className="modal-header-left">
+                <div className="modal-title-row">
+                  <h2>Select User</h2>
+                  <span className="hint esc-hint">Esc Close</span>
+                </div>
+                <div className="keyboard-hints">
+                  <span className="hint">↑↓ Navigate</span>
+                  <span className="hint">Enter Select</span>
+                  <span className="hint">Alt+X Filters</span>
+                </div>
+              </div>
               <button className="modal-close" onClick={() => {
                 setShowUserModal(false);
                 setTimeout(() => {
