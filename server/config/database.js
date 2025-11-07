@@ -15,8 +15,17 @@ export async function connectToDatabase() {
       return db;
     }
 
-    // Simple configuration for MongoDB Atlas
-    client = new MongoClient(uri);
+    // Configuration for MongoDB Atlas with TLS options for Render compatibility
+    const options = {
+      tls: true,
+      tlsAllowInvalidCertificates: false,
+      tlsAllowInvalidHostnames: false,
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+    };
+
+    client = new MongoClient(uri, options);
 
     await client.connect();
     console.log('✅ Connected to MongoDB Atlas');
@@ -32,6 +41,7 @@ export async function connectToDatabase() {
     console.error('❌ MongoDB connection error:', error.message);
     console.error('💡 Tip: Make sure your IP is whitelisted in MongoDB Atlas');
     console.error('💡 You can whitelist all IPs (0.0.0.0/0) for testing');
+    console.error('💡 Ensure your MongoDB connection string includes the correct options');
     throw error;
   }
 }
