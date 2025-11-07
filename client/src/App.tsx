@@ -68,11 +68,11 @@ function App() {
     }
   }, [user]);
 
-  const handleLoginSuccess = (userData: any, token: string) => {
+  const handleLoginSuccess = (userData: any) => {
     setUser(userData);
   };
 
-  const handleRegisterSuccess = (userData: any, token: string) => {
+  const handleRegisterSuccess = (userData: any) => {
     setUser(userData);
   };
 

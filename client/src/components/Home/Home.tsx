@@ -727,40 +727,38 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }, 100);
   };
 
-  const closePrivateChat = async (chat: PrivateChat) => {
-    if (chat.unreadCount > 0) {
-      return;
-    }
-    
-    // Call server to mark as closed
-    try {
-      const token = localStorage.getItem('accessToken');
-      await fetch(`${import.meta.env.VITE_API_URL}/rooms/close-private-chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ otherUserId: chat.otherUser.userId })
-      });
-      
-      // Remove from local list
-      setPrivateChats(prev => prev.filter(c => c.chatId !== chat.chatId));
-      
-      // If this was the selected chat, switch to first room
-      if (selectedPrivateChat?.chatId === chat.chatId) {
-        if (rooms.length > 0) {
-          selectRoom(rooms[0]);
-        } else {
-          setSelectedPrivateChat(null);
-          setChatType('room');
-          setMessages([]);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to close chat:', error);
-    }
-  };
+  // Function to close private chat - currently not used but available for future use
+  // const closePrivateChat = async (chat: PrivateChat) => {
+  //   if (chat.unreadCount > 0) {
+  //     return;
+  //   }
+  //   
+  //   try {
+  //     const token = localStorage.getItem('accessToken');
+  //     await fetch(`${import.meta.env.VITE_API_URL}/rooms/close-private-chat`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`
+  //       },
+  //       body: JSON.stringify({ otherUserId: chat.otherUser.userId })
+  //     });
+  //     
+  //     setPrivateChats(prev => prev.filter(c => c.chatId !== chat.chatId));
+  //     
+  //     if (selectedPrivateChat?.chatId === chat.chatId) {
+  //       if (rooms.length > 0) {
+  //         selectRoom(rooms[0]);
+  //       } else {
+  //         setSelectedPrivateChat(null);
+  //         setChatType('room');
+  //         setMessages([]);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to close chat:', error);
+  //   }
+  // };
 
   const sendMessage = () => {
     if (!messageInput.trim() || !socket) return;
