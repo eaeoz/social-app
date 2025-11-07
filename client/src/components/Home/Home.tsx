@@ -1070,7 +1070,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
               <span className="hamburger-notification-dot"></span>
             )}
           </button>
-          <h1>💬 {import.meta.env.VITE_APP_NAME || 'netci_fy!'}</h1>
+          <h1>💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
         </div>
         <div className="header-center">
           <div className="new-chat-wrapper">
