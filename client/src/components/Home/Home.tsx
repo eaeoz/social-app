@@ -102,7 +102,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.key.toLowerCase() === 'm') {
         e.preventDefault();
-        setShowUserModal(prev => !prev);
+        setShowUserModal(prev => {
+          const newValue = !prev;
+          // If closing the modal, focus message input
+          if (prev === true) {
+            setTimeout(() => {
+              messageInputRef.current?.focus();
+            }, 100);
+          }
+          return newValue;
+        });
       } else if (e.key === 'Escape' && showUserModal) {
         e.preventDefault();
         setShowUserModal(false);
