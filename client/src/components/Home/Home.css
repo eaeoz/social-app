@@ -132,7 +132,8 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 18px;
   position: relative;
   transition: all 0.3s ease;
   box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
