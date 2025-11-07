@@ -889,6 +889,20 @@
   gap: 15px;
 }
 
+.chat-title .user-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chat-title .user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
 .chat-title .room-icon {
   font-size: 2rem;
 }
