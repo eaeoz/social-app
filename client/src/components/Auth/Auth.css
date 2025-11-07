@@ -93,15 +93,15 @@
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #333;
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: #000000;
+  font-weight: 800;
+  font-size: 0.95rem;
   transition: color 0.3s ease;
 }
 

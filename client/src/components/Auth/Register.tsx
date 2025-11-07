@@ -148,7 +148,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
 
           {/* Profile Picture Upload */}
           <div className="form-group">
-            <label>Profile Picture (Optional)</label>
             <div className="profile-picture-upload">
               {previewUrl ? (
                 <div className="profile-preview-container">
@@ -177,71 +176,65 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="fullName">Full Name</label>
             <input
               type="text"
               id="fullName"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
+              placeholder="Full Name"
               disabled={loading}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="username">Username</label>
             <input
               type="text"
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Choose a username"
+              placeholder="Username"
               required
               disabled={loading}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="Email"
               required
               disabled={loading}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a password (min 6 characters)"
+              placeholder="Password (min 6 characters)"
               required
               disabled={loading}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
+              placeholder="Confirm Password"
               required
               disabled={loading}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="age">Age</label>
             <select
               id="age"
               value={age}
@@ -249,7 +242,7 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
               required
               disabled={loading}
             >
-              <option value="">Select your age</option>
+              <option value="">Age</option>
               {Array.from({ length: 83 }, (_, i) => i + 18).map((ageValue) => (
                 <option key={ageValue} value={ageValue}>
                   {ageValue}
@@ -259,7 +252,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
           </div>
 
           <div className="form-group">
-            <label>Gender</label>
             <div className="radio-group">
               <label className="radio-label">
                 <input
