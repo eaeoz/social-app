@@ -177,7 +177,8 @@ router.get('/users', authenticateToken, async (req, res) => {
         status: user.status || 'offline',
         bio: user.bio || '',
         age: user.age,
-        gender: user.gender
+        gender: user.gender,
+        lastSeen: user.lastSeen // Include lastSeen for offline users
       };
 
       // Only add profilePicture field if pictures should be shown
