@@ -1549,7 +1549,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 >
                   📷 Change Picture
                 </button>
-                <p className="picture-hint">Image will be resized to 80x80</p>
               </div>
 
               <div className="profile-form-section">
