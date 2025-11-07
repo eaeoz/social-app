@@ -1367,7 +1367,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           title="Video Call"
                           aria-label="Start video call"
                         >
-                          📹
+                          🎥
                         </button>
                       </div>
                     </>
@@ -1705,14 +1705,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 <button
                   className="call-action-button decline-button"
                   onClick={declineIncomingCall}
+                  aria-label="Decline call"
                 >
-                  ❌ Decline
+                  ❌
                 </button>
                 <button
                   className="call-action-button accept-button"
                   onClick={acceptIncomingCall}
+                  aria-label="Accept call"
                 >
-                  ✅ Accept
+                  ✅
                 </button>
               </div>
             </div>
