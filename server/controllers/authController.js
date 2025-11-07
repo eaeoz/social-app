@@ -331,3 +331,102 @@ export async function logout(req, res) {
     res.status(500).json({ error: 'Logout failed' });
   }
 }
+
+// Update user profile
+export async function updateProfile(req, res) {
+  try {
+    const userId = req.user.userId;
+    const { age, gender } = req.body;
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Get current user
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prepare update object
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    // Update age if provided
+    if (age) {
+      const ageNum = parseInt(age);
+      if (ageNum < 18 || ageNum > 100) {
+        return res.status(400).json({ error: 'Age must be between 18 and 100' });
+      }
+      updateData.age = ageNum;
+    }
+
+    // Update gender if provided
+    if (gender) {
+      if (!['Male', 'Female'].includes(gender)) {
+        return res.status(400).json({ error: 'Gender must be Male or Female' });
+      }
+      updateData.gender = gender;
+    }
+
+    // Process and upload profile picture if provided
+    if (req.file) {
+      try {
+        // Delete old profile picture if exists
+        if (user.profilePictureId) {
+          try {
+            await storage.deleteFile(BUCKET_ID, user.profilePictureId);
+            console.log(`✅ Deleted old profile picture: ${user.profilePictureId}`);
+          } catch (deleteError) {
+            console.error('Failed to delete old profile picture:', deleteError);
+            // Continue even if deletion fails
+          }
+        }
+
+        // Upload new profile picture
+        const profilePictureId = await processAndUploadImage(req.file.buffer, user.username, userId);
+        updateData.profilePictureId = profilePictureId;
+      } catch (uploadError) {
+        console.error('Failed to upload profile picture:', uploadError);
+        return res.status(500).json({ error: 'Failed to upload profile picture' });
+      }
+    }
+
+    // Update user in database
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: updateData }
+    );
+
+    // Get updated user
+    const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    // Get profile picture URL if available
+    let profilePictureUrl = null;
+    if (updatedUser.profilePictureId) {
+      profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${updatedUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+    }
+
+    const userResponse = {
+      userId: updatedUser._id.toString(),
+      username: updatedUser.username,
+      email: updatedUser.email,
+      fullName: updatedUser.displayName,
+      age: updatedUser.age,
+      gender: updatedUser.gender,
+      profilePicture: profilePictureUrl,
+      profilePictureId: updatedUser.profilePictureId,
+      bio: updatedUser.bio || ''
+    };
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: userResponse
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+}

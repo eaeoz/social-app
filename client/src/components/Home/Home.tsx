@@ -64,6 +64,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [selectedGenders, setSelectedGenders] = useState<string[]>(['Male', 'Female']);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileAge, setProfileAge] = useState(user.age || 18);
+  const [profileGender, setProfileGender] = useState(user.gender || 'Male');
+  const [profilePicture, setProfilePicture] = useState(user.profilePicture);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
@@ -768,6 +774,104 @@ function Home({ user, socket, onLogout }: HomeProps) {
     onLogout();
   };
 
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 80;
+        canvas.height = 80;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, 80, 80);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const previewUrl = URL.createObjectURL(blob);
+              setProfilePicture(previewUrl);
+            }
+          }, 'image/jpeg', 0.9);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpdateProfile = async () => {
+    setIsUpdatingProfile(true);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const formData = new FormData();
+
+      formData.append('age', profileAge.toString());
+      formData.append('gender', profileGender);
+
+      if (fileInputRef.current?.files?.[0]) {
+        const file = fileInputRef.current.files[0];
+        const img = new Image();
+        const reader = new FileReader();
+
+        await new Promise<void>((resolve) => {
+          reader.onload = (event) => {
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = 80;
+              canvas.height = 80;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, 80, 80);
+                canvas.toBlob((blob) => {
+                  if (blob) {
+                    const resizedFile = new File([blob], file.name, { type: 'image/jpeg' });
+                    formData.append('profilePicture', resizedFile);
+                    resolve();
+                  }
+                }, 'image/jpeg', 0.9);
+              }
+            };
+            img.src = event.target?.result as string;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/update-profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        user.age = data.user.age;
+        user.gender = data.user.gender;
+        user.profilePicture = data.user.profilePicture;
+        
+        localStorage.setItem('user', JSON.stringify(user));
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setShowProfileModal(false);
+        setIsUpdatingProfile(false);
+      } else {
+        console.error('Failed to update profile');
+        setIsUpdatingProfile(false);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setIsUpdatingProfile(false);
+    }
+  };
+
   return (
     <div className="home-container">
       <header className="home-header">
@@ -811,7 +915,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
           </button>
           <div className="user-info">
-            <div className="user-avatar">
+            <div className="user-avatar" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }} title="Click to edit profile">
               {user.profilePicture ? (
                 <img src={user.profilePicture} alt={user.fullName || user.username} />
               ) : (
@@ -1187,6 +1291,105 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     No users found matching your filters
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProfileModal && (
+        <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="modal-content profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <h2>Edit Profile</h2>
+              </div>
+              <button className="modal-close" onClick={() => setShowProfileModal(false)}>×</button>
+            </div>
+            <div className="modal-body profile-modal-body">
+              <div className="profile-picture-section">
+                <div className={`profile-picture-preview ${isUpdatingProfile ? 'updating' : ''}`}>
+                  {profilePicture ? (
+                    <img src={profilePicture} alt="Profile" />
+                  ) : (
+                    <span>{user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}</span>
+                  )}
+                  {isUpdatingProfile && (
+                    <div className="update-overlay">
+                      <div className="spinner"></div>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  className="upload-button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUpdatingProfile}
+                >
+                  📷 Change Picture
+                </button>
+                <p className="picture-hint">Image will be resized to 80x80</p>
+              </div>
+
+              <div className="profile-form-section">
+                <div className="form-group">
+                  <label htmlFor="age">Age</label>
+                  <select
+                    id="age"
+                    value={profileAge}
+                    onChange={(e) => setProfileAge(parseInt(e.target.value))}
+                    disabled={isUpdatingProfile}
+                    className="age-select"
+                  >
+                    {Array.from({ length: 83 }, (_, i) => i + 18).map((age) => (
+                      <option key={age} value={age}>
+                        {age} years old
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Gender</label>
+                  <div className="radio-group">
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Male"
+                        checked={profileGender === 'Male'}
+                        onChange={(e) => setProfileGender(e.target.value)}
+                        disabled={isUpdatingProfile}
+                      />
+                      <span>Male</span>
+                    </label>
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Female"
+                        checked={profileGender === 'Female'}
+                        onChange={(e) => setProfileGender(e.target.value)}
+                        disabled={isUpdatingProfile}
+                      />
+                      <span>Female</span>
+                    </label>
+                  </div>
+                </div>
+
+                <button
+                  className="update-profile-button"
+                  onClick={handleUpdateProfile}
+                  disabled={isUpdatingProfile}
+                >
+                  {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
+                </button>
               </div>
             </div>
           </div>
