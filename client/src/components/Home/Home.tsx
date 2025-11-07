@@ -34,6 +34,7 @@ interface User {
   age?: number;
   gender?: string;
   profilePicture?: string | null;
+  lastSeen?: Date;
 }
 
 interface PrivateChat {
@@ -641,7 +642,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
         if (a.status === 'online' && b.status !== 'online') return -1;
         if (a.status !== 'online' && b.status === 'online') return 1;
         
-        // Third priority: Alphabetical by display name
+        // Third priority: Most recently online (for offline users)
+        if (a.status !== 'online' && b.status !== 'online') {
+          if (a.lastSeen && b.lastSeen) {
+            return new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime();
+          }
+          if (a.lastSeen && !b.lastSeen) return -1;
+          if (!a.lastSeen && b.lastSeen) return 1;
+        }
+        
+        // Fourth priority: Alphabetical by display name
         return a.displayName.localeCompare(b.displayName);
       });
   };
@@ -857,6 +867,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
       hour: '2-digit', 
       minute: '2-digit' 
     });
+  };
+
+  const formatLastSeen = (lastSeen: Date | undefined) => {
+    if (!lastSeen) return '';
+    
+    const now = new Date();
+    const lastSeenDate = new Date(lastSeen);
+    const diffMs = now.getTime() - lastSeenDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return lastSeenDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const toggleTheme = () => {
@@ -1407,6 +1435,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
                             <span className="user-demographics">
                               {u.age} years old
                             </span>
+                          )}
+                          {u.status !== 'online' && u.lastSeen && (
+                            <>
+                              {u.age && <span className="user-demographics-separator"> • </span>}
+                              <span className="user-last-seen">
+                                {formatLastSeen(u.lastSeen)}
+                              </span>
+                            </>
                           )}
                         </div>
                       </div>
