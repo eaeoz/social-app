@@ -1469,10 +1469,6 @@
 }
 
 @media (max-width: 768px) {
-  .mobile-menu-button {
-    display: flex;
-  }
-  
   .header-left h1 {
     font-size: 1.3rem;
   }
@@ -1492,6 +1488,10 @@
 }
 
 @media (max-width: 640px) {
+  .mobile-menu-button {
+    display: flex;
+  }
+
   .sidebar {
     position: fixed;
     left: -100%;
