@@ -793,8 +793,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
               title="Start New Chat (Alt+M)"
             >
               <span className="chat-icon">💬</span>
+              <span className="new-chat-hint">Alt+M</span>
             </button>
-            <span className="hint new-chat-hint">Alt+M</span>
           </div>
         </div>
         <div className="header-right">
