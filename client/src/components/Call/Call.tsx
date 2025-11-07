@@ -100,13 +100,18 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
 
   const initializeCall = async () => {
     try {
-      // Get user media
+      // Get user media with mobile-friendly constraints
       const constraints = {
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
         video: callType === 'video' ? {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
+          width: { min: 320, ideal: 640, max: 1280 },
+          height: { min: 240, ideal: 480, max: 720 },
+          facingMode: 'user',
+          frameRate: { ideal: 30, max: 30 }
         } : false
       };
 
