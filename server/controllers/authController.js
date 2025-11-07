@@ -36,8 +36,9 @@ function sanitizeUsername(username) {
 // Helper function to process and upload image
 async function processAndUploadImage(buffer, username, userId) {
   try {
-    // Process image: resize to 80x80 and convert to JPG
+    // Process image: auto-rotate based on EXIF, resize to 80x80 and convert to JPG
     const processedBuffer = await sharp(buffer)
+      .rotate() // Auto-rotate based on EXIF orientation
       .resize(80, 80, {
         fit: 'cover',
         position: 'center'
