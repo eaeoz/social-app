@@ -5,7 +5,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { ObjectId } from 'mongodb';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectToDatabase } from './config/database.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -52,6 +57,21 @@ import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
+
+// Serve static files from React build (for production)
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../client/dist');
+  app.use(express.static(clientBuildPath));
+  
+  // Handle client-side routing - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 // Store user socket connections and activity timestamps
 const userSockets = new Map(); // userId -> socketId
