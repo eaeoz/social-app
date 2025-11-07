@@ -128,7 +128,7 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 19px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -159,6 +159,15 @@
 
 .new-chat-button:active {
   transform: translateY(0);
+}
+
+.new-chat-button:focus {
+  outline: none;
+}
+
+.new-chat-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
 }
 
 .chat-icon {
