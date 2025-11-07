@@ -316,10 +316,10 @@
 
 @keyframes acceptPulse {
   0%, 100% {
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4), 0 0 0 0 rgba(16, 185, 129, 0.7);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
   }
   50% {
-    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6), 0 0 0 12px rgba(16, 185, 129, 0);
+    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6), 0 0 25px 8px rgba(16, 185, 129, 0.3);
   }
 }
 
@@ -336,10 +336,10 @@
 
 @keyframes rejectPulse {
   0%, 100% {
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
   }
   50% {
-    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6), 0 0 0 12px rgba(239, 68, 68, 0);
+    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6), 0 0 25px 8px rgba(239, 68, 68, 0.3);
   }
 }
 
