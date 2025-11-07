@@ -233,16 +233,22 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
 
       socket.on('room_message', (message: any) => {
-        if (selectedRoom?.roomId === message.roomId) {
-          setMessages(prev => [...prev, {
-            messageId: message.messageId,
-            senderId: message.senderId,
-            senderName: message.senderName,
-            content: message.content,
-            timestamp: message.timestamp,
-            messageType: message.messageType
-          }]);
-        }
+        console.log('🔔 Received room_message:', {
+          messageRoomId: message.roomId,
+          content: message.content,
+          timestamp: new Date()
+        });
+        
+        // Always add the message if it's for a room chat, let React state handle filtering
+        setMessages(prev => [...prev, {
+          messageId: message.messageId,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          content: message.content,
+          timestamp: message.timestamp,
+          messageType: message.messageType,
+          roomId: message.roomId
+        }]);
       });
 
       socket.on('room_messages', (data: { roomId: string; messages: Message[] }) => {
@@ -694,18 +700,31 @@ function Home({ user, socket, onLogout }: HomeProps) {
     setMessages([]);
     setTypingUsers([]);
     
-    if (socket) {
+    if (socket && socket.connected) {
+      // Request message history
       socket.emit('get_private_messages', {
         userId: user.userId,
         otherUserId: chat.otherUser.userId,
         limit: 50
       });
       
+      // Mark chat as read
       socket.emit('mark_chat_as_read', {
         userId: user.userId,
         otherUserId: chat.otherUser.userId
       });
+      
+      // Subscribe to private chat updates immediately
+      socket.emit('subscribe_private_chat', {
+        userId: user.userId,
+        otherUserId: chat.otherUser.userId
+      });
     }
+    
+    // Focus input after a short delay to ensure chat is ready
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 100);
   };
 
   const closePrivateChat = async (chat: PrivateChat) => {
@@ -765,6 +784,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
       };
       setMessages(prev => [...prev, tempMessage]);
     } else if (selectedRoom) {
+      console.log('📤 Sending room message:', {
+        roomId: selectedRoom.roomId,
+        roomName: selectedRoom.name,
+        chatType,
+        content: messageInput.trim()
+      });
+      
       socket.emit('send_room_message', {
         roomId: selectedRoom.roomId,
         senderId: user.userId,
@@ -1158,7 +1184,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         )}
                       </div>
                       <div>
-                        <h2>{selectedPrivateChat.otherUser.displayName}</h2>
+                        <h2>{selectedPrivateChat.otherUser.username}</h2>
                         <p className="chat-description">
                           {selectedPrivateChat.otherUser.age && (
                             <span className="chat-header-info">{selectedPrivateChat.otherUser.age} years old</span>
