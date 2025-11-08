@@ -62,8 +62,9 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
     setErrorMessage('');
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(`${API_URL}/contact`, {
+      // Use Netlify serverless function instead of Render backend
+      // This function fetches SMTP credentials from MongoDB directly
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
