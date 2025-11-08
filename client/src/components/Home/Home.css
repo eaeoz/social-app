@@ -1152,11 +1152,11 @@
 
 /* Input Action Buttons (Emoji & Location) */
 .input-action-button {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: none;
-  font-size: 1.3rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -1165,10 +1165,17 @@
   position: relative;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
+  float: left;
+  margin: 2px;
+  padding: 2px;
 }
 
 .input-action-button + .input-action-button {
-  margin-left: 5px;
+  margin-left: 2px;
+}
+
+.input-action-button:first-of-type {
+  margin-left: 2px;
 }
 
 .input-action-button::before {
@@ -1178,7 +1185,7 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
-  border-radius: 10px;
+  border-radius: 6px;
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: -1;
@@ -1537,6 +1544,7 @@
   background: var(--bg-tertiary);
   color: var(--text-primary);
   transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+  margin-left: 0;
 }
 
 .message-input:focus {
@@ -2194,11 +2202,6 @@
     max-height: 85vh;
   }
   
-  /* Center emoji and location buttons in input area on mobile */
-  .message-input-container {
-    justify-content: center;
-  }
-  
   /* Hide keyboard hints on mobile */
   .new-chat-hint,
   .esc-hint,
@@ -2248,6 +2251,10 @@
     padding: 12px 15px;
   }
   
+  .chat-title {
+    flex-wrap: wrap;
+  }
+  
   .chat-title h2 {
     font-size: 1.05rem;
     letter-spacing: -0.3px;
@@ -2256,6 +2263,17 @@
   .chat-description {
     font-size: 0.75rem;
     letter-spacing: -0.2px;
+  }
+  
+  .call-buttons {
+    gap: 8px;
+    margin-left: 8px;
+  }
+  
+  .call-action-button {
+    width: 38px;
+    height: 38px;
+    font-size: 1.2rem;
   }
   
   .messages-container {
@@ -2279,24 +2297,24 @@
   }
   
   .message-input-container {
-    padding: 12px;
+    padding: 10px 8px;
+    gap: 4px;
+  }
+  
+  .input-action-button {
+    width: 32px;
+    height: 32px;
+    margin: 0;
   }
   
   .message-input {
-    font-size: 0.85rem;
-    padding: 9px 15px;
-    letter-spacing: -0.2px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
   
   .send-button {
-    padding: 9px 18px;
-    font-size: 0.85rem;
-    letter-spacing: -0.2px;
-  }
-  
-  .room-item {
-    padding: 8px 10px;
-    gap: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
   }
   
   .room-name {
