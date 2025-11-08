@@ -170,6 +170,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
         if (sidebarOpen) {
           setSidebarOpen(false);
         }
+        // Close profile modal if open
+        else if (showProfileModal) {
+          setShowProfileModal(false);
+        }
         // Close user modal if open
         else if (showUserModal) {
           setShowUserModal(false);
@@ -189,7 +193,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showUserModal, sidebarOpen]);
+  }, [showUserModal, sidebarOpen, showProfileModal]);
 
   // Auto-focus search input when modal opens and reset selected index
   useEffect(() => {
@@ -2025,7 +2029,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
           <div className="modal-content profile-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-header-left">
-                <h2>Edit Profile</h2>
+                <div className="modal-title-row">
+                  <h2>Edit Profile</h2>
+                  <span className="esc-hint">ESC</span>
+                </div>
               </div>
               <button className="modal-close" onClick={() => setShowProfileModal(false)}>×</button>
             </div>
