@@ -25,16 +25,29 @@ const allowedOrigins = [
   process.env.CLIENT_URL
 ].filter(Boolean);
 
+console.log('🌐 CORS Configuration:');
+console.log('📋 Allowed Origins:', allowedOrigins);
+console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+console.log('🔧 PORT:', process.env.PORT);
+console.log('🔧 CLIENT_URL:', process.env.CLIENT_URL);
+
 const io = new Server(httpServer, {
   cors: {
     origin: (origin, callback) => {
+      console.log(`🔍 Socket.IO CORS check - Origin: ${origin || 'no-origin'}`);
+      
       // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        console.log('✅ Allowing request with no origin');
+        return callback(null, true);
+      }
       
       if (allowedOrigins.includes(origin)) {
+        console.log(`✅ Origin allowed: ${origin}`);
         callback(null, true);
       } else {
-        console.warn(`⚠️ Blocked CORS request from origin: ${origin}`);
+        console.warn(`⛔ BLOCKED Socket.IO CORS from origin: ${origin}`);
+        console.warn(`📋 Allowed origins are:`, allowedOrigins);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -46,13 +59,20 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
+    console.log(`🔍 HTTP CORS check - Origin: ${origin || 'no-origin'}, Method: ${callback ? 'checking' : 'unknown'}`);
+    
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('✅ Allowing HTTP request with no origin');
+      return callback(null, true);
+    }
     
     if (allowedOrigins.includes(origin)) {
+      console.log(`✅ HTTP Origin allowed: ${origin}`);
       callback(null, true);
     } else {
-      console.warn(`⚠️ Blocked CORS request from origin: ${origin}`);
+      console.warn(`⛔ BLOCKED HTTP CORS from origin: ${origin}`);
+      console.warn(`📋 Allowed origins are:`, allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
