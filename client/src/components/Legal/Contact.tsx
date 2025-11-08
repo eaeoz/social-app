@@ -16,7 +16,7 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -139,16 +139,28 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
 
             <div className="form-group">
               <label htmlFor="subject">Subject *</label>
-              <input
-                type="text"
+              <select
                 id="subject"
                 name="subject"
                 value={formData.subject}
                 onChange={handleChange}
-                placeholder="What's this about?"
                 disabled={isSubmitting}
                 required
-              />
+                className="subject-select"
+              >
+                <option value="">Select a subject...</option>
+                <option value="General Inquiry">General Inquiry</option>
+                <option value="Technical Support">Technical Support</option>
+                <option value="Account Issues">Account Issues</option>
+                <option value="Report User/Abuse">Report User/Abuse</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Privacy Concerns">Privacy Concerns</option>
+                <option value="Billing/Subscription">Billing/Subscription</option>
+                <option value="Partnership/Business">Partnership/Business</option>
+                <option value="Feedback/Suggestions">Feedback/Suggestions</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
             <div className="form-group">
