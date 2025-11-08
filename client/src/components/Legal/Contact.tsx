@@ -5,6 +5,13 @@ interface ContactProps {
   onClose: () => void;
 }
 
+// Declare grecaptcha for TypeScript
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
+
 const Contact: React.FC<ContactProps> = ({ onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
@@ -15,6 +22,35 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
+
+  // Load reCAPTCHA script
+  useEffect(() => {
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      console.error('reCAPTCHA site key not found');
+      return;
+    }
+
+    // Check if script already exists
+    if (document.querySelector(`script[src*="recaptcha"]`)) {
+      setRecaptchaLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setRecaptchaLoaded(true);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove script on unmount as it might be needed by other components
+    };
+  }, []);
 
   // Handle ESC key press globally
   useEffect(() => {
@@ -62,6 +98,21 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
     setErrorMessage('');
 
     try {
+      // Get reCAPTCHA token
+      let recaptchaToken = '';
+      if (recaptchaLoaded && window.grecaptcha) {
+        const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+        try {
+          recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'contact_form' });
+        } catch (error) {
+          console.error('reCAPTCHA execution failed:', error);
+          setSubmitStatus('error');
+          setErrorMessage('Security verification failed. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // In production (Netlify): use Netlify function
       // In development (localhost): use Render backend API
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -74,7 +125,10 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          recaptchaToken
+        }),
       });
 
       const data = await response.json();
@@ -214,17 +268,27 @@ const Contact: React.FC<ContactProps> = ({ onClose }) => {
             <button 
               type="submit" 
               className="submit-button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !recaptchaLoaded}
             >
               {isSubmitting ? (
                 <>
                   <span className="button-spinner"></span>
                   Sending...
                 </>
+              ) : !recaptchaLoaded ? (
+                'Loading...'
               ) : (
                 'Send Message'
               )}
             </button>
+
+            <div className="recaptcha-notice">
+              <small>
+                This site is protected by reCAPTCHA and the Google{' '}
+                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and{' '}
+                <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
+              </small>
+            </div>
           </form>
         </div>
       </div>

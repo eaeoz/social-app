@@ -113,7 +113,7 @@ export async function handler(event, context) {
       bodyPreview: event.body?.substring(0, 100)
     });
     
-    const { username, email, subject, message } = JSON.parse(event.body);
+    const { username, email, subject, message, recaptchaToken } = JSON.parse(event.body);
     const parseEndTime = Date.now();
 
     debugLog('✅ STEP 1 COMPLETE: Request Body Parsed Successfully', {
@@ -122,8 +122,92 @@ export async function handler(event, context) {
       subject,
       messageLength: message?.length,
       messagePreview: message?.substring(0, 50) + '...',
+      hasRecaptchaToken: !!recaptchaToken,
       parseTime: `${parseEndTime - parseStartTime}ms`
     });
+
+    // Verify reCAPTCHA token
+    if (recaptchaToken) {
+      const recaptchaStartTime = Date.now();
+      debugLog('🔒 STEP 1.5: Verifying reCAPTCHA Token', {
+        hasToken: true,
+        tokenLength: recaptchaToken.length
+      });
+
+      try {
+        const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
+        
+        if (!recaptchaSecretKey) {
+          debugLog('⚠️ reCAPTCHA Warning', {
+            message: 'reCAPTCHA secret key not configured, skipping verification'
+          });
+        } else {
+          const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `secret=${recaptchaSecretKey}&response=${recaptchaToken}`
+          });
+
+          const recaptchaResult = await recaptchaResponse.json();
+          const recaptchaEndTime = Date.now();
+
+          debugLog('✅ STEP 1.5 COMPLETE: reCAPTCHA Verification Result', {
+            success: recaptchaResult.success,
+            score: recaptchaResult.score,
+            action: recaptchaResult.action,
+            challenge_ts: recaptchaResult.challenge_ts,
+            hostname: recaptchaResult.hostname,
+            errorCodes: recaptchaResult['error-codes'],
+            verificationTime: `${recaptchaEndTime - recaptchaStartTime}ms`
+          });
+
+          if (!recaptchaResult.success) {
+            debugLog('❌ reCAPTCHA Verification Failed', {
+              errorCodes: recaptchaResult['error-codes']
+            });
+            return {
+              statusCode: 400,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                success: false,
+                message: 'reCAPTCHA verification failed. Please try again.'
+              })
+            };
+          }
+
+          // Check score (v3 typically returns 0.0 to 1.0, with 1.0 being most likely human)
+          if (recaptchaResult.score < 0.5) {
+            debugLog('⚠️ Low reCAPTCHA Score', {
+              score: recaptchaResult.score,
+              threshold: 0.5,
+              action: 'Rejecting submission'
+            });
+            return {
+              statusCode: 400,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                success: false,
+                message: 'Suspicious activity detected. Please try again.'
+              })
+            };
+          }
+        }
+      } catch (recaptchaError) {
+        errorLog('❌ reCAPTCHA Verification Error', recaptchaError);
+        // Don't block the submission if reCAPTCHA service is down
+        debugLog('⚠️ reCAPTCHA Service Error - Allowing submission', {
+          error: recaptchaError.message
+        });
+      }
+    }
 
     // Validate request body
     if (!username || !email || !subject || !message) {

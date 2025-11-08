@@ -763,6 +763,26 @@
   }
 }
 
+.recaptcha-notice {
+  margin-top: 15px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.recaptcha-notice a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.recaptcha-notice a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
 /* Contact Modal Responsive */
 @media (max-width: 768px) {
   .contact-modal {
