@@ -47,6 +47,11 @@ function App() {
 
       newSocket.on('connect', () => {
         console.log('✅ Connected to server:', newSocket.id);
+        // Authenticate immediately upon connection
+        newSocket.emit('authenticate', {
+          userId: user.userId,
+          username: user.username
+        });
       });
 
       newSocket.on('disconnect', () => {

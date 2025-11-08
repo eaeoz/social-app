@@ -275,10 +275,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       socket.on('connect', () => {
         setConnected(true);
-        socket.emit('authenticate', {
-          userId: user.userId,
-          username: user.username
-        });
+        // Authentication now handled in App.tsx on initial connection
       });
 
       // Send activity heartbeat every 2 minutes to keep user online

@@ -409,17 +409,32 @@ export function setupMessageHandlers(io, socket, userSockets) {
       const { to, callType, from, fromName, fromPicture } = data;
       const toSocketId = userSockets.get(to);
       
+      console.log(`📞 Call initiation attempt from ${fromName} (${from}) to ${to} (${callType})`);
+      console.log(`📊 userSockets size: ${userSockets.size}, looking for userId: ${to}`);
+      console.log(`📍 Target socket ID: ${toSocketId || 'NOT FOUND'}`);
+      
       if (toSocketId) {
-        io.to(toSocketId).emit('incoming-call', {
-          from,
-          fromName,
-          fromPicture,
-          callType
-        });
-        console.log(`📞 Call initiated from ${fromName} to ${to} (${callType})`);
+        // Verify the socket is still connected
+        const targetSocket = io.sockets.sockets.get(toSocketId);
+        if (targetSocket && targetSocket.connected) {
+          io.to(toSocketId).emit('incoming-call', {
+            from,
+            fromName,
+            fromPicture,
+            callType
+          });
+          console.log(`📞 Call initiated from ${fromName} to ${to} (${callType}) - socket ${toSocketId}`);
+        } else {
+          console.log(`⚠️ Socket ${toSocketId} for user ${to} is not connected`);
+          // Clean up stale socket reference
+          userSockets.delete(to);
+          socket.emit('error', { message: 'User is not online' });
+        }
       } else {
+        // Log all registered users for debugging
+        console.log(`⚠️ User ${to} is not in userSockets map`);
+        console.log(`📋 Registered users:`, Array.from(userSockets.keys()));
         socket.emit('error', { message: 'User is not online' });
-        console.log(`⚠️ User ${to} is not online for call`);
       }
     } catch (error) {
       console.error('Error initiating call:', error);
