@@ -232,6 +232,7 @@ export async function handler(event, context) {
 
     // Verify transporter configuration
     const verifyStartTime = Date.now();
+    let verifyEndTime;
     try {
       debugLog('🔍 STEP 5: Verifying Email Transporter Connection', { 
         status: 'Testing SMTP server connection',
@@ -241,14 +242,14 @@ export async function handler(event, context) {
       
       await transporter.verify();
       
-      const verifyEndTime = Date.now();
+      verifyEndTime = Date.now();
       debugLog('✅ STEP 5 COMPLETE: Email Transporter Verified Successfully', { 
         status: 'SMTP server connection successful',
         verificationTime: `${verifyEndTime - verifyStartTime}ms`,
         connectionEstablished: true
       });
     } catch (error) {
-      const verifyEndTime = Date.now();
+      verifyEndTime = Date.now();
       errorLog('❌ STEP 5 FAILED: Email Transporter Verification Failed', error);
       debugLog('Verification Attempt Details', {
         attemptDuration: `${verifyEndTime - verifyStartTime}ms`,
