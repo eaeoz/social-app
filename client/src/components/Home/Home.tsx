@@ -1376,6 +1376,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
   return (
     <>
+    <header className="app-header">
+      <div className="wind-effect">
+        <div className="wind-layer"></div>
+        <div className="wind-layer"></div>
+        <div className="wind-layer"></div>
+      </div>
+    </header>
+
     <div className="home-container">
       <header className="home-header">
         <div className="header-left">
