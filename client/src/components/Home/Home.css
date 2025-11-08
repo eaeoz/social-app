@@ -2969,3 +2969,65 @@
     font-size: 0.65rem;
   }
 }
+
+/* Scroll to Bottom Button */
+.scroll-to-bottom-button {
+  position: absolute;
+  bottom: 110px;
+  right: 30px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  animation: scroll-button-appear 0.3s ease, scroll-button-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scroll-button-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scroll-button-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6), 0 0 30px rgba(102, 126, 234, 0.3);
+  }
+}
+
+.scroll-to-bottom-button:hover {
+  transform: translateY(-3px) scale(1.1);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+  animation: scroll-button-appear 0.3s ease;
+}
+
+.scroll-to-bottom-button:active {
+  transform: translateY(-1px) scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .scroll-to-bottom-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+    bottom: 95px;
+    right: 15px;
+  }
+}

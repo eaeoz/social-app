@@ -105,9 +105,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTermsConditions, setShowTermsConditions] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior: 'smooth' | 'auto' = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    
+    setShowScrollButton(!isNearBottom);
   };
 
   useEffect(() => {
@@ -1603,7 +1615,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
               </div>
 
               <div 
+                ref={messagesContainerRef}
                 className="messages-container"
+                onScroll={handleScroll}
                 onClick={async () => {
                   if (selectedRoom) {
                     setRooms(prev => prev.map(r =>
@@ -1664,6 +1678,17 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   <div className="typing-indicator">
                     <span>{typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...</span>
                   </div>
+                )}
+                
+                {showScrollButton && (
+                  <button
+                    className="scroll-to-bottom-button"
+                    onClick={() => scrollToBottom('smooth')}
+                    title="Scroll to bottom"
+                    aria-label="Scroll to bottom"
+                  >
+                    ↓
+                  </button>
                 )}
               </div>
 
