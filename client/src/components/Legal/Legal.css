@@ -783,6 +783,24 @@
   text-decoration: underline;
 }
 
+/* Fix reCAPTCHA badge positioning */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Alternative: Move badge to bottom-left if you want to keep it visible */
+/* Uncomment below and comment out the above if you prefer to show the badge */
+/*
+.grecaptcha-badge {
+  bottom: 70px !important;
+  left: 4px !important;
+  right: auto !important;
+  z-index: 1999 !important;
+}
+*/
+
 /* Contact Modal Responsive */
 @media (max-width: 768px) {
   .contact-modal {
