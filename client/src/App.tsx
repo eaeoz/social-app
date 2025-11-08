@@ -10,6 +10,13 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
 type AuthView = 'login' | 'register';
 
 function App() {
+  // Debug: Log the URLs being used
+  console.log('🔧 Environment Check:', {
+    SOCKET_URL,
+    API_URL: import.meta.env.VITE_API_URL,
+    NODE_ENV: import.meta.env.MODE,
+    ALL_ENV: import.meta.env
+  });
   const [socket, setSocket] = useState<Socket | null>(null);
   const [user, setUser] = useState<any>(null);
   const [authView, setAuthView] = useState<AuthView>('login');
