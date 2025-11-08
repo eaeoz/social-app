@@ -6,14 +6,46 @@ interface LoginProps {
   onSwitchToRegister: () => void;
 }
 
+// Declare grecaptcha for TypeScript
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
+
 function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  // Load reCAPTCHA script
+  useEffect(() => {
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      console.error('reCAPTCHA site key not found');
+      return;
+    }
+
+    // Check if script already exists
+    if (document.querySelector(`script[src*="recaptcha"]`)) {
+      setRecaptchaLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setRecaptchaLoaded(true);
+    };
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('authTheme') as 'light' | 'dark' | null;
@@ -34,12 +66,26 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     setLoading(true);
 
     try {
+      // Get reCAPTCHA token
+      let recaptchaToken = '';
+      if (recaptchaLoaded && window.grecaptcha) {
+        const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+        try {
+          recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'login' });
+        } catch (error) {
+          console.error('reCAPTCHA execution failed:', error);
+          setError('Security verification failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, recaptchaToken }),
       });
 
       const data = await response.json();
@@ -97,8 +143,8 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             />
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
+            {loading ? 'Signing in...' : !recaptchaLoaded ? 'Loading...' : 'Sign In'}
           </button>
         </form>
 

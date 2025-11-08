@@ -6,6 +6,13 @@ interface RegisterProps {
   onSwitchToLogin: () => void;
 }
 
+// Declare grecaptcha for TypeScript
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
+
 function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -19,8 +26,33 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  // Load reCAPTCHA script
+  useEffect(() => {
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      console.error('reCAPTCHA site key not found');
+      return;
+    }
+
+    // Check if script already exists
+    if (document.querySelector(`script[src*="recaptcha"]`)) {
+      setRecaptchaLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setRecaptchaLoaded(true);
+    };
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('authTheme') as 'light' | 'dark' | null;
@@ -97,6 +129,20 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     setLoading(true);
 
     try {
+      // Get reCAPTCHA token
+      let recaptchaToken = '';
+      if (recaptchaLoaded && window.grecaptcha) {
+        const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+        try {
+          recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'register' });
+        } catch (error) {
+          console.error('reCAPTCHA execution failed:', error);
+          setError('Security verification failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+
       // Create FormData to handle file upload
       const formData = new FormData();
       formData.append('username', username);
@@ -105,6 +151,7 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
       formData.append('fullName', fullName);
       formData.append('age', age);
       formData.append('gender', gender);
+      formData.append('recaptchaToken', recaptchaToken);
       
       if (profilePicture) {
         formData.append('profilePicture', profilePicture);
@@ -280,8 +327,8 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
             </div>
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Sign Up'}
+          <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
+            {loading ? 'Creating Account...' : !recaptchaLoaded ? 'Loading...' : 'Sign Up'}
           </button>
         </form>
 

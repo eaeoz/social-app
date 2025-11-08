@@ -8,6 +8,56 @@ import { InputFile } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
+
+// Helper function to verify reCAPTCHA token
+async function verifyRecaptcha(token, action, minScore = 0.5) {
+  if (!RECAPTCHA_SECRET_KEY) {
+    console.warn('⚠️ reCAPTCHA secret key not configured, skipping verification');
+    return { success: true, skipped: true };
+  }
+
+  if (!token) {
+    return { success: false, error: 'No reCAPTCHA token provided' };
+  }
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `secret=${RECAPTCHA_SECRET_KEY}&response=${token}`
+    });
+
+    const result = await response.json();
+
+    console.log('🔒 reCAPTCHA verification result:', {
+      success: result.success,
+      score: result.score,
+      action: result.action,
+      hostname: result.hostname
+    });
+
+    if (!result.success) {
+      return { success: false, error: 'reCAPTCHA verification failed', details: result };
+    }
+
+    if (result.action !== action) {
+      return { success: false, error: `Action mismatch: expected ${action}, got ${result.action}` };
+    }
+
+    if (result.score < minScore) {
+      return { success: false, error: `Score too low: ${result.score}`, score: result.score };
+    }
+
+    return { success: true, score: result.score };
+  } catch (error) {
+    console.error('❌ reCAPTCHA verification error:', error);
+    // Don't block authentication if reCAPTCHA service is down
+    return { success: true, error: 'reCAPTCHA service error', serviceError: true };
+  }
+}
 
 // Configure multer for memory storage
 const upload = multer({
@@ -73,7 +123,13 @@ async function processAndUploadImage(buffer, username, userId) {
 // Register new user
 export async function register(req, res) {
   try {
-    const { username, email, password, fullName, age, gender } = req.body;
+    const { username, email, password, fullName, age, gender, recaptchaToken } = req.body;
+
+    // Verify reCAPTCHA
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'register');
+    if (!recaptchaResult.success && !recaptchaResult.skipped && !recaptchaResult.serviceError) {
+      return res.status(400).json({ error: 'Security verification failed. Please try again.' });
+    }
 
     // Validation
     if (!username || !email || !password) {
@@ -217,7 +273,13 @@ export async function register(req, res) {
 // Login user
 export async function login(req, res) {
   try {
-    const { username, password } = req.body;
+    const { username, password, recaptchaToken } = req.body;
+
+    // Verify reCAPTCHA
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'login');
+    if (!recaptchaResult.success && !recaptchaResult.skipped && !recaptchaResult.serviceError) {
+      return res.status(400).json({ error: 'Security verification failed. Please try again.' });
+    }
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
