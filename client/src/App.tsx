@@ -49,7 +49,8 @@ function App() {
         transports: ['websocket', 'polling'],
         auth: {
           token
-        }
+        },
+        autoConnect: true
       });
 
       newSocket.on('connect', () => {
@@ -59,6 +60,7 @@ function App() {
           username: user.username,
           fullUser: user
         });
+        
         // Authenticate immediately upon connection
         console.log('📤 Sending authenticate event...');
         newSocket.emit('authenticate', {
@@ -66,6 +68,12 @@ function App() {
           username: user.username
         });
         console.log('✅ Authenticate event sent');
+        
+        // Set socket AFTER authentication is sent (with small delay to ensure it's processed)
+        setTimeout(() => {
+          console.log('⏱️ Setting socket in state after authentication');
+          setSocket(newSocket);
+        }, 100);
       });
 
       newSocket.on('disconnect', () => {
@@ -76,10 +84,12 @@ function App() {
         console.error('Connection error:', error);
       });
 
-      setSocket(newSocket);
+      // Don't set socket immediately - wait for connect event
+      // setSocket(newSocket); <- REMOVED
 
       return () => {
         newSocket.close();
+        setSocket(null);
       };
     } else if (!user && socket) {
       socket.close();
