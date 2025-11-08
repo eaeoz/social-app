@@ -99,6 +99,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const userItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const footerRef = useRef<HTMLElement | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -109,6 +110,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showAbout, setShowAbout] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle footer visibility on mobile when input is focused
+  useEffect(() => {
+    footerRef.current = document.querySelector('.app-footer');
+  }, []);
+
+  const handleInputFocus = () => {
+    // Only hide footer on mobile/tablet devices
+    if (window.innerWidth <= 1024 && footerRef.current) {
+      footerRef.current.classList.add('hidden');
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Show footer again when input loses focus
+    if (footerRef.current) {
+      footerRef.current.classList.remove('hidden');
+    }
+  };
 
   const scrollToBottom = (behavior: 'smooth' | 'auto' = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -1768,6 +1788,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
                   onFocus={async () => {
+                    handleInputFocus();
+                    
                     if (selectedRoom) {
                       setRooms(prev => prev.map(r =>
                         r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
@@ -1788,6 +1810,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       }
                     }
                   }}
+                  onBlur={handleInputBlur}
                   disabled={!connected}
                 />
                 <button 
