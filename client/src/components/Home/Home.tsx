@@ -1266,18 +1266,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
     }
     
-    // Start the call
+    // Start the call - this will mount the Call component
     setCallType(incomingCall.callType);
     setIsCallInitiator(false);
     setInCall(true);
+    
+    const callFrom = incomingCall.from;
     setIncomingCall(null);
     
-    // Notify caller that call was accepted
-    if (socket) {
-      socket.emit('call-accepted', {
-        to: incomingCall.from
-      });
-    }
+    // CRITICAL: Wait for Call component to mount and initialize before accepting
+    // This ensures the Call component is listening for the call-offer that will be sent
+    setTimeout(() => {
+      if (socket) {
+        console.log('📞 Sending call-accepted to initiator after Call component mounted');
+        socket.emit('call-accepted', {
+          to: callFrom
+        });
+      }
+    }, 500); // 500ms delay to ensure Call component is mounted and listening
   };
 
   const declineIncomingCall = () => {
