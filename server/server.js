@@ -49,6 +49,7 @@ app.get('/api', (req, res) => {
 import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
@@ -57,6 +58,7 @@ import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Serve static files from React build (for production)
 if (process.env.NODE_ENV === 'production') {

@@ -18,6 +18,7 @@ export async function initializeSiteSettings() {
         showuserlistpicture: 1, // 1 = show pictures, 0 = hide pictures
         searchUserCount: 50, // Maximum number of users to show in search
         defaultUsersDisplayCount: 20, // Maximum number of users to show by default (online users only)
+        siteEmail: '', // Email address to receive contact form submissions
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -27,6 +28,7 @@ export async function initializeSiteSettings() {
       console.log('   - showuserlistpicture: 1 (enabled)');
       console.log('   - searchUserCount: 50');
       console.log('   - defaultUsersDisplayCount: 20');
+      console.log('   - siteEmail: (not set)');
     } else {
       console.log('✅ Site settings already exist');
     }
@@ -54,14 +56,16 @@ export async function getSiteSettings() {
       return {
         showuserlistpicture: 1,
         searchUserCount: 50,
-        defaultUsersDisplayCount: 20
+        defaultUsersDisplayCount: 20,
+        siteEmail: ''
       };
     }
 
     return {
       showuserlistpicture: settings.showuserlistpicture || 0,
       searchUserCount: settings.searchUserCount || 50,
-      defaultUsersDisplayCount: settings.defaultUsersDisplayCount || 20
+      defaultUsersDisplayCount: settings.defaultUsersDisplayCount || 20,
+      siteEmail: settings.siteEmail || ''
     };
   } catch (error) {
     console.error('❌ Error getting site settings:', error);

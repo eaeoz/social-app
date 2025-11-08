@@ -4,6 +4,7 @@ import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
 import Call from '../Call/Call';
 import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
+import Contact from '../Legal/Contact';
 import './Home.css';
 
 interface HomeProps {
@@ -103,6 +104,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTermsConditions, setShowTermsConditions] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1494,6 +1496,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <button 
               className="sidebar-footer-link" 
               onClick={() => {
+                setShowContact(true);
+                setSidebarOpen(false);
+              }}
+              aria-label="Contact Us"
+            >
+              ✉️ Contact Us
+            </button>
+            <button 
+              className="sidebar-footer-link" 
+              onClick={() => {
                 setShowPrivacyPolicy(true);
                 setSidebarOpen(false);
               }}
@@ -2104,6 +2116,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {showContact && (
+        <Contact onClose={() => setShowContact(false)} />
       )}
 
       {showPrivacyPolicy && (
