@@ -402,6 +402,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
         setIncomingCall(null);
       });
 
+      socket.on('force_logout', (data: { reason: string }) => {
+        console.warn('⚠️ Force logout received:', data.reason);
+        alert(data.reason || 'Your session has been terminated. You will be logged out.');
+        handleLogout();
+      });
+
       socket.on('error', (error: { message: string }) => {
         console.error('Socket error:', error.message);
       });
@@ -426,6 +432,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('call-cancelled');
         socket.off('call-rejected');
         socket.off('call-ended');
+        socket.off('force_logout');
         socket.off('error');
       };
     }

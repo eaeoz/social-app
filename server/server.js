@@ -151,8 +151,25 @@ io.on('connection', (socket) => {
   });
 
   // Authentication
-  socket.on('authenticate', (data) => {
+  socket.on('authenticate', async (data) => {
     console.log('🔐 User authenticated:', data.username);
+    
+    // Validate user still exists in database
+    try {
+      const { getDatabase } = await import('./config/database.js');
+      const db = getDatabase();
+      const user = await db.collection('users').findOne({ _id: new ObjectId(data.userId) });
+      
+      if (!user) {
+        console.log(`⚠️ User ${data.userId} no longer exists, rejecting authentication`);
+        socket.emit('force_logout', { reason: 'User account deleted' });
+        socket.disconnect(true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error validating user during authentication:', error);
+    }
+    
     socket.userId = data.userId;
     socket.username = data.username;
     

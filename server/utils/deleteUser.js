@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { forceDisconnectUser } from './forceDisconnectUser.js';
 
 // Load environment variables from the root .env file
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +39,13 @@ async function deleteUser(username) {
     
     if (result.deletedCount === 1) {
       console.log(`✅ Successfully deleted user "${username}"`);
+      
+      // Force disconnect any active sessions for this user
+      try {
+        forceDisconnectUser(user._id.toString(), 'Your account has been deleted');
+      } catch (error) {
+        console.log(`⚠️ Could not force disconnect user (server may not be running): ${error.message}`);
+      }
       
       // Also delete related data
       const messagesDeleted = await db.collection('messages').deleteMany({

@@ -1,6 +1,20 @@
 import { getDatabase } from '../config/database.js';
 import { ObjectId } from 'mongodb';
 
+// Middleware to validate user still exists in database
+async function validateUserExists(userId) {
+  if (!userId) return false;
+  
+  try {
+    const db = getDatabase();
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    return !!user;
+  } catch (error) {
+    console.error('Error validating user existence:', error);
+    return false;
+  }
+}
+
 export function setupMessageHandlers(io, socket, userSockets) {
   const db = getDatabase();
 
@@ -193,11 +207,27 @@ export function setupMessageHandlers(io, socket, userSockets) {
   });
 
   // User typing indicator
-  socket.on('typing', (data) => {
+  socket.on('typing', async (data) => {
     try {
       const { roomId, userId, username, isPrivate, targetId } = data;
       
+      // Validate user still exists
+      const userExists = await validateUserExists(userId);
+      if (!userExists) {
+        console.log(`⚠️ User ${userId} no longer exists, disconnecting socket`);
+        socket.emit('force_logout', { reason: 'User account deleted' });
+        socket.disconnect(true);
+        return;
+      }
+      
       if (isPrivate && targetId) {
+        // Validate target user still exists
+        const targetExists = await validateUserExists(targetId);
+        if (!targetExists) {
+          console.log(`⚠️ Target user ${targetId} no longer exists`);
+          return;
+        }
+        
         // Send typing to specific user (private chat)
         const targetSocketId = userSockets.get(targetId);
         if (targetSocketId) {
@@ -214,9 +244,18 @@ export function setupMessageHandlers(io, socket, userSockets) {
   });
 
   // User stopped typing
-  socket.on('stop_typing', (data) => {
+  socket.on('stop_typing', async (data) => {
     try {
       const { roomId, userId, username, isPrivate, targetId } = data;
+      
+      // Validate user still exists
+      const userExists = await validateUserExists(userId);
+      if (!userExists) {
+        console.log(`⚠️ User ${userId} no longer exists, disconnecting socket`);
+        socket.emit('force_logout', { reason: 'User account deleted' });
+        socket.disconnect(true);
+        return;
+      }
       
       if (isPrivate && targetId) {
         // Send stop typing to specific user (private chat)
