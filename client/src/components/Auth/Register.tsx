@@ -330,6 +330,14 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
           <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
             {loading ? 'Creating Account...' : !recaptchaLoaded ? 'Loading...' : 'Sign Up'}
           </button>
+
+          <div className="recaptcha-notice">
+            <small>
+              This site is protected by reCAPTCHA and the Google{' '}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and{' '}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
+            </small>
+          </div>
         </form>
 
         <div className="auth-footer">

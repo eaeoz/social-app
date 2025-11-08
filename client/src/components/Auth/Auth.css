@@ -547,6 +547,60 @@
   cursor: not-allowed;
 }
 
+.recaptcha-notice {
+  margin-top: 15px;
+  text-align: center;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .recaptcha-notice {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: rgba(102, 126, 234, 0.15);
+}
+
+.recaptcha-notice small {
+  color: #666;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.auth-container[data-theme="dark"] .recaptcha-notice small {
+  color: #a0a0a0;
+}
+
+.recaptcha-notice a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.recaptcha-notice a::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+}
+
+.recaptcha-notice a:hover {
+  color: #764ba2;
+}
+
+.recaptcha-notice a:hover::after {
+  width: 100%;
+}
+
 .auth-footer {
   margin-top: 25px;
   text-align: center;
