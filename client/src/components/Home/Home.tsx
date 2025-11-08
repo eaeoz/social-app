@@ -1596,6 +1596,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
               📜 Terms & Conditions
             </button>
           </div>
+          
+          <div className="sidebar-copyright">
+            <p className="copyright-text">© 2025 Netcify</p>
+            <p className="copyright-rights">All rights reserved.</p>
+          </div>
         </aside>
 
         <main className="main-chat">
