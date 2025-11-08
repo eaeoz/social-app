@@ -61,6 +61,13 @@ function App() {
           fullUser: user
         });
         
+        // Verify we have required user data
+        if (!user.userId || !user.username) {
+          console.error('❌ Missing user data! Cannot authenticate');
+          console.error('User object:', user);
+          return;
+        }
+        
         // Authenticate immediately upon connection
         console.log('📤 Sending authenticate event...');
         newSocket.emit('authenticate', {
@@ -69,11 +76,11 @@ function App() {
         });
         console.log('✅ Authenticate event sent');
         
-        // Set socket AFTER authentication is sent (with small delay to ensure it's processed)
+        // Set socket AFTER authentication is sent (with longer delay to ensure it's processed)
         setTimeout(() => {
           console.log('⏱️ Setting socket in state after authentication');
           setSocket(newSocket);
-        }, 100);
+        }, 200);
       });
 
       newSocket.on('disconnect', () => {
