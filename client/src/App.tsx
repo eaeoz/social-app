@@ -54,11 +54,18 @@ function App() {
 
       newSocket.on('connect', () => {
         console.log('✅ Connected to server:', newSocket.id);
+        console.log('👤 User data for authentication:', {
+          userId: user.userId,
+          username: user.username,
+          fullUser: user
+        });
         // Authenticate immediately upon connection
+        console.log('📤 Sending authenticate event...');
         newSocket.emit('authenticate', {
           userId: user.userId,
           username: user.username
         });
+        console.log('✅ Authenticate event sent');
       });
 
       newSocket.on('disconnect', () => {
