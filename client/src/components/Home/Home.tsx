@@ -2193,40 +2193,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
     </div>
 
     <footer className="app-footer">
-      <div className="footer-content">
-        <button 
-          className="footer-link" 
-          onClick={() => setShowAbout(true)}
-          aria-label="About Netcify"
-        >
-          ℹ️ About
-        </button>
-        <span className="footer-separator"></span>
-        <button 
-          className="footer-link" 
-          onClick={() => setShowContact(true)}
-          aria-label="Contact Us"
-        >
-          ✉️ Contact
-        </button>
-        <span className="footer-separator"></span>
-        <button 
-          className="footer-link" 
-          onClick={() => setShowPrivacyPolicy(true)}
-          aria-label="Privacy Policy"
-        >
-          🔒 Privacy
-        </button>
-        <span className="footer-separator"></span>
-        <button 
-          className="footer-link" 
-          onClick={() => setShowTermsConditions(true)}
-          aria-label="Terms & Conditions"
-        >
-          📜 Terms
-        </button>
-      </div>
-      <span className="footer-separator"></span>
       <span className="footer-copyright">
         © 2025 Netcify. All rights reserved.
       </span>
