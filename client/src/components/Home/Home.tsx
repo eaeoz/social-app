@@ -5,6 +5,7 @@ import Call from '../Call/Call';
 import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import Contact from '../Legal/Contact';
+import About from '../Legal/About';
 import './Home.css';
 
 interface HomeProps {
@@ -105,6 +106,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTermsConditions, setShowTermsConditions] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -178,8 +180,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
         });
       } else if (e.key === 'Escape') {
         e.preventDefault();
+        // Close legal modals first
+        if (showAbout) {
+          setShowAbout(false);
+        }
+        else if (showPrivacyPolicy) {
+          setShowPrivacyPolicy(false);
+        }
+        else if (showTermsConditions) {
+          setShowTermsConditions(false);
+        }
+        else if (showContact) {
+          setShowContact(false);
+        }
         // Close sidebar if open
-        if (sidebarOpen) {
+        else if (sidebarOpen) {
           setSidebarOpen(false);
         }
         // Close profile modal if open
@@ -205,7 +220,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showUserModal, sidebarOpen, showProfileModal]);
+  }, [showUserModal, sidebarOpen, showProfileModal, showAbout, showPrivacyPolicy, showTermsConditions, showContact]);
 
   // Auto-focus search input when modal opens and reset selected index
   useEffect(() => {
@@ -1512,6 +1527,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <button 
               className="sidebar-footer-link" 
               onClick={() => {
+                setShowAbout(true);
+                setSidebarOpen(false);
+              }}
+              aria-label="About Netcify"
+            >
+              ℹ️ About
+            </button>
+            <button 
+              className="sidebar-footer-link" 
+              onClick={() => {
                 setShowContact(true);
                 setSidebarOpen(false);
               }}
@@ -2150,6 +2175,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
         </div>
       )}
 
+      {showAbout && (
+        <About onClose={() => setShowAbout(false)} />
+      )}
+
       {showContact && (
         <Contact onClose={() => setShowContact(false)} />
       )}
@@ -2164,6 +2193,40 @@ function Home({ user, socket, onLogout }: HomeProps) {
     </div>
 
     <footer className="app-footer">
+      <div className="footer-content">
+        <button 
+          className="footer-link" 
+          onClick={() => setShowAbout(true)}
+          aria-label="About Netcify"
+        >
+          ℹ️ About
+        </button>
+        <span className="footer-separator"></span>
+        <button 
+          className="footer-link" 
+          onClick={() => setShowContact(true)}
+          aria-label="Contact Us"
+        >
+          ✉️ Contact
+        </button>
+        <span className="footer-separator"></span>
+        <button 
+          className="footer-link" 
+          onClick={() => setShowPrivacyPolicy(true)}
+          aria-label="Privacy Policy"
+        >
+          🔒 Privacy
+        </button>
+        <span className="footer-separator"></span>
+        <button 
+          className="footer-link" 
+          onClick={() => setShowTermsConditions(true)}
+          aria-label="Terms & Conditions"
+        >
+          📜 Terms
+        </button>
+      </div>
+      <span className="footer-separator"></span>
       <span className="footer-copyright">
         © 2025 Netcify. All rights reserved.
       </span>
