@@ -1152,11 +1152,11 @@
 
 /* Input Action Buttons (Emoji & Location) */
 .input-action-button {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
   border: none;
-  font-size: 1rem;
+  font-size: 1.3rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -1166,12 +1166,12 @@
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
   float: left;
-  margin: 2px;
-  padding: 2px;
+  margin: 0 5px 0 0;
+  padding: 0;
 }
 
 .input-action-button + .input-action-button {
-  margin-left: 2px;
+  margin-left: 0;
 }
 
 .input-action-button:first-of-type {
