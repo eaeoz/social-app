@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
 import Call from '../Call/Call';
+import PrivacyPolicy from '../Legal/PrivacyPolicy';
+import TermsConditions from '../Legal/TermsConditions';
 import './Home.css';
 
 interface HomeProps {
@@ -99,6 +101,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsConditions, setShowTermsConditions] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1335,6 +1339,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   return (
+    <>
     <div className="home-container">
       <header className="home-header">
         <div className="header-left">
@@ -1483,6 +1488,29 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 ))
               )}
             </div>
+          </div>
+
+          <div className="sidebar-footer">
+            <button 
+              className="sidebar-footer-link" 
+              onClick={() => {
+                setShowPrivacyPolicy(true);
+                setSidebarOpen(false);
+              }}
+              aria-label="View Privacy Policy"
+            >
+              🔒 Privacy Policy
+            </button>
+            <button 
+              className="sidebar-footer-link" 
+              onClick={() => {
+                setShowTermsConditions(true);
+                setSidebarOpen(false);
+              }}
+              aria-label="View Terms & Conditions"
+            >
+              📜 Terms & Conditions
+            </button>
           </div>
         </aside>
 
@@ -2077,7 +2105,22 @@ function Home({ user, socket, onLogout }: HomeProps) {
           </div>
         </div>
       )}
+
+      {showPrivacyPolicy && (
+        <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />
+      )}
+
+      {showTermsConditions && (
+        <TermsConditions onClose={() => setShowTermsConditions(false)} />
+      )}
     </div>
+
+    <footer className="app-footer">
+      <span className="footer-copyright">
+        © 2025 Netcify. All rights reserved.
+      </span>
+    </footer>
+    </>
   );
 }
 
