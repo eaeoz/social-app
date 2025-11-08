@@ -3353,20 +3353,12 @@
 
 /* App Footer Styles (Bottom Copyright) */
 .app-footer {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-primary);
-  padding: 8px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+  display: none;
 }
 
 /* Hide footer when input is focused on mobile devices */
 .app-footer.hidden {
-  transform: translateY(100%);
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .footer-copyright {
