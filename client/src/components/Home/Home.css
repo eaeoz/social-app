@@ -1224,10 +1224,10 @@
 }
 
 .message-input-container {
-  padding: 20px 30px;
+  padding: 10px 30px;
   border-top: 1px solid var(--border-primary);
   display: flex;
-  gap: 15px;
+  gap: 10px;
   background: var(--bg-secondary);
   transition: background-color 0.3s ease, border-color 0.3s ease;
   position: relative;
