@@ -177,13 +177,16 @@ function handleUserActivity(userId) {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`✅ Client connected: ${socket.id}`);
+  console.log(`🔌 Socket.IO connection established: ${socket.id}`);
+  console.log(`🌐 Socket origin: ${socket.handshake.headers.origin}`);
+  console.log(`🔐 Socket auth:`, socket.handshake.auth);
+  console.log(`📍 Socket transport: ${socket.conn.transport.name}`);
 
   // Set up message handlers
   setupMessageHandlers(io, socket, userSockets);
 
-  socket.on('disconnect', () => {
-    console.log(`❌ Client disconnected: ${socket.id}`);
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ Client disconnected: ${socket.id}, Reason: ${reason}`);
     // Remove user from userSockets map
     if (socket.userId) {
       // Clear activity timeout
@@ -203,7 +206,9 @@ io.on('connection', (socket) => {
 
   // Authentication
   socket.on('authenticate', async (data) => {
+    console.log('📥 AUTHENTICATE EVENT RECEIVED!');
     console.log('🔐 User authenticated:', data.username);
+    console.log('👤 User data:', data);
     
     // Validate user still exists in database
     try {
