@@ -113,6 +113,9 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
       <div className="auth-card">
+        <div className="auth-logo">
+          <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
+        </div>
         <h1>🚀 Welcome Back!</h1>
         <p className="subtitle">Sign in to your account</p>
 

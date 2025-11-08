@@ -187,6 +187,9 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
       <div className="auth-card">
+        <div className="auth-logo">
+          <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
+        </div>
         <h1>🎉 Create Account</h1>
         <p className="subtitle">Join the chat community</p>
 

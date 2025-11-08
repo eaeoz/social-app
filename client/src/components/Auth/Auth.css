@@ -52,6 +52,28 @@
   transition: all 0.3s ease;
 }
 
+.auth-logo {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e1e8ed;
+}
+
+.auth-container[data-theme="dark"] .auth-logo {
+  border-bottom-color: #3a3a4e;
+}
+
+.auth-logo-text {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+}
+
 .auth-container[data-theme="dark"] .auth-card {
   background: #1e1e2e;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
