@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
+import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
 import Call from '../Call/Call';
 import './Home.css';
 
@@ -94,6 +95,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const userItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,6 +107,22 @@ function Home({ user, socket, onLogout }: HomeProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showEmojiPicker]);
 
   useEffect(() => {
     loadRooms();
@@ -137,13 +158,20 @@ function Home({ user, socket, onLogout }: HomeProps) {
           }
           return newValue;
         });
-      } else if (e.key === 'Escape' && showUserModal) {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
-        setShowUserModal(false);
-        // Focus chat input after closing modal
-        setTimeout(() => {
-          messageInputRef.current?.focus();
-        }, 100);
+        // Close sidebar if open
+        if (sidebarOpen) {
+          setSidebarOpen(false);
+        }
+        // Close user modal if open
+        else if (showUserModal) {
+          setShowUserModal(false);
+          // Focus chat input after closing modal
+          setTimeout(() => {
+            messageInputRef.current?.focus();
+          }, 100);
+        }
       } else if (e.altKey && e.key.toLowerCase() === 'x' && showUserModal) {
         e.preventDefault();
         setShowFilters(prev => !prev);
@@ -155,7 +183,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showUserModal]);
+  }, [showUserModal, sidebarOpen]);
 
   // Auto-focus search input when modal opens and reset selected index
   useEffect(() => {
@@ -805,15 +833,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
   //   }
   // };
 
-  const sendMessage = () => {
-    if (!messageInput.trim() || !socket) return;
+  const sendMessage = (messageContent?: string) => {
+    const content = messageContent || messageInput.trim();
+    if (!content || !socket) return;
 
     if (chatType === 'private' && selectedPrivateChat) {
       socket.emit('send_private_message', {
         receiverId: selectedPrivateChat.otherUser.userId,
         senderId: user.userId,
         senderName: user.fullName || user.username,
-        content: messageInput.trim(),
+        content: content,
         messageType: 'text'
       });
       
@@ -821,7 +850,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         messageId: `temp_${Date.now()}`,
         senderId: user.userId,
         senderName: user.fullName || user.username,
-        content: messageInput.trim(),
+        content: content,
         timestamp: new Date(),
         messageType: 'text'
       };
@@ -831,20 +860,118 @@ function Home({ user, socket, onLogout }: HomeProps) {
         roomId: selectedRoom.roomId,
         roomName: selectedRoom.name,
         chatType,
-        content: messageInput.trim()
+        content: content
       });
       
       socket.emit('send_room_message', {
         roomId: selectedRoom.roomId,
         senderId: user.userId,
         senderName: user.fullName || user.username,
-        content: messageInput.trim(),
+        content: content,
         messageType: 'text'
       });
     }
 
     setMessageInput('');
+    setShowEmojiPicker(false);
     stopTyping();
+  };
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setMessageInput(prev => prev + emojiData.emoji);
+    messageInputRef.current?.focus();
+  };
+
+  const handleLocationShare = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    setShowLocationModal(true);
+  };
+
+  const confirmLocationShare = () => {
+    setIsGettingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        const locationMessage = `📍 Location: ${googleMapsUrl}`;
+        sendMessage(locationMessage);
+        setShowLocationModal(false);
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        let errorMessage = 'Unable to retrieve your location';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is currently unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out. Please try again.';
+            break;
+        }
+        alert(errorMessage);
+        setShowLocationModal(false);
+        setIsGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  const cancelLocationShare = () => {
+    setShowLocationModal(false);
+    setIsGettingLocation(false);
+  };
+
+  const renderMessageContent = (content: string) => {
+    // Check if message contains a location URL
+    const locationUrlRegex = /📍\s*Location:\s*(https:\/\/www\.google\.com\/maps\?q=[-0-9.]+,[-0-9.]+)/;
+    const match = content.match(locationUrlRegex);
+    
+    if (match) {
+      const url = match[1];
+      const coords = url.match(/q=([-0-9.]+),([-0-9.]+)/);
+      
+      if (coords) {
+        const [, lat, lng] = coords;
+        return (
+          <div className="location-message">
+            <div className="location-text">📍 Shared Location</div>
+            <div className="location-map-preview">
+              <iframe
+                src={`https://www.google.com/maps?q=${lat},${lng}&output=embed`}
+                width="100%"
+                height="200"
+                style={{ border: 0, borderRadius: '8px' }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Location Map"
+              />
+            </div>
+            <a 
+              href={url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="location-link"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Open in Google Maps →
+            </a>
+          </div>
+        );
+      }
+    }
+    
+    return content;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -1308,6 +1435,55 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
           </div>
 
+          <div className="sidebar-section">
+            <div className="section-header">
+              <h3>
+                💬 Private Chats
+                {privateChats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 && (
+                  <span className="section-unread-badge">
+                    {privateChats.reduce((total, chat) => total + chat.unreadCount, 0)}
+                  </span>
+                )}
+              </h3>
+            </div>
+            <div className="chat-list">
+              {privateChats.length === 0 ? (
+                <p className="empty-message">No private chats yet</p>
+              ) : (
+                privateChats.map(chat => (
+                  <div
+                    key={chat.chatId}
+                    className={`room-item ${selectedPrivateChat?.chatId === chat.chatId ? 'active' : ''}`}
+                    onClick={() => {
+                      selectPrivateChat(chat);
+                      setSidebarOpen(false);
+                    }}
+                  >
+                    <div className="private-chat-card">
+                      <div className="private-chat-info">
+                        <div className="private-chat-avatar">
+                          {chat.otherUser.profilePicture ? (
+                            <img src={chat.otherUser.profilePicture} alt={chat.otherUser.displayName} />
+                          ) : (
+                            chat.otherUser.displayName.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="private-chat-details">
+                          <div className="private-chat-name">{chat.otherUser.displayName}</div>
+                          {chat.lastMessage && (
+                            <div className="private-chat-preview">{chat.lastMessage}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {chat.unreadCount > 0 && (
+                      <span className="room-badge unread">{chat.unreadCount}</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </aside>
 
         <main className="main-chat">
@@ -1432,7 +1608,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                             <span className="message-sender">{msg.senderName}</span>
                             <span className="message-time">{formatTime(msg.timestamp)}</span>
                           </div>
-                          <div className="message-text">{msg.content}</div>
+                          <div className="message-text">{renderMessageContent(msg.content)}</div>
                         </div>
                       </div>
                     ))}
@@ -1448,6 +1624,36 @@ function Home({ user, socket, onLogout }: HomeProps) {
               </div>
 
               <div className="message-input-container">
+                <button
+                  className="input-action-button location-button"
+                  onClick={handleLocationShare}
+                  disabled={!connected}
+                  title="Share Location"
+                  aria-label="Share location"
+                >
+                  📍
+                </button>
+                <button
+                  className="input-action-button emoji-button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  disabled={!connected}
+                  title="Add Emoji"
+                  aria-label="Add emoji"
+                >
+                  😊
+                </button>
+                {showEmojiPicker && (
+                  <div className="emoji-picker-container" ref={emojiPickerRef}>
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
+                      width={320}
+                      height={400}
+                      searchPlaceholder="Search emoji..."
+                      previewConfig={{ showPreview: false }}
+                    />
+                  </div>
+                )}
                 <input
                   ref={messageInputRef}
                   type="text"
@@ -1481,7 +1687,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 />
                 <button 
                   className="send-button" 
-                  onClick={sendMessage}
+                  onClick={() => sendMessage()}
                   disabled={!connected || !messageInput.trim()}
                 >
                   Send
@@ -1722,6 +1928,51 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   aria-label="Accept call"
                 >
                   ✅
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLocationModal && (
+        <div className="modal-overlay" onClick={cancelLocationShare}>
+          <div className="modal-content location-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <h2>Share Your Location</h2>
+              </div>
+              <button className="modal-close" onClick={cancelLocationShare}>×</button>
+            </div>
+            <div className="modal-body location-modal-body">
+              <div className="location-modal-icon">📍</div>
+              <p className="location-modal-text">
+                Do you want to share your current location with this chat?
+              </p>
+              <p className="location-modal-subtext">
+                Your location will be sent as a Google Maps link that others can view.
+              </p>
+              <div className="location-modal-actions">
+                <button
+                  className="location-modal-button cancel-button"
+                  onClick={cancelLocationShare}
+                  disabled={isGettingLocation}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="location-modal-button share-button"
+                  onClick={confirmLocationShare}
+                  disabled={isGettingLocation}
+                >
+                  {isGettingLocation ? (
+                    <>
+                      <span className="button-spinner"></span>
+                      Getting Location...
+                    </>
+                  ) : (
+                    'Share Location'
+                  )}
                 </button>
               </div>
             </div>
