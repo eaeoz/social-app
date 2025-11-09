@@ -1986,6 +1986,8 @@
 
 .search-input {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
   padding: 10px 16px;
   border: 2px solid var(--border-input);
   border-radius: 8px;
@@ -1993,6 +1995,8 @@
   background: var(--bg-secondary);
   color: var(--text-primary);
   transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-input:focus {
