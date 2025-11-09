@@ -2227,7 +2227,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
             <div className="modal-body profile-modal-body">
               <div className="profile-picture-section">
-                <div className={`profile-picture-preview ${isUpdatingProfile ? 'updating' : ''}`}>
+                <div 
+                  className={`profile-picture-preview ${isUpdatingProfile ? 'updating' : ''}`}
+                  onClick={() => !isUpdatingProfile && fileInputRef.current?.click()}
+                  style={{ cursor: isUpdatingProfile ? 'default' : 'pointer' }}
+                  title={isUpdatingProfile ? '' : 'Click to change picture'}
+                >
                   {profilePicture ? (
                     <img src={profilePicture} alt="Profile" />
                   ) : (
@@ -2238,6 +2243,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       <div className="spinner"></div>
                     </div>
                   )}
+                  {!isUpdatingProfile && (
+                    <div className="picture-hover-overlay">
+                      <span className="hover-icon">📷</span>
+                      <span className="hover-text">Change Picture</span>
+                    </div>
+                  )}
                 </div>
                 <input
                   ref={fileInputRef}
@@ -2246,13 +2257,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   onChange={handleProfilePictureChange}
                   style={{ display: 'none' }}
                 />
-                <button
-                  className="upload-button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUpdatingProfile}
-                >
-                  📷 Change Picture
-                </button>
+                <p className="picture-hint">Click on the picture to change it</p>
               </div>
 
               <div className="profile-form-section">
@@ -2275,29 +2280,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
                 <div className="form-group">
                   <label>Gender</label>
-                  <div className="radio-group">
-                    <label className="radio-label">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="Male"
-                        checked={profileGender === 'Male'}
-                        onChange={(e) => setProfileGender(e.target.value)}
-                        disabled={isUpdatingProfile}
-                      />
-                      <span>Male</span>
-                    </label>
-                    <label className="radio-label">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="Female"
-                        checked={profileGender === 'Female'}
-                        onChange={(e) => setProfileGender(e.target.value)}
-                        disabled={isUpdatingProfile}
-                      />
-                      <span>Female</span>
-                    </label>
+                  <div className="gender-toggle-container">
+                    <button
+                      type="button"
+                      className={`gender-toggle-button ${profileGender === 'Male' ? 'active' : ''}`}
+                      onClick={() => !isUpdatingProfile && setProfileGender('Male')}
+                      disabled={isUpdatingProfile}
+                    >
+                      <span className="gender-icon">♂️</span>
+                      <span className="gender-label">Male</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`gender-toggle-button ${profileGender === 'Female' ? 'active' : ''}`}
+                      onClick={() => !isUpdatingProfile && setProfileGender('Female')}
+                      disabled={isUpdatingProfile}
+                    >
+                      <span className="gender-icon">♀️</span>
+                      <span className="gender-label">Female</span>
+                    </button>
                   </div>
                 </div>
 
