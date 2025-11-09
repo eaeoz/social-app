@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
@@ -33,7 +32,6 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [showContact, setShowContact] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-  const navigate = useNavigate();
 
   // Load reCAPTCHA script
   useEffect(() => {
