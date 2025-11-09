@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 interface GoogleCallbackProps {
@@ -8,16 +8,37 @@ interface GoogleCallbackProps {
 function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [status, setStatus] = useState('Processing...');
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const refresh = searchParams.get('refresh');
-    const userParam = searchParams.get('user');
+    let processed = false;
 
-    if (token && refresh && userParam) {
+    // Set a timeout fallback to prevent indefinite loading
+    const timeoutId = setTimeout(() => {
+      if (!processed) {
+        console.error('OAuth callback timeout - redirecting to login');
+        navigate('/login?error=timeout');
+      }
+    }, 5000); // 5 second timeout
+
+    const processCallback = async () => {
       try {
+        const token = searchParams.get('token');
+        const refresh = searchParams.get('refresh');
+        const userParam = searchParams.get('user');
+
+        if (!token || !refresh || !userParam) {
+          processed = true;
+          clearTimeout(timeoutId);
+          setStatus('Missing parameters...');
+          setTimeout(() => navigate('/login?error=missing_params'), 1000);
+          return;
+        }
+
+        setStatus('Parsing user data...');
         const user = JSON.parse(decodeURIComponent(userParam));
         
+        setStatus('Storing credentials...');
         // Store tokens
         localStorage.setItem('accessToken', token);
         localStorage.setItem('refreshToken', refresh);
@@ -37,19 +58,32 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         
         localStorage.setItem('user', JSON.stringify(userData));
 
+        setStatus('Logging in...');
         // Call success handler
-        onLoginSuccess(userData);
+        await onLoginSuccess(userData);
         
-        // Navigate to home
-        navigate('/');
+        processed = true;
+        clearTimeout(timeoutId);
+        
+        setStatus('Redirecting to home...');
+        // Use a small delay to ensure state updates complete
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 100);
       } catch (error) {
+        processed = true;
+        clearTimeout(timeoutId);
         console.error('Error parsing OAuth callback data:', error);
-        navigate('/login?error=invalid_callback');
+        setStatus('Error occurred...');
+        setTimeout(() => navigate('/login?error=invalid_callback'), 1000);
       }
-    } else {
-      // Missing parameters
-      navigate('/login?error=missing_params');
-    }
+    };
+
+    processCallback();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [searchParams, onLoginSuccess, navigate]);
 
   return (
@@ -65,10 +99,11 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         padding: '40px',
         borderRadius: '12px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-        textAlign: 'center'
+        textAlign: 'center',
+        maxWidth: '400px'
       }}>
         <h2>🔐 Completing Google Sign In...</h2>
-        <p>Please wait while we log you in.</p>
+        <p style={{ margin: '10px 0', color: '#666' }}>{status}</p>
         <div style={{
           marginTop: '20px',
           fontSize: '40px',
@@ -76,6 +111,9 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         }}>
           ⏳
         </div>
+        <p style={{ marginTop: '20px', fontSize: '12px', color: '#999' }}>
+          This should only take a moment...
+        </p>
       </div>
       <style>{`
         @keyframes spin {
