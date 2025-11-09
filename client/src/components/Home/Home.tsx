@@ -113,6 +113,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
   const [croppedImageFile, setCroppedImageFile] = useState<File | null>(null);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle footer visibility on mobile when input is focused
@@ -1394,6 +1401,72 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
+  const handleChangePassword = async () => {
+    // Clear previous messages
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All password fields are required');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setPasswordError('New password must be different from current password');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPasswordSuccess('Password changed successfully!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        
+        // Auto-hide password change section after 2 seconds
+        setTimeout(() => {
+          setShowPasswordChange(false);
+          setPasswordSuccess('');
+        }, 2000);
+      } else {
+        setPasswordError(data.error || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPasswordError('An error occurred while changing password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <>
     <header className="app-header">
@@ -2208,6 +2281,84 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 >
                   {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
                 </button>
+
+                <div className="password-change-section">
+                  <button
+                    className="toggle-password-change-button"
+                    onClick={() => {
+                      setShowPasswordChange(!showPasswordChange);
+                      setPasswordError('');
+                      setPasswordSuccess('');
+                      if (showPasswordChange) {
+                        setCurrentPassword('');
+                        setNewPassword('');
+                        setConfirmPassword('');
+                      }
+                    }}
+                    disabled={isUpdatingProfile}
+                  >
+                    {showPasswordChange ? '🔒 Hide Password Change' : '🔑 Change Password'}
+                  </button>
+
+                  {showPasswordChange && (
+                    <div className="password-change-form">
+                      {passwordError && (
+                        <div className="password-message error-message">
+                          {passwordError}
+                        </div>
+                      )}
+                      {passwordSuccess && (
+                        <div className="password-message success-message">
+                          {passwordSuccess}
+                        </div>
+                      )}
+
+                      <div className="form-group">
+                        <label htmlFor="currentPassword">Current Password</label>
+                        <input
+                          type="password"
+                          id="currentPassword"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          disabled={isChangingPassword}
+                          placeholder="Enter current password"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="newPassword">New Password</label>
+                        <input
+                          type="password"
+                          id="newPassword"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          disabled={isChangingPassword}
+                          placeholder="Enter new password (min 6 characters)"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="confirmPassword">Confirm New Password</label>
+                        <input
+                          type="password"
+                          id="confirmPassword"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={isChangingPassword}
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+
+                      <button
+                        className="change-password-button"
+                        onClick={handleChangePassword}
+                        disabled={isChangingPassword}
+                      >
+                        {isChangingPassword ? 'Changing...' : 'Change Password'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
