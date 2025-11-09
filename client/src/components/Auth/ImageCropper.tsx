@@ -8,15 +8,19 @@ interface ImageCropperProps {
 }
 
 function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps) {
-  const [zoom, setZoom] = useState(1);
+  const [zoomPercent, setZoomPercent] = useState(100); // Percentage: 100 = fit to frame
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [baseScale, setBaseScale] = useState(1); // Scale that fits image to frame
   const [loading, setLoading] = useState(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate actual zoom from percentage
+  const actualZoom = (baseScale * zoomPercent) / 100;
 
   // Load image and calculate initial size
   useEffect(() => {
@@ -27,7 +31,8 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
       if (containerRef.current) {
         const containerSize = 300; // Preview size
         const scale = Math.max(containerSize / img.width, containerSize / img.height);
-        setZoom(scale);
+        setBaseScale(scale);
+        setZoomPercent(100); // Start at 100% (perfectly fit)
         
         // Calculate initial position to center the image
         const scaledWidth = img.width * scale;
@@ -94,8 +99,13 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
     setIsDragging(false);
   };
 
-  const handleZoomChange = (newZoom: number) => {
-    setZoom(Math.max(0.5, Math.min(3, newZoom)));
+  const handleZoomChange = (newPercent: number) => {
+    // Allow 50% to 300% of the fitted size
+    setZoomPercent(Math.max(50, Math.min(300, newPercent)));
+  };
+
+  const handleZoomStep = (step: number) => {
+    setZoomPercent(prev => Math.max(50, Math.min(300, prev + step)));
   };
 
   const handleCrop = async () => {
@@ -122,10 +132,10 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
       const previewSize = 300;
 
       // Calculate source rectangle (what's visible in the preview)
-      const sourceX = Math.max(0, -position.x / zoom);
-      const sourceY = Math.max(0, -position.y / zoom);
-      const sourceWidth = Math.min(imageSize.width - sourceX, previewSize / zoom);
-      const sourceHeight = Math.min(imageSize.height - sourceY, previewSize / zoom);
+      const sourceX = Math.max(0, -position.x / actualZoom);
+      const sourceY = Math.max(0, -position.y / actualZoom);
+      const sourceWidth = Math.min(imageSize.width - sourceX, previewSize / actualZoom);
+      const sourceHeight = Math.min(imageSize.height - sourceY, previewSize / actualZoom);
 
       // Draw the cropped area to canvas
       ctx.drawImage(
@@ -159,13 +169,12 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
 
   const resetPosition = () => {
     if (containerRef.current && imageSize.width > 0) {
-      const containerSize = 300;
-      const scale = Math.max(containerSize / imageSize.width, containerSize / imageSize.height);
-      setZoom(scale);
+      setZoomPercent(100); // Reset to 100% (fit to frame)
       
-      // Recalculate centered position
-      const scaledWidth = imageSize.width * scale;
-      const scaledHeight = imageSize.height * scale;
+      // Recalculate centered position with base scale
+      const containerSize = 300;
+      const scaledWidth = imageSize.width * baseScale;
+      const scaledHeight = imageSize.height * baseScale;
       const initialX = (containerSize - scaledWidth) / 2;
       const initialY = (containerSize - scaledHeight) / 2;
       setPosition({ x: initialX, y: initialY });
@@ -202,7 +211,7 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
                 alt="Crop preview"
                 className="cropper-image"
                 style={{
-                  transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                  transform: `translate(${position.x}px, ${position.y}px) scale(${actualZoom})`,
                   transformOrigin: 'top left',
                   cursor: isDragging ? 'grabbing' : 'grab',
                 }}
@@ -215,25 +224,30 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
             <div className="zoom-control">
               <button
                 className="zoom-button"
-                onClick={() => handleZoomChange(zoom - 0.1)}
-                disabled={zoom <= 0.5 || loading}
+                onClick={() => handleZoomStep(-5)}
+                disabled={zoomPercent <= 50 || loading}
+                title="Zoom out 5%"
               >
                 ➖
               </button>
-              <input
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.1"
-                value={zoom}
-                onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                className="zoom-slider"
-                disabled={loading}
-              />
+              <div className="zoom-info">
+                <input
+                  type="range"
+                  min="50"
+                  max="300"
+                  step="1"
+                  value={zoomPercent}
+                  onChange={(e) => handleZoomChange(parseInt(e.target.value))}
+                  className="zoom-slider"
+                  disabled={loading}
+                />
+                <span className="zoom-label">{zoomPercent}%</span>
+              </div>
               <button
                 className="zoom-button"
-                onClick={() => handleZoomChange(zoom + 0.1)}
-                disabled={zoom >= 3 || loading}
+                onClick={() => handleZoomStep(5)}
+                disabled={zoomPercent >= 300 || loading}
+                title="Zoom in 5%"
               >
                 ➕
               </button>
