@@ -20,14 +20,15 @@ export function configurePassport() {
     }
   });
 
-  // Google OAuth Strategy
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/auth/google/callback',
-      },
+  // Google OAuth Strategy - Only initialize if credentials are provided
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/auth/google/callback',
+        },
       async (accessToken, refreshToken, profile, done) => {
         try {
           const db = getDatabase();
@@ -130,9 +131,12 @@ export function configurePassport() {
           console.error('Google OAuth error:', error);
           done(error, null);
         }
-      }
-    )
-  );
+        }
+      )
+    );
+  } else {
+    console.log('ℹ️  Google OAuth not configured - skipping Google authentication strategy');
+  }
 
   return passport;
 }

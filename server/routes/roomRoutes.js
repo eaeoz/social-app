@@ -74,6 +74,7 @@ router.get('/user-profile/:userId', authenticateToken, async (req, res) => {
         projection: { 
           username: 1, 
           displayName: 1, 
+          nickName: 1,
           status: 1,
           bio: 1,
           age: 1,
@@ -97,6 +98,7 @@ router.get('/user-profile/:userId', authenticateToken, async (req, res) => {
       userId: user._id.toString(),
       username: user.username,
       displayName: user.displayName,
+      nickName: user.nickName || user.username,
       status: user.status || 'offline',
       bio: user.bio || '',
       age: user.age,
@@ -155,7 +157,8 @@ router.get('/users', authenticateToken, async (req, res) => {
     // Build projection dynamically based on settings
     const projection = { 
       username: 1, 
-      displayName: 1, 
+      displayName: 1,
+      nickName: 1,
       status: 1,
       bio: 1,
       age: 1,
@@ -205,6 +208,7 @@ router.get('/users', authenticateToken, async (req, res) => {
         userId: user._id.toString(),
         username: user.username,
         displayName: user.displayName,
+        nickName: user.nickName || user.username,
         status: user.status || 'offline',
         bio: user.bio || '',
         age: user.age,
@@ -292,7 +296,7 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
         // Get other user's info
         const otherUser = await db.collection('users').findOne(
           { _id: otherUserId },
-          { projection: { username: 1, displayName: 1, status: 1, profilePictureId: 1 } }
+          { projection: { username: 1, displayName: 1, nickName: 1, status: 1, profilePictureId: 1 } }
         );
 
         if (!otherUser) return null;
@@ -333,6 +337,7 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
             userId: otherUser._id.toString(),
             username: otherUser.username,
             displayName: otherUser.displayName,
+            nickName: otherUser.nickName || otherUser.username,
             status: otherUser.status || 'offline',
             profilePicture: profilePictureUrl
           },

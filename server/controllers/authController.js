@@ -184,6 +184,8 @@ export async function register(req, res) {
       email,
       passwordHash: hashedPassword,
       displayName: fullName || username,
+      nickName: username, // Initialize nickName with username
+      lastNickNameChange: null, // User can change nickName immediately
       age: parseInt(age),
       gender,
       bio: '',
@@ -290,6 +292,7 @@ export async function register(req, res) {
       username,
       email,
       fullName: newUser.displayName,
+      nickName: newUser.nickName,
       age: newUser.age,
       gender: newUser.gender,
       profilePicture: profilePictureUrl,
@@ -488,6 +491,7 @@ export async function login(req, res) {
       username: user.username,
       email: user.email,
       fullName: user.displayName,
+      nickName: user.nickName || user.username,
       age: user.age,
       gender: user.gender,
       profilePicture: profilePictureUrl,
@@ -535,6 +539,7 @@ export async function getCurrentUser(req, res) {
       username: user.username,
       email: user.email,
       fullName: user.displayName,
+      nickName: user.nickName || user.username,
       age: user.age,
       gender: user.gender,
       profilePicture: profilePictureUrl,
@@ -779,7 +784,7 @@ export async function logout(req, res) {
 export async function updateProfile(req, res) {
   try {
     const userId = req.user.userId;
-    const { age, gender } = req.body;
+    const { age, gender, nickName } = req.body;
 
     const db = getDatabase();
     const usersCollection = db.collection('users');
@@ -811,6 +816,48 @@ export async function updateProfile(req, res) {
         return res.status(400).json({ error: 'Gender must be Male or Female' });
       }
       updateData.gender = gender;
+    }
+
+    // Update nickName if provided
+    if (nickName !== undefined && nickName !== user.nickName) {
+      // Validate nickName
+      if (!nickName || nickName.trim().length === 0) {
+        return res.status(400).json({ error: 'Nickname cannot be empty' });
+      }
+
+      if (nickName.length > 30) {
+        return res.status(400).json({ error: 'Nickname must be 30 characters or less' });
+      }
+
+      // Check if user can change nickName (once per year restriction)
+      if (user.lastNickNameChange) {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        
+        if (user.lastNickNameChange > oneYearAgo) {
+          const nextChangeDate = new Date(user.lastNickNameChange);
+          nextChangeDate.setFullYear(nextChangeDate.getFullYear() + 1);
+          
+          return res.status(400).json({ 
+            error: 'You can only change your nickname once per year',
+            nextChangeDate: nextChangeDate.toISOString(),
+            message: `You can change your nickname again on ${nextChangeDate.toLocaleDateString()}`
+          });
+        }
+      }
+
+      // Check if nickName is already taken by another user
+      const existingUser = await usersCollection.findOne({
+        nickName: nickName,
+        _id: { $ne: new ObjectId(userId) }
+      });
+
+      if (existingUser) {
+        return res.status(400).json({ error: 'This nickname is already taken by another user' });
+      }
+
+      updateData.nickName = nickName;
+      updateData.lastNickNameChange = new Date();
     }
 
     // Process and upload profile picture if provided
@@ -856,6 +903,8 @@ export async function updateProfile(req, res) {
       username: updatedUser.username,
       email: updatedUser.email,
       fullName: updatedUser.displayName,
+      nickName: updatedUser.nickName || updatedUser.username,
+      lastNickNameChange: updatedUser.lastNickNameChange,
       age: updatedUser.age,
       gender: updatedUser.gender,
       profilePicture: profilePictureUrl,

@@ -326,13 +326,13 @@ export function setupMessageHandlers(io, socket, userSockets) {
         messages.map(async (msg) => {
           const sender = await db.collection('users').findOne(
             { _id: msg.senderId },
-            { projection: { username: 1, displayName: 1 } }
+            { projection: { username: 1, displayName: 1, nickName: 1 } }
           );
           
           return {
             messageId: msg._id.toString(),
             senderId: msg.senderId.toString(),
-            senderName: sender?.displayName || sender?.username || 'Unknown',
+            senderName: sender?.nickName || sender?.displayName || sender?.username || 'Unknown',
             content: msg.content,
             messageType: msg.messageType,
             timestamp: msg.timestamp
@@ -372,14 +372,14 @@ export function setupMessageHandlers(io, socket, userSockets) {
         messages.map(async (msg) => {
           const sender = await db.collection('users').findOne(
             { _id: msg.senderId },
-            { projection: { username: 1, displayName: 1 } }
+            { projection: { username: 1, displayName: 1, nickName: 1 } }
           );
           
           return {
             messageId: msg._id.toString(),
             senderId: msg.senderId.toString(),
             receiverId: msg.receiverId.toString(),
-            senderName: sender?.displayName || sender?.username || 'Unknown',
+            senderName: sender?.nickName || sender?.displayName || sender?.username || 'Unknown',
             content: msg.content,
             messageType: msg.messageType,
             timestamp: msg.timestamp,

@@ -5,13 +5,15 @@
       "validator": {
         "$jsonSchema": {
           "bsonType": "object",
-          "required": ["username", "email", "passwordHash", "createdAt"],
+          "required": ["username", "email", "passwordHash", "createdAt", "nickName"],
           "properties": {
             "username": { "bsonType": "string" },
             "email": { "bsonType": "string" },
             "passwordHash": { "bsonType": "string" },
             "displayName": { "bsonType": "string" },
-            "age": { 
+            "nickName": { "bsonType": "string" },
+            "lastNickNameChange": { "bsonType": ["date", "null"] },
+            "age": {
               "bsonType": "int",
               "minimum": 18,
               "maximum": 100
@@ -35,6 +37,7 @@
       "indexes": [
         { "key": { "username": 1 }, "unique": true },
         { "key": { "email": 1 }, "unique": true },
+        { "key": { "nickName": 1 }, "unique": true },
         { "key": { "createdAt": -1 } }
       ]
     },

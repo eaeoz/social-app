@@ -77,8 +77,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileAge, setProfileAge] = useState(user.age || 18);
   const [profileGender, setProfileGender] = useState(user.gender || 'Male');
+  const [profileNickName, setProfileNickName] = useState(user.nickName || user.username);
   const [profilePicture, setProfilePicture] = useState(user.profilePicture);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [nickNameError, setNickNameError] = useState('');
+  const [canChangeNickName, setCanChangeNickName] = useState(true);
+  const [nextNickNameChangeDate, setNextNickNameChangeDate] = useState<string | null>(null);
   const [inCall, setInCall] = useState(false);
   const [callType, setCallType] = useState<'voice' | 'video' | null>(null);
   const [isCallInitiator, setIsCallInitiator] = useState(false);
@@ -1378,7 +1382,31 @@ function Home({ user, socket, onLogout }: HomeProps) {
   };
 
   const handleUpdateProfile = async () => {
+    // Validate nickName before submitting
+    if (!profileNickName || profileNickName.trim().length === 0) {
+      setNickNameError('Display name cannot be empty');
+      return;
+    }
+
+    if (profileNickName.trim().length < 3) {
+      setNickNameError('Display name must be at least 3 characters');
+      return;
+    }
+
+    if (profileNickName.trim().length > 20) {
+      setNickNameError('Display name must be at most 20 characters');
+      return;
+    }
+
+    // Check if nickname contains only allowed characters (letters, numbers, spaces, underscores, hyphens)
+    const nickNameRegex = /^[a-zA-Z0-9\s_-]+$/;
+    if (!nickNameRegex.test(profileNickName.trim())) {
+      setNickNameError('Display name can only contain letters, numbers, spaces, underscores, and hyphens');
+      return;
+    }
+
     setIsUpdatingProfile(true);
+    setNickNameError('');
 
     try {
       const token = localStorage.getItem('accessToken');
@@ -1386,6 +1414,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       formData.append('age', profileAge.toString());
       formData.append('gender', profileGender);
+      formData.append('nickName', profileNickName.trim());
 
       // Use the cropped image file if available
       if (croppedImageFile) {
@@ -1400,10 +1429,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
         body: formData
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         user.age = data.user.age;
         user.gender = data.user.gender;
+        user.nickName = data.user.nickName;
+        user.displayName = data.user.displayName;
         
         // Add cache-busting timestamp to force browser to reload the image
         const newProfilePicture = data.user.profilePicture 
@@ -1412,8 +1444,17 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         user.profilePicture = newProfilePicture;
         
-        // Update the profilePicture state to reflect in header immediately
+        // Update states
         setProfilePicture(newProfilePicture);
+        setProfileNickName(data.user.nickName);
+        
+        // Update nickname change restriction info
+        if (data.canChangeNickName !== undefined) {
+          setCanChangeNickName(data.canChangeNickName);
+        }
+        if (data.nextNickNameChangeDate) {
+          setNextNickNameChangeDate(data.nextNickNameChangeDate);
+        }
         
         localStorage.setItem('user', JSON.stringify(user));
 
@@ -1422,11 +1463,23 @@ function Home({ user, socket, onLogout }: HomeProps) {
         setShowProfileModal(false);
         setIsUpdatingProfile(false);
       } else {
-        console.error('Failed to update profile');
+        // Handle specific errors
+        if (data.error && data.error.includes('nickname')) {
+          setNickNameError(data.error);
+        } else if (data.error && data.error.includes('once per year')) {
+          setNickNameError(data.error);
+          if (data.nextChangeDate) {
+            setNextNickNameChangeDate(data.nextChangeDate);
+            setCanChangeNickName(false);
+          }
+        } else {
+          setNickNameError(data.error || 'Failed to update profile');
+        }
         setIsUpdatingProfile(false);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
+      setNickNameError('An error occurred while updating profile');
       setIsUpdatingProfile(false);
     }
   };
@@ -1557,7 +1610,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
               )}
             </div>
             <div className="user-details">
-              <span className="user-name">{user.fullName || user.username}</span>
+              <span className="user-name">{user.displayName || user.nickName || user.username}</span>
               <span className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
                 {connected ? '🟢 Online' : '🔴 Offline'}
               </span>
@@ -1739,7 +1792,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         )}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <h2>{selectedPrivateChat.otherUser.username}</h2>
+                        <h2>{selectedPrivateChat.otherUser.displayName}</h2>
                         <p className="chat-description">
                           {selectedPrivateChat.otherUser.age && (
                             <span className="chat-header-info">{selectedPrivateChat.otherUser.age} years old</span>
@@ -2272,6 +2325,34 @@ function Home({ user, socket, onLogout }: HomeProps) {
               </div>
 
               <div className="profile-form-section">
+                <div className="form-group">
+                  <label htmlFor="nickName">Display Name (Nickname)</label>
+                  <input
+                    type="text"
+                    id="nickName"
+                    value={profileNickName}
+                    onChange={(e) => {
+                      setProfileNickName(e.target.value);
+                      setNickNameError('');
+                    }}
+                    disabled={isUpdatingProfile || !canChangeNickName}
+                    placeholder="Enter your display name"
+                    maxLength={20}
+                    className="nickname-input"
+                  />
+                  {nickNameError && (
+                    <p className="error-message">{nickNameError}</p>
+                  )}
+                  {!canChangeNickName && nextNickNameChangeDate && (
+                    <p className="info-message">
+                      You can change your nickname again on {new Date(nextNickNameChangeDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  <p className="field-hint">
+                    This name will be displayed in chats. You can change it once per year.
+                  </p>
+                </div>
+
                 <div className="form-group">
                   <label htmlFor="age">Age</label>
                   <select
