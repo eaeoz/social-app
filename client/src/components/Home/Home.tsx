@@ -7,6 +7,7 @@ import TermsConditions from '../Legal/TermsConditions';
 import Contact from '../Legal/Contact';
 import About from '../Legal/About';
 import ImageCropper from '../Auth/ImageCropper';
+import ReportModal from './ReportModal';
 import './Home.css';
 
 interface HomeProps {
@@ -121,6 +122,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedUserId, setReportedUserId] = useState<string | null>(null);
 
   // Handle footer visibility on mobile when input is focused
   useEffect(() => {
@@ -1720,7 +1723,15 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     </>
                   ) : selectedPrivateChat ? (
                     <>
-                      <div className="user-avatar" style={{ width: '45px', height: '45px', fontSize: '1.1rem' }}>
+                      <div 
+                        className="user-avatar" 
+                        style={{ width: '45px', height: '45px', fontSize: '1.1rem', cursor: 'pointer' }}
+                        onClick={() => {
+                          setReportedUserId(selectedPrivateChat.otherUser.userId);
+                          setShowReportModal(true);
+                        }}
+                        title="Click to report user"
+                      >
                         {selectedPrivateChat.otherUser.profilePicture ? (
                           <img src={selectedPrivateChat.otherUser.profilePicture} alt={selectedPrivateChat.otherUser.displayName} />
                         ) : (
@@ -2414,6 +2425,20 @@ function Home({ user, socket, onLogout }: HomeProps) {
           imageSrc={tempImageUrl}
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
+        />
+      )}
+
+      {showReportModal && reportedUserId && selectedPrivateChat && (
+        <ReportModal
+          reportedUser={{
+            userId: selectedPrivateChat.otherUser.userId,
+            username: selectedPrivateChat.otherUser.username,
+            displayName: selectedPrivateChat.otherUser.displayName
+          }}
+          onClose={() => {
+            setShowReportModal(false);
+            setReportedUserId(null);
+          }}
         />
       )}
     </div>

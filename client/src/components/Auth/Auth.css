@@ -918,6 +918,205 @@
   gap: 10px;
 }
 
+/* Suspended Screen Styles */
+.suspended-card {
+  max-width: 550px;
+  text-align: center;
+}
+
+.suspended-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.auth-title {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.auth-container[data-theme="dark"] .auth-title {
+  color: #e0e0e0;
+}
+
+.suspended-message {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(239, 68, 68, 0.2);
+}
+
+.auth-container[data-theme="dark"] .suspended-message {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.suspended-message p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.auth-container[data-theme="dark"] .suspended-message p {
+  color: #a0a0a0;
+}
+
+.details-toggle {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: var(--bg-secondary, #f5f5f5);
+  border: 2px solid #e1e8ed;
+  border-radius: 10px;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.auth-container[data-theme="dark"] .details-toggle {
+  background: #2a2a3e;
+  border-color: #3a3a4e;
+}
+
+.details-toggle:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  transform: translateY(-1px);
+}
+
+.suspension-details {
+  text-align: left;
+  padding: 20px;
+  margin-bottom: 20px;
+  background: var(--bg-secondary, #f9f9f9);
+  border-radius: 12px;
+  border: 2px solid #e1e8ed;
+  animation: slideIn 0.3s ease-out;
+}
+
+.auth-container[data-theme="dark"] .suspension-details {
+  background: #2a2a3e;
+  border-color: #3a3a4e;
+}
+
+.suspension-details h3 {
+  margin: 15px 0 10px 0;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.suspension-details h3:first-child {
+  margin-top: 0;
+}
+
+.suspension-details p {
+  margin: 8px 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.auth-container[data-theme="dark"] .suspension-details p {
+  color: #a0a0a0;
+}
+
+.suspension-details ul {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.suspension-details li {
+  margin: 6px 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.auth-container[data-theme="dark"] .suspension-details li {
+  color: #a0a0a0;
+}
+
+.suspended-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.suspended-button {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.suspended-button.contact-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.suspended-button.contact-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.suspended-button.login-button {
+  background: var(--bg-secondary, #f5f5f5);
+  color: #333;
+  border: 2px solid #e1e8ed;
+}
+
+.auth-container[data-theme="dark"] .suspended-button.login-button {
+  background: #2a2a3e;
+  color: #e0e0e0;
+  border-color: #3a3a4e;
+}
+
+.suspended-button.login-button:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  transform: translateY(-1px);
+}
+
+.suspended-footer {
+  padding-top: 20px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.auth-container[data-theme="dark"] .suspended-footer {
+  border-top-color: #3a3a4e;
+}
+
+.suspended-footer p {
+  margin: 0;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.auth-container[data-theme="dark"] .suspended-footer p {
+  color: #808090;
+}
+
 @media (max-width: 500px) {
   .auth-card {
     padding: 30px 20px;
@@ -952,5 +1151,13 @@
 
   .footer-separator {
     font-size: 0.8rem;
+  }
+
+  .suspended-icon {
+    font-size: 4rem;
+  }
+
+  .suspended-actions {
+    gap: 10px;
   }
 }

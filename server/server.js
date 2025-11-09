@@ -288,9 +288,11 @@ import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
+import { initializeReportingSystem } from './utils/initializeReportingSystem.js';
 
 // Create a custom router for auth with rate limiting
 const authRouter = express.Router();
@@ -306,6 +308,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/report', reportRoutes);
 
 // Serve static files from React build (for production)
 if (process.env.NODE_ENV === 'production') {
@@ -470,6 +473,9 @@ async function startServer() {
     
     // Initialize site settings
     await initializeSiteSettings();
+    
+    // Initialize reporting system
+    await initializeReportingSystem();
     
     // Seed default rooms
     await seedDefaultRooms();

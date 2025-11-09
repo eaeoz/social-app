@@ -427,6 +427,18 @@ export async function login(req, res) {
       }
     }
 
+    // Check if user is suspended
+    if (user.userSuspended) {
+      console.log(`🚫 Suspended user attempted login: ${user.username}`);
+      return res.status(403).json({ 
+        error: 'Your account has been suspended.',
+        suspended: true,
+        suspendedAt: user.suspendedAt,
+        reportCount: user.reports?.length || 0,
+        message: 'Your account has been suspended due to multiple user reports. Please contact support if you believe this is an error.'
+      });
+    }
+
     // Check if email is verified
     if (!user.isEmailVerified) {
       return res.status(403).json({ 
