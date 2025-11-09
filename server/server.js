@@ -308,7 +308,6 @@ import roomRoutes from './routes/roomRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
-import testUserRoutes from './routes/testUserRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
@@ -331,7 +330,6 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/report', reportRoutes);
-app.use('/api/test', testUserRoutes);
 
 // Serve static files from React build (for production)
 if (process.env.NODE_ENV === 'production') {
