@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import './Auth.css';
+import PrivacyPolicy from '../Legal/PrivacyPolicy';
+import TermsConditions from '../Legal/TermsConditions';
+import About from '../Legal/About';
+import Contact from '../Legal/Contact';
 
 interface RegisterProps {
   onRegisterSuccess: (user: any, token: string) => void;
@@ -29,6 +33,10 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -430,7 +438,30 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
             </button>
           </p>
         </div>
+
+        <div className="auth-footer-links">
+          <button onClick={() => setShowPrivacyPolicy(true)} className="footer-link-button">
+            Privacy Policy
+          </button>
+          <span className="footer-separator">•</span>
+          <button onClick={() => setShowTerms(true)} className="footer-link-button">
+            Terms
+          </button>
+          <span className="footer-separator">•</span>
+          <button onClick={() => setShowAbout(true)} className="footer-link-button">
+            About
+          </button>
+          <span className="footer-separator">•</span>
+          <button onClick={() => setShowContact(true)} className="footer-link-button">
+            Contact
+          </button>
+        </div>
       </div>
+
+      {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
+      {showTerms && <TermsConditions onClose={() => setShowTerms(false)} />}
+      {showAbout && <About onClose={() => setShowAbout(false)} />}
+      {showContact && <Contact onClose={() => setShowContact(false)} />}
     </div>
   );
 }
