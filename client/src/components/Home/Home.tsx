@@ -242,10 +242,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
     };
   }, [showUserModal, sidebarOpen, showProfileModal, showAbout, showPrivacyPolicy, showTermsConditions, showContact]);
 
-  // Auto-focus search input when modal opens and reset selected index
+  // Auto-focus search input when modal opens, reset selected index, and reload users
   useEffect(() => {
     if (showUserModal) {
       setSelectedUserIndex(0);
+      // Reload users to get fresh data including showPictures setting
+      loadUsers(userSearchText);
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 100);

@@ -120,7 +120,11 @@ router.get('/users', authenticateToken, async (req, res) => {
 
     // Get site settings to check if we should show profile pictures and user limit
     const siteSettings = await getSiteSettings();
-    const showPictures = siteSettings.showuserlistpicture === 1;
+    console.log('📸 Site Settings:', siteSettings);
+    console.log('📸 showuserlistpicture value:', siteSettings.showuserlistpicture, 'type:', typeof siteSettings.showuserlistpicture);
+    // Convert to number and compare - handles string "1" or number 1
+    const showPictures = Number(siteSettings.showuserlistpicture) === 1;
+    console.log('📸 showPictures result:', showPictures);
     const searchUserCount = siteSettings.searchUserCount || 50;
     const defaultUsersDisplayCount = siteSettings.defaultUsersDisplayCount || 20;
 

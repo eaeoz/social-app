@@ -6,12 +6,21 @@ import { getDatabase } from '../config/database.js';
 export async function initializeSiteSettings() {
   try {
     const db = getDatabase();
-    const settingsCollection = db.collection('sitesettings');
+    const settingsCollection = db.collection('siteSettings');
+
+    console.log('🔍 [INIT] Checking for existing settings...');
+    
+    // First, let's see ALL documents in the collection
+    const allSettings = await settingsCollection.find({}).toArray();
+    console.log('🔍 [INIT] Total documents in sitesettings:', allSettings.length);
+    console.log('🔍 [INIT] All documents:', JSON.stringify(allSettings, null, 2));
 
     // Check if settings already exist
     const existingSettings = await settingsCollection.findOne({ settingType: 'global' });
+    console.log('🔍 [INIT] Found existing settings with settingType=global:', existingSettings ? 'YES' : 'NO');
 
     if (!existingSettings) {
+      console.log('⚠️ [INIT] No existing settings found, creating new one...');
       // Create default settings
       const defaultSettings = {
         settingType: 'global',
@@ -30,7 +39,7 @@ export async function initializeSiteSettings() {
       console.log('   - defaultUsersDisplayCount: 20');
       console.log('   - siteEmail: (not set)');
     } else {
-      console.log('✅ Site settings already exist');
+      console.log('✅ Site settings already exist, skipping creation');
     }
 
     return true;
@@ -46,11 +55,14 @@ export async function initializeSiteSettings() {
 export async function getSiteSettings() {
   try {
     const db = getDatabase();
-    const settingsCollection = db.collection('sitesettings');
+    const settingsCollection = db.collection('siteSettings');
 
+    console.log('🔍 Querying sitesettings collection...');
     const settings = await settingsCollection.findOne({ settingType: 'global' });
+    console.log('🔍 Raw settings from DB:', JSON.stringify(settings, null, 2));
 
     if (!settings) {
+      console.log('⚠️ No settings found in DB, creating defaults...');
       // If no settings found, create default and return
       await initializeSiteSettings();
       return {
@@ -61,12 +73,15 @@ export async function getSiteSettings() {
       };
     }
 
-    return {
-      showuserlistpicture: settings.showuserlistpicture || 0,
-      searchUserCount: settings.searchUserCount || 50,
-      defaultUsersDisplayCount: settings.defaultUsersDisplayCount || 20,
+    const result = {
+      showuserlistpicture: settings.showuserlistpicture !== undefined ? settings.showuserlistpicture : 1,
+      searchUserCount: settings.searchUserCount !== undefined ? settings.searchUserCount : 50,
+      defaultUsersDisplayCount: settings.defaultUsersDisplayCount !== undefined ? settings.defaultUsersDisplayCount : 20,
       siteEmail: settings.siteEmail || ''
     };
+    
+    console.log('🔍 Processed settings result:', JSON.stringify(result, null, 2));
+    return result;
   } catch (error) {
     console.error('❌ Error getting site settings:', error);
     // Return default on error
@@ -84,7 +99,7 @@ export async function getSiteSettings() {
 export async function updateSiteSettings(settings) {
   try {
     const db = getDatabase();
-    const settingsCollection = db.collection('sitesettings');
+    const settingsCollection = db.collection('siteSettings');
 
     const updateData = {
       ...settings,
