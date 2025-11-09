@@ -177,15 +177,19 @@ export function clearFailedAttempts(ip) {
   failedAttempts.delete(ip);
 }
 
-// General API rate limiter (100 requests per 15 minutes per IP)
+// General API rate limiter (300 requests per 15 minutes per IP - more lenient for reconnections)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 300, // 300 requests per window (increased to handle reconnections)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for socket.io handshake and polling
+    return req.path?.includes('/socket.io/') || req.path === '/health';
+  },
   handler: (req, res) => {
-    console.log(`⚠️ Rate limit exceeded for IP: ${req.ip}`);
+    console.log(`⚠️ Rate limit exceeded for IP: ${req.ip}, Path: ${req.path}`);
     res.status(429).json({
       error: 'Too many requests',
       message: 'You have exceeded the rate limit. Please try again later.',
