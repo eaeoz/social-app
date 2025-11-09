@@ -253,9 +253,8 @@ export async function register(req, res) {
     }
 
     // Send verification email (non-blocking)
-    const emailFunctionUrl = process.env.NODE_ENV === 'production' 
-      ? '/.netlify/functions/verify-email'
-      : 'http://localhost:8888/.netlify/functions/verify-email';
+    const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
     
     try {
       await fetch(emailFunctionUrl, {
@@ -620,9 +619,8 @@ export async function resendVerificationEmail(req, res) {
     );
 
     // Send verification email
-    const emailFunctionUrl = process.env.NODE_ENV === 'production' 
-      ? '/.netlify/functions/verify-email'
-      : 'http://localhost:8888/.netlify/functions/verify-email';
+    const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
     
     try {
       await fetch(emailFunctionUrl, {
