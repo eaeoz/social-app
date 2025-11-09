@@ -10,6 +10,9 @@ import { fileURLToPath } from 'url';
 import { connectToDatabase } from './config/database.js';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import passport from 'passport';
+import session from 'express-session';
+import { configurePassport } from './config/passport.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,6 +109,22 @@ app.use(helmet({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Session configuration for passport
+app.use(session({
+  secret: process.env.JWT_SECRET || 'your-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+configurePassport();
 
 // ============================================
 // RATE LIMITING & IP BLOCKING CONFIGURATION
@@ -289,6 +308,8 @@ import roomRoutes from './routes/roomRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import testUserRoutes from './routes/testUserRoutes.js';
+import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
@@ -305,10 +326,12 @@ authRouter.post('/verify-email', emailActionLimiter, authRoutes);
 
 // Use routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', googleAuthRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/report', reportRoutes);
+app.use('/api/test', testUserRoutes);
 
 // Serve static files from React build (for production)
 if (process.env.NODE_ENV === 'production') {
