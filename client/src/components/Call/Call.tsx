@@ -152,29 +152,51 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
 
       // Handle incoming stream
       peerConnectionRef.current.ontrack = (event) => {
-        console.log('📹 Received remote track:', event.track.kind, 'Stream ID:', event.streams[0]?.id);
+        console.log('📹 Received remote track:', event.track.kind, 'Stream ID:', event.streams[0]?.id, 'Track state:', event.track.readyState);
         
         if (remoteVideoRef.current && event.streams[0]) {
-          // Only set srcObject if not already set (prevents re-rendering and play() interruption)
-          if (!remoteVideoRef.current.srcObject) {
-            const remoteStream = event.streams[0];
+          const remoteStream = event.streams[0];
+          const currentSrcObject = remoteVideoRef.current.srcObject as MediaStream | null;
+          
+          // Check if we need to update the stream (new stream or additional tracks)
+          const needsUpdate = !currentSrcObject || 
+                             currentSrcObject.id !== remoteStream.id ||
+                             currentSrcObject.getTracks().length < remoteStream.getTracks().length;
+          
+          if (needsUpdate) {
+            console.log('✅ Setting/updating remote stream to video element');
+            console.log('📊 Remote stream tracks:', remoteStream.getTracks().map(t => `${t.kind} (${t.enabled ? 'enabled' : 'disabled'}, ${t.readyState})`));
+            
             remoteVideoRef.current.srcObject = remoteStream;
             
-            console.log('✅ Remote stream set to video element');
-            console.log('📊 Remote stream tracks:', remoteStream.getTracks().map(t => `${t.kind} (${t.enabled ? 'enabled' : 'disabled'})`));
+            // Wait for the video element to be ready before playing
+            remoteVideoRef.current.onloadedmetadata = () => {
+              console.log('📺 Remote video metadata loaded');
+              if (remoteVideoRef.current) {
+                remoteVideoRef.current.play().catch(err => {
+                  console.error('Error playing remote video after metadata loaded:', err);
+                  // Retry once after a short delay
+                  setTimeout(() => {
+                    remoteVideoRef.current?.play().catch(retryErr => {
+                      console.error('Error on retry playing remote video:', retryErr);
+                    });
+                  }, 500);
+                });
+              }
+            };
             
-            // Ensure video plays
+            // Also try playing immediately in case metadata is already loaded
             remoteVideoRef.current.play().catch(err => {
-              console.error('Error playing remote video:', err);
+              console.log('Initial play attempt failed (expected if metadata not loaded yet):', err.message);
             });
             
-            // Only set connected and start timer once (when we set the stream)
+            // Only set connected and start timer once
             if (callState !== 'connected') {
               setCallState('connected');
               startCallTimer();
             }
           } else {
-            console.log('📺 Remote stream already set, skipping to avoid re-render');
+            console.log('📺 Remote stream already set with same tracks, skipping update');
           }
         }
       };
