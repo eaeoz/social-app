@@ -503,6 +503,32 @@ function Home({ user, socket, onLogout }: HomeProps) {
         handleLogout();
       });
 
+      socket.on('user_status_changed', (data: { userId: string; status: string; lastActiveAt: Date }) => {
+        console.log('👤 User status changed:', data);
+        
+        // Update user status in the users list
+        setUsers(prev => prev.map(u => 
+          u.userId === data.userId 
+            ? { ...u, status: data.status, lastSeen: data.lastActiveAt }
+            : u
+        ));
+        
+        // Update status in private chats list
+        setPrivateChats(prev => prev.map(chat =>
+          chat.otherUser.userId === data.userId
+            ? { ...chat, otherUser: { ...chat.otherUser, status: data.status, lastSeen: data.lastActiveAt } }
+            : chat
+        ));
+        
+        // Update status in selected private chat
+        if (selectedPrivateChat && selectedPrivateChat.otherUser.userId === data.userId) {
+          setSelectedPrivateChat(prev => prev ? {
+            ...prev,
+            otherUser: { ...prev.otherUser, status: data.status, lastSeen: data.lastActiveAt }
+          } : null);
+        }
+      });
+
       socket.on('error', (error: { message: string }) => {
         console.error('Socket error:', error.message);
       });
@@ -528,6 +554,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('call-rejected');
         socket.off('call-ended');
         socket.off('force_logout');
+        socket.off('user_status_changed');
         socket.off('error');
       };
     }

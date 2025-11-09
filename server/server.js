@@ -337,6 +337,13 @@ async function updateUserStatus(userId, status) {
       }
     );
     console.log(`🔄 User ${userId} status updated to: ${status}`);
+    
+    // Broadcast status change to all connected clients
+    io.emit('user_status_changed', {
+      userId: userId,
+      status: status,
+      lastActiveAt: new Date()
+    });
   } catch (error) {
     console.error('Error updating user status:', error);
   }
