@@ -26,6 +26,10 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
   const [showResendOption, setShowResendOption] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendError, setResendError] = useState('');
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  const [maxAttempts, setMaxAttempts] = useState<number | null>(null);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -70,31 +74,47 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     localStorage.setItem('authTheme', newTheme);
   };
 
-  const handleResendVerification = async () => {
-    if (!unverifiedEmail) return;
+  const handleResendVerification = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
-    setLoading(true);
+    if (!unverifiedEmail || !password) {
+      setResendError('Please ensure email and password are entered');
+      return;
+    }
+    
+    setResendLoading(true);
+    setResendError('');
     try {
       const response = await fetch(`${API_URL}/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: unverifiedEmail }),
+        body: JSON.stringify({ email: unverifiedEmail, password: password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to resend verification email');
+        if (data.remainingAttempts !== undefined) {
+          setRemainingAttempts(data.remainingAttempts);
+          setMaxAttempts(data.maxAttempts);
+        }
+        throw new Error(data.message || data.error || 'Failed to resend verification email');
       }
 
-      alert('Verification email sent! Please check your inbox.');
-      setError('');
+      // Update remaining attempts
+      if (data.remainingAttempts !== undefined) {
+        setRemainingAttempts(data.remainingAttempts);
+        setMaxAttempts(data.maxAttempts);
+      }
+
+      alert(data.message || 'Verification email sent! Please check your inbox.');
+      setResendError('');
     } catch (err: any) {
-      setError(err.message);
+      setResendError(err.message);
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
   };
 
@@ -129,17 +149,23 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's an email verification error
-        if (data.requiresEmailVerification) {
-          setShowResendOption(true);
-          setUnverifiedEmail(data.email);
-        }
+      // Check if it's an email verification error
+      if (data.requiresEmailVerification) {
+        setShowResendOption(true);
+        setUnverifiedEmail(data.email);
+        // Initialize remaining attempts to max (fresh start)
+        setRemainingAttempts(4);
+        setMaxAttempts(4);
+      }
         throw new Error(data.error || 'Login failed');
       }
 
       // Reset verification error state on successful login
       setShowResendOption(false);
       setUnverifiedEmail('');
+      setResendError('');
+      setRemainingAttempts(null);
+      setMaxAttempts(null);
 
       // Store token in localStorage
       localStorage.setItem('accessToken', data.accessToken);
@@ -193,23 +219,70 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             />
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
-            {loading ? 'Signing in...' : !recaptchaLoaded ? 'Loading...' : 'Sign In'}
-          </button>
+          {!showResendOption && (
+            <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
+              {loading ? 'Signing in...' : !recaptchaLoaded ? 'Loading...' : 'Sign In'}
+            </button>
+          )}
 
           {showResendOption && (
-            <button 
-              type="button"
-              className="auth-button" 
-              onClick={handleResendVerification}
-              disabled={loading}
-              style={{ 
-                marginTop: '10px',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-              }}
-            >
-              📧 Resend Verification Email
-            </button>
+            <>
+              {remainingAttempts !== null && maxAttempts !== null && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  padding: '10px', 
+                  background: remainingAttempts > 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  textAlign: 'center'
+                }}>
+                  {remainingAttempts > 0 ? (
+                    <span style={{ color: '#3b82f6' }}>
+                      📧 Attempts remaining: <strong>{remainingAttempts}/{maxAttempts}</strong>
+                    </span>
+                  ) : (
+                    <span style={{ color: '#ef4444' }}>
+                      ⚠️ Maximum attempts reached. Please contact the site administrator for assistance.
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {resendError && <div className="error-message" style={{ marginTop: '10px' }}>{resendError}</div>}
+
+              <button 
+                type="button"
+                className="auth-button" 
+                onClick={handleResendVerification}
+                disabled={resendLoading || (remainingAttempts !== null && remainingAttempts <= 0)}
+                style={{ 
+                  marginTop: '10px',
+                  background: (remainingAttempts !== null && remainingAttempts <= 0) 
+                    ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+                    : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                }}
+              >
+                {resendLoading ? 'Sending...' : '📧 Resend Verification Email'}
+              </button>
+
+              <button 
+                type="button"
+                className="auth-button" 
+                onClick={() => {
+                  setShowResendOption(false);
+                  setUnverifiedEmail('');
+                  setResendError('');
+                  setRemainingAttempts(null);
+                  setMaxAttempts(null);
+                }}
+                style={{ 
+                  marginTop: '10px',
+                  background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+                }}
+              >
+                ← Back to Sign In
+              </button>
+            </>
           )}
 
           <div className="recaptcha-notice">

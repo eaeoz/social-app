@@ -28,6 +28,7 @@ export async function initializeSiteSettings() {
         searchUserCount: 50, // Maximum number of users to show in search
         defaultUsersDisplayCount: 20, // Maximum number of users to show by default (online users only)
         siteEmail: '', // Email address to receive contact form submissions
+        verificationEmailResendCount: 4, // Maximum number of verification email resend attempts
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -38,6 +39,7 @@ export async function initializeSiteSettings() {
       console.log('   - searchUserCount: 50');
       console.log('   - defaultUsersDisplayCount: 20');
       console.log('   - siteEmail: (not set)');
+      console.log('   - verificationEmailResendCount: 4');
     } else {
       console.log('✅ Site settings already exist, skipping creation');
     }
@@ -69,7 +71,8 @@ export async function getSiteSettings() {
         showuserlistpicture: 1,
         searchUserCount: 50,
         defaultUsersDisplayCount: 20,
-        siteEmail: ''
+        siteEmail: '',
+        verificationEmailResendCount: 4
       };
     }
 
@@ -77,7 +80,8 @@ export async function getSiteSettings() {
       showuserlistpicture: settings.showuserlistpicture !== undefined ? settings.showuserlistpicture : 1,
       searchUserCount: settings.searchUserCount !== undefined ? settings.searchUserCount : 50,
       defaultUsersDisplayCount: settings.defaultUsersDisplayCount !== undefined ? settings.defaultUsersDisplayCount : 20,
-      siteEmail: settings.siteEmail || ''
+      siteEmail: settings.siteEmail || '',
+      verificationEmailResendCount: settings.verificationEmailResendCount !== undefined ? settings.verificationEmailResendCount : 4
     };
     
     console.log('🔍 Processed settings result:', JSON.stringify(result, null, 2));
@@ -88,7 +92,8 @@ export async function getSiteSettings() {
     return {
       showuserlistpicture: 1,
       searchUserCount: 50,
-      defaultUsersDisplayCount: 20
+      defaultUsersDisplayCount: 20,
+      verificationEmailResendCount: 4
     };
   }
 }

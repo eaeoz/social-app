@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import { InputFile } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
 import crypto from 'crypto';
+import { sendVerificationEmail } from '../utils/sendVerificationEmail.js';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -253,25 +254,34 @@ export async function register(req, res) {
     }
 
     // Send verification email (non-blocking)
-    const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
-    
     try {
-      await fetch(emailFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email,
-          username,
-          verificationToken: emailVerificationToken
-        })
-      });
+      // Try direct email sending first
+      await sendVerificationEmail(email, username, emailVerificationToken);
       console.log('✅ Verification email sent to:', email);
     } catch (emailError) {
-      console.error('❌ Failed to send verification email:', emailError);
-      // Don't fail registration if email fails
+      console.error('❌ Failed to send verification email via direct method:', emailError);
+      
+      // Fallback to Netlify function if direct method fails
+      try {
+        const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
+        
+        await fetch(emailFunctionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email,
+            username,
+            verificationToken: emailVerificationToken
+          })
+        });
+        console.log('✅ Verification email sent via Netlify function to:', email);
+      } catch (netlifyError) {
+        console.error('❌ Failed to send verification email via Netlify function:', netlifyError);
+        // Don't fail registration if email fails
+      }
     }
 
     // Return user data (without password)
@@ -582,31 +592,54 @@ export async function verifyEmail(req, res) {
 // Resend verification email
 export async function resendVerificationEmail(req, res) {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
     const db = getDatabase();
     const usersCollection = db.collection('users');
+    const siteSettingsCollection = db.collection('siteSettings');
+
+    // Get site settings for resend limit
+    const siteSettings = await siteSettingsCollection.findOne({ settingType: 'global' });
+    const maxResendAttempts = siteSettings?.verificationEmailResendCount || 4;
 
     // Find user
     const user = await usersCollection.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'Invalid email or password' });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     if (user.isEmailVerified) {
       return res.status(400).json({ error: 'Email is already verified' });
     }
 
+    // Check resend count
+    const currentResendCount = user.emailResendCount || 0;
+    
+    if (currentResendCount >= maxResendAttempts) {
+      return res.status(429).json({ 
+        error: 'Maximum verification email attempts reached',
+        message: 'You have reached the maximum number of verification email attempts. Please contact the site administrator for assistance.',
+        remainingAttempts: 0,
+        maxAttempts: maxResendAttempts
+      });
+    }
+
     // Generate new verification token
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Update user with new token
+    // Update user with new token and increment resend count
     await usersCollection.updateOne(
       { _id: user._id },
       {
@@ -614,35 +647,53 @@ export async function resendVerificationEmail(req, res) {
           emailVerificationToken,
           emailVerificationExpires,
           updatedAt: new Date()
+        },
+        $inc: {
+          emailResendCount: 1
         }
       }
     );
 
+    const newResendCount = currentResendCount + 1;
+    const remainingAttempts = maxResendAttempts - newResendCount;
+
     // Send verification email
-    const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
-    
     try {
-      await fetch(emailFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email,
-          username: user.username,
-          verificationToken: emailVerificationToken
-        })
-      });
-      console.log('✅ Verification email resent to:', email);
+      // Try direct email sending first
+      await sendVerificationEmail(email, user.username, emailVerificationToken);
+      console.log(`✅ Verification email resent to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
     } catch (emailError) {
-      console.error('❌ Failed to resend verification email:', emailError);
-      return res.status(500).json({ error: 'Failed to send verification email' });
+      console.error('❌ Failed to send verification email via direct method:', emailError);
+      
+      // Fallback to Netlify function if direct method fails
+      try {
+        const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
+        
+        await fetch(emailFunctionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email,
+            username: user.username,
+            verificationToken: emailVerificationToken
+          })
+        });
+        console.log(`✅ Verification email resent via Netlify function to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
+      } catch (netlifyError) {
+        console.error('❌ Failed to resend verification email via Netlify function:', netlifyError);
+        return res.status(500).json({ error: 'Failed to send verification email' });
+      }
     }
 
     res.json({
-      message: 'Verification email sent! Please check your inbox.',
-      success: true
+      message: `Verification email sent! Please check your inbox. (${remainingAttempts} attempts remaining)`,
+      success: true,
+      remainingAttempts,
+      maxAttempts: maxResendAttempts,
+      currentAttempt: newResendCount
     });
 
   } catch (error) {
