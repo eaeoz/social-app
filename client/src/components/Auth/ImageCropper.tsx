@@ -120,8 +120,6 @@ function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps)
 
       // Calculate the visible area in the preview (300x300)
       const previewSize = 300;
-      const scaledWidth = imageSize.width * zoom;
-      const scaledHeight = imageSize.height * zoom;
 
       // Calculate source rectangle (what's visible in the preview)
       const sourceX = Math.max(0, -position.x / zoom);

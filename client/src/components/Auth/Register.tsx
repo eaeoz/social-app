@@ -40,7 +40,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [showContact, setShowContact] = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
-  const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -112,7 +111,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     // Convert blob to File
     const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
     setProfilePicture(file);
-    setCroppedImage(croppedBlob);
     
     // Create preview from blob
     const url = URL.createObjectURL(croppedBlob);
@@ -130,7 +128,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const removeImage = () => {
     setProfilePicture(null);
     setPreviewUrl('');
-    setCroppedImage(null);
     if (previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
