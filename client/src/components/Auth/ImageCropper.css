@@ -79,7 +79,7 @@
 .cropper-instructions {
   text-align: center;
   margin-bottom: 20px;
-  padding: 12px;
+  padding: 8px 12px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   border-radius: 10px;
   border: 1px solid rgba(102, 126, 234, 0.2);
@@ -89,7 +89,7 @@
   margin: 0;
   color: #667eea;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 /* Preview Container */
@@ -268,17 +268,17 @@
 .cropper-footer {
   display: flex;
   gap: 10px;
-  padding: 20px 25px;
+  padding: 15px 20px;
   border-top: 2px solid #e1e8ed;
   background: #f9fafb;
 }
 
 .cropper-button {
   flex: 1;
-  padding: 14px 20px;
+  padding: 12px 18px;
   border: none;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -339,21 +339,52 @@
 
 /* Responsive */
 @media (max-width: 500px) {
-  .image-cropper-modal {
-    margin: 10px;
+  .image-cropper-overlay {
+    padding: 10px;
   }
 
-  .cropper-preview-container {
-    width: 250px;
-    height: 250px;
+  .image-cropper-modal {
+    margin: 0;
+    max-height: 95vh;
+    max-height: 95dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cropper-header {
+    padding: 15px 18px;
   }
 
   .cropper-header h2 {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
 
-  .cropper-footer {
-    flex-direction: column;
+  .cropper-close {
+    width: 32px;
+    height: 32px;
+    font-size: 1.3rem;
+  }
+
+  .cropper-body {
+    padding: 15px 18px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .cropper-instructions {
+    margin-bottom: 15px;
+    padding: 6px 10px;
+  }
+
+  .cropper-instructions p {
+    font-size: 0.75rem;
+  }
+
+  .cropper-preview-container {
+    width: 100%;
+    max-width: 280px;
+    height: 280px;
+    margin-bottom: 18px;
   }
 
   .zoom-control {
@@ -364,5 +395,96 @@
     width: 36px;
     height: 36px;
     font-size: 1rem;
+  }
+
+  .zoom-label {
+    font-size: 0.8rem;
+    padding: 3px 10px;
+  }
+
+  .reset-button {
+    padding: 9px 16px;
+    font-size: 0.9rem;
+  }
+
+  .cropper-footer {
+    padding: 12px 18px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .cropper-button {
+    padding: 11px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .image-cropper-overlay {
+    padding: 5px;
+  }
+
+  .cropper-header {
+    padding: 12px 15px;
+  }
+
+  .cropper-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .cropper-close {
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+  }
+
+  .cropper-body {
+    padding: 12px 15px;
+  }
+
+  .cropper-instructions {
+    margin-bottom: 12px;
+    padding: 5px 8px;
+  }
+
+  .cropper-instructions p {
+    font-size: 0.7rem;
+  }
+
+  .cropper-preview-container {
+    width: 100%;
+    max-width: 260px;
+    height: 260px;
+    margin-bottom: 15px;
+  }
+
+  .zoom-control {
+    gap: 8px;
+  }
+
+  .zoom-button {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+
+  .zoom-label {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+  }
+
+  .reset-button {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+
+  .cropper-footer {
+    padding: 10px 15px;
+    gap: 6px;
+  }
+
+  .cropper-button {
+    padding: 10px 14px;
+    font-size: 0.85rem;
   }
 }
