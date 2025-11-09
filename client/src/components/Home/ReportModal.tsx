@@ -8,10 +8,9 @@ interface ReportModalProps {
     displayName: string;
   };
   onClose: () => void;
-  onSubmit?: (reportData: { subject: string; description: string }) => void;
 }
 
-function ReportModal({ reportedUser, onClose, onSubmit }: ReportModalProps) {
+function ReportModal({ reportedUser, onClose }: ReportModalProps) {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
