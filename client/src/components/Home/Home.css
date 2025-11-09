@@ -77,8 +77,12 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height on mobile */
+  max-height: 100vh;
+  max-height: 100dvh;
   background: var(--bg-primary);
   transition: background-color 0.3s ease;
+  overflow: hidden;
 }
 
 .home-header {
@@ -1077,6 +1081,8 @@
   flex-direction: column;
   background: var(--bg-secondary);
   transition: background-color 0.3s ease;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chat-header {
@@ -1164,11 +1170,14 @@
 .messages-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 30px;
   background: var(--bg-tertiary);
   display: flex;
   flex-direction: column;
   transition: background-color 0.3s ease;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .messages-list {
@@ -1348,6 +1357,8 @@
   background: var(--bg-secondary);
   transition: background-color 0.3s ease, border-color 0.3s ease;
   position: relative;
+  flex-shrink: 0;
+  min-height: 70px;
 }
 
 /* Input Action Buttons (Emoji & Location) */
@@ -1746,6 +1757,7 @@
 
 .message-input {
   flex: 1;
+  min-width: 0;
   padding: 12px 20px;
   border: 2px solid var(--border-input);
   border-radius: 25px;
@@ -1754,6 +1766,7 @@
   color: var(--text-primary);
   transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
   margin-left: 0;
+  max-width: 100%;
 }
 
 .message-input:focus {
@@ -1850,10 +1863,12 @@
   width: 90%;
   max-width: 500px;
   max-height: 80vh;
+  max-height: 80dvh;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-xl);
   animation: slideUp 0.3s ease;
+  overflow: hidden;
 }
 
 @keyframes slideUp {
@@ -2165,8 +2180,10 @@
 .modal-body {
   padding: 20px 25px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .user-list {
@@ -2408,7 +2425,9 @@
 
   .modal-content {
     width: 95%;
+    max-width: 95vw;
     max-height: 85vh;
+    max-height: 85dvh;
   }
   
   /* Hide keyboard hints on mobile */
@@ -3289,10 +3308,19 @@
   
   .modal-content {
     width: 96%;
+    max-width: 96vw;
   }
   
   .modal-header {
-    padding: 15px 15px;
+    padding: 15px 12px;
+  }
+  
+  .modal-filters {
+    padding: 12px 12px;
+  }
+  
+  .modal-body {
+    padding: 15px 12px;
   }
   
   .modal-header h2 {
