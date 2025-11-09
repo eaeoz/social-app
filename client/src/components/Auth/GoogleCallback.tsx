@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 interface GoogleCallbackProps {
-  onLoginSuccess: (user: any, token: string) => void;
+  onLoginSuccess: (user: any) => void;
 }
 
 function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
@@ -21,10 +21,27 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         // Store tokens
         localStorage.setItem('accessToken', token);
         localStorage.setItem('refreshToken', refresh);
-        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Format user data to match expected structure
+        const userData = {
+          userId: user._id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName || user.username,
+          age: user.age,
+          gender: user.gender,
+          bio: user.bio || '',
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
 
         // Call success handler
-        onLoginSuccess(user, token);
+        onLoginSuccess(userData);
+        
+        // Navigate to home
+        navigate('/');
       } catch (error) {
         console.error('Error parsing OAuth callback data:', error);
         navigate('/login?error=invalid_callback');
