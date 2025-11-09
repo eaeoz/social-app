@@ -8,6 +8,7 @@ import { ObjectId } from 'mongodb';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectToDatabase } from './config/database.js';
+import rateLimit from 'express-rate-limit';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -86,6 +87,166 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// ============================================
+// RATE LIMITING & IP BLOCKING CONFIGURATION
+// ============================================
+
+// Store for tracking failed attempts and blocked IPs
+const failedAttempts = new Map(); // IP -> { count, firstAttempt, blockedUntil }
+const blockedIPs = new Set();
+
+// Cleanup old entries every 1 hour
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of failedAttempts.entries()) {
+    // Remove entries older than 1 hour
+    if (now - data.firstAttempt > 60 * 60 * 1000) {
+      failedAttempts.delete(ip);
+    }
+    // Unblock IPs after block period expires
+    if (data.blockedUntil && now > data.blockedUntil) {
+      failedAttempts.delete(ip);
+      blockedIPs.delete(ip);
+      console.log(`🔓 IP unblocked: ${ip}`);
+    }
+  }
+}, 60 * 60 * 1000); // Run every 1 hour
+
+// Middleware to check if IP is blocked
+const checkIPBlock = (req, res, next) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
+  
+  if (blockedIPs.has(clientIP)) {
+    const attemptData = failedAttempts.get(clientIP);
+    const remainingTime = attemptData?.blockedUntil 
+      ? Math.ceil((attemptData.blockedUntil - Date.now()) / 1000 / 60)
+      : 0;
+    
+    console.log(`🚫 Blocked IP attempted access: ${clientIP}`);
+    return res.status(429).json({ 
+      error: 'Too many failed attempts. Your IP has been temporarily blocked.',
+      blockedFor: `${remainingTime} minutes`,
+      message: 'Please try again later or contact support if you believe this is an error.'
+    });
+  }
+  
+  next();
+};
+
+// Track failed login attempts
+export function trackFailedAttempt(ip) {
+  const now = Date.now();
+  const attemptData = failedAttempts.get(ip) || { count: 0, firstAttempt: now };
+  
+  attemptData.count++;
+  
+  // Block IP after 10 failed attempts within 1 hour
+  if (attemptData.count >= 10) {
+    const blockDuration = 30 * 60 * 1000; // 30 minutes
+    attemptData.blockedUntil = now + blockDuration;
+    blockedIPs.add(ip);
+    console.log(`🚫 IP blocked for 30 minutes: ${ip} (${attemptData.count} failed attempts)`);
+  }
+  
+  failedAttempts.set(ip, attemptData);
+  console.log(`⚠️ Failed attempt from ${ip}: ${attemptData.count}/10`);
+}
+
+// Clear failed attempts on successful login
+export function clearFailedAttempts(ip) {
+  failedAttempts.delete(ip);
+}
+
+// General API rate limiter (100 requests per 15 minutes per IP)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    console.log(`⚠️ Rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'Too many requests',
+      message: 'You have exceeded the rate limit. Please try again later.',
+      retryAfter: '15 minutes'
+    });
+  }
+});
+
+// Strict rate limiter for login endpoint (5 attempts per 15 minutes per IP)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per window
+  skipSuccessfulRequests: true, // Don't count successful logins
+  message: 'Too many login attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    console.log(`🚨 Login rate limit exceeded for IP: ${ip}`);
+    res.status(429).json({
+      error: 'Too many login attempts',
+      message: 'You have exceeded the maximum number of login attempts. Please try again in 15 minutes.',
+      retryAfter: '15 minutes'
+    });
+  }
+});
+
+// Rate limiter for registration (3 accounts per hour per IP)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 registrations per hour
+  message: 'Too many accounts created from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    console.log(`🚨 Registration rate limit exceeded for IP: ${ip}`);
+    res.status(429).json({
+      error: 'Registration limit exceeded',
+      message: 'Too many accounts created from this IP. Please try again in 1 hour.',
+      retryAfter: '1 hour'
+    });
+  }
+});
+
+// Rate limiter for password reset/email verification (3 per hour per IP)
+const emailActionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 requests per hour
+  message: 'Too many email requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    console.log(`🚨 Email action rate limit exceeded for IP: ${ip}`);
+    res.status(429).json({
+      error: 'Too many email requests',
+      message: 'You have exceeded the limit for email-related actions. Please try again in 1 hour.',
+      retryAfter: '1 hour'
+    });
+  }
+});
+
+// Apply general rate limiter to all routes
+app.use('/api/', generalLimiter);
+
+// Apply IP block check to auth routes
+app.use('/api/auth/login', checkIPBlock);
+app.use('/api/auth/register', checkIPBlock);
+
+console.log('🛡️ Security features enabled:');
+console.log('  ✅ General rate limiting: 100 requests per 15 minutes');
+console.log('  ✅ Login rate limiting: 5 attempts per 15 minutes');
+console.log('  ✅ Registration rate limiting: 3 accounts per hour');
+console.log('  ✅ Email action rate limiting: 3 requests per hour');
+console.log('  ✅ IP blocking: 30 minutes after 10 failed attempts');
+
+// ============================================
+// END RATE LIMITING CONFIGURATION
+// ============================================
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
@@ -104,6 +265,15 @@ import contactRoutes from './routes/contactRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
+
+// Create a custom router for auth with rate limiting
+const authRouter = express.Router();
+
+// Apply specific rate limiters to auth endpoints
+authRouter.post('/login', loginLimiter, authRoutes);
+authRouter.post('/register', registerLimiter, authRoutes);
+authRouter.post('/resend-verification', emailActionLimiter, authRoutes);
+authRouter.post('/verify-email', emailActionLimiter, authRoutes);
 
 // Use routes
 app.use('/api/auth', authRoutes);

@@ -311,6 +311,8 @@ export async function register(req, res) {
 
 // Login user
 export async function login(req, res) {
+  const clientIP = req.ip || req.connection.remoteAddress;
+  
   try {
     const { username, password, recaptchaToken } = req.body;
 
@@ -333,6 +335,9 @@ export async function login(req, res) {
     });
 
     if (!user) {
+      // Track failed attempt
+      const { trackFailedAttempt } = await import('../server.js');
+      trackFailedAttempt(clientIP);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -340,6 +345,9 @@ export async function login(req, res) {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
+      // Track failed attempt
+      const { trackFailedAttempt } = await import('../server.js');
+      trackFailedAttempt(clientIP);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -357,6 +365,10 @@ export async function login(req, res) {
       { _id: user._id },
       { $set: { lastSeen: new Date(), updatedAt: new Date(), status: 'online' } }
     );
+
+    // Clear failed attempts on successful login
+    const { clearFailedAttempts } = await import('../server.js');
+    clearFailedAttempts(clientIP);
 
     // Generate tokens
     const userId = user._id.toString();
