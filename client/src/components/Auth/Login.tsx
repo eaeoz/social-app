@@ -96,11 +96,21 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       const data = await response.json();
 
       if (!response.ok) {
+        // Show simple error in alert modal
+        if (response.status === 401) {
+          alert('Password wrong!');
+        } else if (response.status === 429) {
+          alert('Maximum attempts reached. Please contact the site administrator.');
+        } else {
+          alert(data.error || 'Failed to resend verification email');
+        }
+        
+        // Update attempts counter if provided
         if (data.remainingAttempts !== undefined) {
           setRemainingAttempts(data.remainingAttempts);
           setMaxAttempts(data.maxAttempts);
         }
-        throw new Error(data.message || data.error || 'Failed to resend verification email');
+        return;
       }
 
       // Update remaining attempts
@@ -112,7 +122,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       alert(data.message || 'Verification email sent! Please check your inbox.');
       setResendError('');
     } catch (err: any) {
-      setResendError(err.message);
+      alert('An error occurred while sending the verification email. Please try again.');
     } finally {
       setResendLoading(false);
     }
@@ -149,14 +159,36 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       const data = await response.json();
 
       if (!response.ok) {
-      // Check if it's an email verification error
-      if (data.requiresEmailVerification) {
-        setShowResendOption(true);
-        setUnverifiedEmail(data.email);
-        // Initialize remaining attempts to max (fresh start)
-        setRemainingAttempts(4);
-        setMaxAttempts(4);
-      }
+        // Check if it's an email verification error
+        if (data.requiresEmailVerification) {
+          setShowResendOption(true);
+          setUnverifiedEmail(data.email);
+          
+          // Fetch current attempt count from backend
+          try {
+            const attemptsResponse = await fetch(`${API_URL}/auth/get-resend-attempts`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: data.email }),
+            });
+            
+            if (attemptsResponse.ok) {
+              const attemptsData = await attemptsResponse.json();
+              setRemainingAttempts(attemptsData.remainingAttempts || 4);
+              setMaxAttempts(attemptsData.maxAttempts || 4);
+            } else {
+              // Fallback to default
+              setRemainingAttempts(4);
+              setMaxAttempts(4);
+            }
+          } catch (error) {
+            // Fallback to default if fetch fails
+            setRemainingAttempts(4);
+            setMaxAttempts(4);
+          }
+        }
         throw new Error(data.error || 'Login failed');
       }
 
@@ -195,29 +227,50 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
 
-          <div className="form-group">
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username or Email"
-              required
-              disabled={loading}
-            />
-          </div>
+          {!showResendOption && (
+            <>
+              <div className="form-group">
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username or Email"
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-          <div className="form-group">
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              required
-              disabled={loading}
-            />
-          </div>
+              <div className="form-group">
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </>
+          )}
+
+          {showResendOption && (
+            <div className="form-group">
+              <label htmlFor="password" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                Enter your password to resend verification email:
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+                disabled={resendLoading}
+              />
+            </div>
+          )}
 
           {!showResendOption && (
             <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
@@ -248,9 +301,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
                 </div>
               )}
 
-              {resendError && <div className="error-message" style={{ marginTop: '10px' }}>{resendError}</div>}
-
-              <button 
+              <button
                 type="button"
                 className="auth-button" 
                 onClick={handleResendVerification}

@@ -589,6 +589,50 @@ export async function verifyEmail(req, res) {
   }
 }
 
+// Get resend attempts count
+export async function getResendAttempts(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+    const siteSettingsCollection = db.collection('siteSettings');
+
+    // Get site settings for max attempts
+    const siteSettings = await siteSettingsCollection.findOne({ settingType: 'global' });
+    const maxResendAttempts = siteSettings?.verificationEmailResendCount || 4;
+
+    // Find user by email
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      // Don't reveal if email exists or not, return default
+      return res.json({
+        remainingAttempts: maxResendAttempts,
+        maxAttempts: maxResendAttempts,
+        currentAttempt: 0
+      });
+    }
+
+    const currentResendCount = user.emailResendCount || 0;
+    const remainingAttempts = Math.max(0, maxResendAttempts - currentResendCount);
+
+    res.json({
+      remainingAttempts,
+      maxAttempts: maxResendAttempts,
+      currentAttempt: currentResendCount
+    });
+
+  } catch (error) {
+    console.error('Get resend attempts error:', error);
+    res.status(500).json({ error: 'Failed to get resend attempts' });
+  }
+}
+
 // Resend verification email
 export async function resendVerificationEmail(req, res) {
   try {
@@ -606,17 +650,23 @@ export async function resendVerificationEmail(req, res) {
     const siteSettings = await siteSettingsCollection.findOne({ settingType: 'global' });
     const maxResendAttempts = siteSettings?.verificationEmailResendCount || 4;
 
-    // Find user
+    // Find user by email
     const user = await usersCollection.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ 
+        error: 'Invalid credentials',
+        message: 'Invalid email or password. Please check your credentials and try again.'
+      });
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ 
+        error: 'Invalid credentials',
+        message: 'Invalid email or password. Please check your credentials and try again.'
+      });
     }
 
     if (user.isEmailVerified) {
