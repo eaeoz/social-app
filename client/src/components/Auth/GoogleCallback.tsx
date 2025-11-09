@@ -66,9 +66,9 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         clearTimeout(timeoutId);
         
         setStatus('Redirecting to home...');
-        // Use a small delay to ensure state updates complete
+        // Force a hard navigation to ensure page loads properly
         setTimeout(() => {
-          navigate('/', { replace: true });
+          window.location.href = '/';
         }, 100);
       } catch (error) {
         processed = true;
