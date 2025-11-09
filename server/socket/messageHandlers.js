@@ -187,10 +187,7 @@ export function setupMessageHandlers(io, socket, userSockets) {
         timestamp: message.timestamp
       };
 
-      // Send to sender (confirmation) - only to the sender's socket
-      socket.emit('private_message', broadcastMessage);
-
-      // Send to receiver (if they're online and not the sender)
+      // Send to receiver only (sender already has it from optimistic update)
       const receiverSocketId = userSockets.get(receiverId);
       if (receiverSocketId && receiverSocketId !== socket.id) {
         io.to(receiverSocketId).emit('private_message', broadcastMessage);
