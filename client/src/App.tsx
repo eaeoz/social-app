@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import VerifyEmail from './components/Auth/VerifyEmail';
 import Home from './components/Home/Home';
 import './App.css';
 
@@ -17,6 +19,7 @@ function App() {
     NODE_ENV: import.meta.env.MODE,
     ALL_ENV: import.meta.env
   });
+  const navigate = useNavigate();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [user, setUser] = useState<any>(null);
   const [authView, setAuthView] = useState<AuthView>('login');
@@ -114,7 +117,8 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
-    setAuthView('login'); // Always redirect to login page after logout
+    setAuthView('login');
+    navigate('/');
     if (socket) {
       socket.close();
       setSocket(null);
@@ -130,26 +134,28 @@ function App() {
     );
   }
 
-  // If user is authenticated, show Home page
-  if (user) {
-    return <Home user={user} socket={socket} onLogout={handleLogout} />;
-  }
-
-  // Otherwise show authentication pages
-  if (authView === 'login') {
-    return (
-      <Login
-        onLoginSuccess={handleLoginSuccess}
-        onSwitchToRegister={() => setAuthView('register')}
-      />
-    );
-  }
-
   return (
-    <Register
-      onRegisterSuccess={handleRegisterSuccess}
-      onSwitchToLogin={() => setAuthView('login')}
-    />
+    <Routes>
+      {/* Email verification route - accessible without authentication */}
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      
+      {/* Main app routes */}
+      <Route path="/*" element={
+        user ? (
+          <Home user={user} socket={socket} onLogout={handleLogout} />
+        ) : authView === 'login' ? (
+          <Login
+            onLoginSuccess={handleLoginSuccess}
+            onSwitchToRegister={() => setAuthView('register')}
+          />
+        ) : (
+          <Register
+            onRegisterSuccess={handleRegisterSuccess}
+            onSwitchToLogin={() => setAuthView('login')}
+          />
+        )
+      } />
+    </Routes>
   );
 }
 

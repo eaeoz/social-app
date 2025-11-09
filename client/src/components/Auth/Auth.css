@@ -42,7 +42,8 @@
 }
 
 .auth-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -75,7 +76,8 @@
 }
 
 .auth-container[data-theme="dark"] .auth-card {
-  background: #1e1e2e;
+  background: rgba(30, 30, 46, 0.95);
+  backdrop-filter: blur(10px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
@@ -663,6 +665,97 @@
   text-decoration: underline;
 }
 
+/* Email Verification Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.3s ease-out;
+  text-align: center;
+  position: relative;
+  z-index: 1001;
+}
+
+.auth-container[data-theme="dark"] .modal-content {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.modal-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.modal-content h2 {
+  margin: 0 0 15px 0;
+  color: #ffffff;
+  font-size: 1.8rem;
+}
+
+.auth-container[data-theme="dark"] .modal-content h2 {
+  color: #ffffff;
+}
+
+.modal-message {
+  color: #e0e0e0;
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.auth-container[data-theme="dark"] .modal-message {
+  color: #e0e0e0;
+}
+
+.modal-message strong {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.modal-submessage {
+  color: #c0c0c0;
+  margin: 0 0 30px 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.auth-container[data-theme="dark"] .modal-submessage {
+  color: #c0c0c0;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 @media (max-width: 500px) {
   .auth-card {
     padding: 30px 20px;
@@ -670,5 +763,17 @@
 
   .auth-card h1 {
     font-size: 1.75rem;
+  }
+
+  .modal-content {
+    padding: 30px 20px;
+  }
+
+  .modal-icon {
+    font-size: 3rem;
+  }
+
+  .modal-content h2 {
+    font-size: 1.5rem;
   }
 }

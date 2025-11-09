@@ -6,6 +6,7 @@ import multer from 'multer';
 import sharp from 'sharp';
 import { InputFile } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
+import crypto from 'crypto';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -172,6 +173,10 @@ export async function register(req, res) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+    // Generate email verification token (valid for 24 hours)
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create user first (matching MongoDB schema)
     const newUser = {
       username,
@@ -183,6 +188,9 @@ export async function register(req, res) {
       bio: '',
       status: 'offline',
       profilePictureId: null,
+      isEmailVerified: false,
+      emailVerificationToken,
+      emailVerificationExpires,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSeen: new Date()
@@ -244,6 +252,29 @@ export async function register(req, res) {
       profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
     }
 
+    // Send verification email (non-blocking)
+    const emailFunctionUrl = process.env.NODE_ENV === 'production' 
+      ? '/.netlify/functions/verify-email'
+      : 'http://localhost:8888/.netlify/functions/verify-email';
+    
+    try {
+      await fetch(emailFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          username,
+          verificationToken: emailVerificationToken
+        })
+      });
+      console.log('✅ Verification email sent to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to send verification email:', emailError);
+      // Don't fail registration if email fails
+    }
+
     // Return user data (without password)
     const userResponse = {
       userId,
@@ -254,14 +285,16 @@ export async function register(req, res) {
       gender: newUser.gender,
       profilePicture: profilePictureUrl,
       profilePictureId: profilePictureId,
-      bio: ''
+      bio: '',
+      isEmailVerified: false
     };
 
     res.status(201).json({
-      message: 'Registration successful',
+      message: 'Registration successful! Please check your email to verify your account.',
       user: userResponse,
       accessToken,
-      refreshToken
+      refreshToken,
+      requiresEmailVerification: true
     });
 
   } catch (error) {
@@ -308,6 +341,15 @@ export async function login(req, res) {
 
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ 
+        error: 'Please verify your email address before logging in. Check your inbox for the verification email.',
+        requiresEmailVerification: true,
+        email: user.email
+      });
     }
 
     // Update last seen and status
@@ -393,6 +435,129 @@ export async function getCurrentUser(req, res) {
   } catch (error) {
     console.error('Get current user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
+  }
+}
+
+// Verify email
+export async function verifyEmail(req, res) {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Verification token is required' });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Find user with this token
+    const user = await usersCollection.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        error: 'Invalid or expired verification token. Please register again.' 
+      });
+    }
+
+    // Update user as verified
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          isEmailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationExpires: null,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Email verified for user: ${user.username}`);
+
+    res.json({
+      message: 'Email verified successfully! You can now log in.',
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({ error: 'Email verification failed' });
+  }
+}
+
+// Resend verification email
+export async function resendVerificationEmail(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Find user
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ error: 'Email is already verified' });
+    }
+
+    // Generate new verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Update user with new token
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          emailVerificationToken,
+          emailVerificationExpires,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    // Send verification email
+    const emailFunctionUrl = process.env.NODE_ENV === 'production' 
+      ? '/.netlify/functions/verify-email'
+      : 'http://localhost:8888/.netlify/functions/verify-email';
+    
+    try {
+      await fetch(emailFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          username: user.username,
+          verificationToken: emailVerificationToken
+        })
+      });
+      console.log('✅ Verification email resent to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to resend verification email:', emailError);
+      return res.status(500).json({ error: 'Failed to send verification email' });
+    }
+
+    res.json({
+      message: 'Verification email sent! Please check your inbox.',
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Resend verification email error:', error);
+    res.status(500).json({ error: 'Failed to resend verification email' });
   }
 }
 

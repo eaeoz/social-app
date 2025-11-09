@@ -20,6 +20,8 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
+  const [showResendOption, setShowResendOption] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -60,6 +62,34 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     localStorage.setItem('authTheme', newTheme);
   };
 
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend verification email');
+      }
+
+      alert('Verification email sent! Please check your inbox.');
+      setError('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -91,8 +121,17 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if it's an email verification error
+        if (data.requiresEmailVerification) {
+          setShowResendOption(true);
+          setUnverifiedEmail(data.email);
+        }
         throw new Error(data.error || 'Login failed');
       }
+
+      // Reset verification error state on successful login
+      setShowResendOption(false);
+      setUnverifiedEmail('');
 
       // Store token in localStorage
       localStorage.setItem('accessToken', data.accessToken);
@@ -149,6 +188,21 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
           <button type="submit" className="auth-button" disabled={loading || !recaptchaLoaded}>
             {loading ? 'Signing in...' : !recaptchaLoaded ? 'Loading...' : 'Sign In'}
           </button>
+
+          {showResendOption && (
+            <button 
+              type="button"
+              className="auth-button" 
+              onClick={handleResendVerification}
+              disabled={loading}
+              style={{ 
+                marginTop: '10px',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+              }}
+            >
+              📧 Resend Verification Email
+            </button>
+          )}
 
           <div className="recaptcha-notice">
             <small>

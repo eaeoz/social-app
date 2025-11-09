@@ -27,6 +27,8 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -99,6 +101,33 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     setPreviewUrl('');
   };
 
+  const handleResendVerification = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: registeredEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend verification email');
+      }
+
+      alert('Verification email sent! Please check your inbox.');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -168,12 +197,27 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Store token in localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      onRegisterSuccess(data.user, data.accessToken);
+      // Check if email verification is required
+      if (data.requiresEmailVerification) {
+        setRegisteredEmail(email);
+        setShowVerificationModal(true);
+        // Clear the form
+        setUsername('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setFullName('');
+        setAge('');
+        setGender('');
+        setProfilePicture(null);
+        setPreviewUrl('');
+      } else {
+        // Old flow: direct login (for backward compatibility)
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        onRegisterSuccess(data.user, data.accessToken);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -186,6 +230,41 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
       <button className="auth-theme-toggle" onClick={toggleTheme} title="Toggle theme">
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
+
+      {/* Email Verification Modal */}
+      {showVerificationModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-icon">📧</div>
+            <h2>Check Your Email!</h2>
+            <p className="modal-message">
+              We've sent a verification email to <strong>{registeredEmail}</strong>
+            </p>
+            <p className="modal-submessage">
+              Click the verification link in the email to activate your account. 
+              The link will expire in 24 hours.
+            </p>
+            <div className="modal-actions">
+              <button 
+                className="auth-button" 
+                onClick={onSwitchToLogin}
+                style={{ marginBottom: '10px' }}
+              >
+                Go to Login
+              </button>
+              <button 
+                className="link-button"
+                onClick={handleResendVerification}
+                disabled={loading}
+              >
+                {loading ? 'Sending...' : 'Resend Email'}
+              </button>
+            </div>
+            {error && <div className="error-message" style={{ marginTop: '15px' }}>{error}</div>}
+          </div>
+        </div>
+      )}
+
       <div className="auth-card">
         <div className="auth-logo">
           <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
