@@ -27,7 +27,6 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [showResendOption, setShowResendOption] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
-  const [resendError, setResendError] = useState('');
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
   const [maxAttempts, setMaxAttempts] = useState<number | null>(null);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -78,12 +77,11 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     if (e) e.preventDefault();
     
     if (!unverifiedEmail || !password) {
-      setResendError('Please ensure email and password are entered');
+      alert('Please ensure email and password are entered');
       return;
     }
     
     setResendLoading(true);
-    setResendError('');
     try {
       const response = await fetch(`${API_URL}/auth/resend-verification`, {
         method: 'POST',
@@ -120,7 +118,6 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       }
 
       alert(data.message || 'Verification email sent! Please check your inbox.');
-      setResendError('');
     } catch (err: any) {
       alert('An error occurred while sending the verification email. Please try again.');
     } finally {
@@ -195,7 +192,6 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       // Reset verification error state on successful login
       setShowResendOption(false);
       setUnverifiedEmail('');
-      setResendError('');
       setRemainingAttempts(null);
       setMaxAttempts(null);
 
@@ -322,7 +318,6 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
                 onClick={() => {
                   setShowResendOption(false);
                   setUnverifiedEmail('');
-                  setResendError('');
                   setRemainingAttempts(null);
                   setMaxAttempts(null);
                 }}
