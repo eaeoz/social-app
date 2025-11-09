@@ -83,6 +83,12 @@
   background: var(--bg-primary);
   transition: background-color 0.3s ease;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
 }
 
 .home-header {
@@ -1259,6 +1265,8 @@
   transition: background-color 0.3s ease;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  position: relative;
 }
 
 .messages-list {
@@ -1440,6 +1448,7 @@
   position: relative;
   flex-shrink: 0;
   min-height: 70px;
+  max-height: 70px;
 }
 
 /* Input Action Buttons (Emoji & Location) */
@@ -2504,6 +2513,18 @@
 }
 
 @media (max-width: 640px) {
+  .home-container {
+    position: fixed;
+    overflow: hidden;
+  }
+
+  body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
   .message-content {
     max-width: 85%;
   }
@@ -2513,6 +2534,18 @@
     max-width: 95vw;
     max-height: 85vh;
     max-height: 85dvh;
+  }
+
+  .messages-container {
+    padding: 12px;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+  }
+
+  .message-input-container {
+    padding: 8px;
+    min-height: 66px;
+    max-height: 66px;
   }
 
   /* Profile Modal Mobile Optimization */
@@ -2702,7 +2735,9 @@
   }
   
   .messages-container {
-    padding: 15px 12px;
+    padding: 12px 8px;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
   
   .message-text {
@@ -2722,8 +2757,10 @@
   }
   
   .message-input-container {
-    padding: 10px 8px;
+    padding: 8px 6px;
     gap: 4px;
+    min-height: 70px;
+    max-height: 70px;
   }
   
 .input-action-button {
@@ -3500,7 +3537,9 @@
   }
   
   .messages-container {
-    padding: 12px 8px;
+    padding: 10px 6px;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
   
   .message {
@@ -3537,9 +3576,11 @@
   }
   
   .message-input-container {
-    padding: 8px 6px;
+    padding: 6px 4px;
     gap: 3px;
     flex-wrap: nowrap;
+    min-height: 66px;
+    max-height: 66px;
   }
   
   .input-action-button {
