@@ -341,14 +341,81 @@ export async function login(req, res) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Check if account is locked
+    const now = new Date();
+    if (user.accountLocked && user.accountLockedUntil && user.accountLockedUntil > now) {
+      const remainingMinutes = Math.ceil((user.accountLockedUntil - now) / 1000 / 60);
+      console.log(`🔒 Account locked: ${user.username} (${remainingMinutes} minutes remaining)`);
+      return res.status(423).json({ 
+        error: 'Account temporarily locked due to multiple failed login attempts.',
+        lockedFor: `${remainingMinutes} minutes`,
+        message: `Please try again in ${remainingMinutes} minutes or reset your password.`
+      });
+    }
+
+    // If lock has expired, clear it
+    if (user.accountLocked && user.accountLockedUntil && user.accountLockedUntil <= now) {
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { 
+          $set: { 
+            accountLocked: false,
+            accountLockedUntil: null,
+            failedLoginAttempts: 0,
+            lastFailedLogin: null
+          }
+        }
+      );
+      console.log(`🔓 Account lock expired and cleared: ${user.username}`);
+      user.accountLocked = false;
+      user.failedLoginAttempts = 0;
+    }
+
     // Check password (use passwordHash from schema)
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      // Track failed attempt
+      // Track failed attempt for IP blocking
       const { trackFailedAttempt } = await import('../server.js');
       trackFailedAttempt(clientIP);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      
+      // Track failed login attempts for account lockout
+      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      const lockoutThreshold = 5; // Lock after 5 failed attempts
+      const lockoutDuration = 30 * 60 * 1000; // 30 minutes
+      
+      const updateData = {
+        failedLoginAttempts: failedAttempts,
+        lastFailedLogin: new Date()
+      };
+      
+      // Lock account if threshold reached
+      if (failedAttempts >= lockoutThreshold) {
+        updateData.accountLocked = true;
+        updateData.accountLockedUntil = new Date(Date.now() + lockoutDuration);
+        console.log(`🔒 Account locked: ${user.username} (${failedAttempts} failed attempts)`);
+      }
+      
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $set: updateData }
+      );
+      
+      // Return appropriate error message
+      if (failedAttempts >= lockoutThreshold) {
+        return res.status(423).json({ 
+          error: 'Account locked due to multiple failed login attempts.',
+          lockedFor: '30 minutes',
+          attemptsRemaining: 0,
+          message: 'Your account has been temporarily locked. Please try again in 30 minutes or reset your password.'
+        });
+      } else {
+        return res.status(401).json({ 
+          error: 'Invalid credentials',
+          attemptsRemaining: lockoutThreshold - failedAttempts,
+          message: `Invalid credentials. ${lockoutThreshold - failedAttempts} attempts remaining before account lockout.`
+        });
+      }
     }
 
     // Check if email is verified
@@ -366,9 +433,22 @@ export async function login(req, res) {
       { $set: { lastSeen: new Date(), updatedAt: new Date(), status: 'online' } }
     );
 
-    // Clear failed attempts on successful login
+    // Clear failed attempts on successful login (both IP and account)
     const { clearFailedAttempts } = await import('../server.js');
     clearFailedAttempts(clientIP);
+    
+    // Reset account lockout fields on successful login
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { 
+        $set: { 
+          failedLoginAttempts: 0,
+          lastFailedLogin: null,
+          accountLocked: false,
+          accountLockedUntil: null
+        }
+      }
+    );
 
     // Generate tokens
     const userId = user._id.toString();

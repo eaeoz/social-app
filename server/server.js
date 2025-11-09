@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectToDatabase } from './config/database.js';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +84,25 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Allow inline scripts for development
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "ws:", "wss:", "https:"],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow loading external resources
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -237,11 +257,13 @@ app.use('/api/auth/login', checkIPBlock);
 app.use('/api/auth/register', checkIPBlock);
 
 console.log('🛡️ Security features enabled:');
+console.log('  ✅ Helmet security headers (XSS, clickjacking, MIME sniffing protection)');
 console.log('  ✅ General rate limiting: 100 requests per 15 minutes');
 console.log('  ✅ Login rate limiting: 5 attempts per 15 minutes');
 console.log('  ✅ Registration rate limiting: 3 accounts per hour');
 console.log('  ✅ Email action rate limiting: 3 requests per hour');
 console.log('  ✅ IP blocking: 30 minutes after 10 failed attempts');
+console.log('  ✅ Account lockout: After 5 failed attempts within 30 minutes');
 
 // ============================================
 // END RATE LIMITING CONFIGURATION
