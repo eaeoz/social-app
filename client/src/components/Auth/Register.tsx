@@ -4,6 +4,7 @@ import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import About from '../Legal/About';
 import Contact from '../Legal/Contact';
+import ImageCropper from './ImageCropper';
 
 interface RegisterProps {
   onRegisterSuccess: (user: any, token: string) => void;
@@ -37,6 +38,9 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [showTerms, setShowTerms] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showImageCropper, setShowImageCropper] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string>('');
+  const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -92,21 +96,44 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
         return;
       }
 
-      setProfilePicture(file);
       setError('');
 
-      // Create preview
+      // Create preview and show cropper
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
+        setTempImageUrl(reader.result as string);
+        setShowImageCropper(true);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Convert blob to File
+    const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
+    setProfilePicture(file);
+    setCroppedImage(croppedBlob);
+    
+    // Create preview from blob
+    const url = URL.createObjectURL(croppedBlob);
+    setPreviewUrl(url);
+    
+    setShowImageCropper(false);
+    setTempImageUrl('');
+  };
+
+  const handleCropCancel = () => {
+    setShowImageCropper(false);
+    setTempImageUrl('');
+  };
+
   const removeImage = () => {
     setProfilePicture(null);
     setPreviewUrl('');
+    setCroppedImage(null);
+    if (previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
   };
 
   const handleResendVerification = async () => {
@@ -462,6 +489,14 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
       {showTerms && <TermsConditions onClose={() => setShowTerms(false)} />}
       {showAbout && <About onClose={() => setShowAbout(false)} />}
       {showContact && <Contact onClose={() => setShowContact(false)} />}
+      
+      {showImageCropper && tempImageUrl && (
+        <ImageCropper
+          imageSrc={tempImageUrl}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

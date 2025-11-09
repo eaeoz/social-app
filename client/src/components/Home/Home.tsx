@@ -6,6 +6,7 @@ import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import Contact from '../Legal/Contact';
 import About from '../Legal/About';
+import ImageCropper from '../Auth/ImageCropper';
 import './Home.css';
 
 interface HomeProps {
@@ -109,6 +110,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showContact, setShowContact] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showImageCropper, setShowImageCropper] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string>('');
+  const [croppedImageFile, setCroppedImageFile] = useState<File | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle footer visibility on mobile when input is focused
@@ -1184,29 +1188,47 @@ function Home({ user, socket, onLogout }: HomeProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const img = new Image();
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    // Create preview and show cropper
     const reader = new FileReader();
-
-    reader.onload = (event) => {
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 80;
-        canvas.height = 80;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, 80, 80);
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const previewUrl = URL.createObjectURL(blob);
-              setProfilePicture(previewUrl);
-            }
-          }, 'image/jpeg', 0.9);
-        }
-      };
-      img.src = event.target?.result as string;
+    reader.onloadend = () => {
+      setTempImageUrl(reader.result as string);
+      setShowImageCropper(true);
     };
-
     reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Convert blob to File
+    const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
+    setCroppedImageFile(file);
+    
+    // Create preview from blob
+    const url = URL.createObjectURL(croppedBlob);
+    setProfilePicture(url);
+    
+    setShowImageCropper(false);
+    setTempImageUrl('');
+  };
+
+  const handleCropCancel = () => {
+    setShowImageCropper(false);
+    setTempImageUrl('');
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const startCall = (type: 'voice' | 'video') => {
@@ -1328,33 +1350,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
       formData.append('age', profileAge.toString());
       formData.append('gender', profileGender);
 
-      if (fileInputRef.current?.files?.[0]) {
-        const file = fileInputRef.current.files[0];
-        const img = new Image();
-        const reader = new FileReader();
-
-        await new Promise<void>((resolve) => {
-          reader.onload = (event) => {
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              canvas.width = 80;
-              canvas.height = 80;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0, 80, 80);
-                canvas.toBlob((blob) => {
-                  if (blob) {
-                    const resizedFile = new File([blob], file.name, { type: 'image/jpeg' });
-                    formData.append('profilePicture', resizedFile);
-                    resolve();
-                  }
-                }, 'image/jpeg', 0.9);
-              }
-            };
-            img.src = event.target?.result as string;
-          };
-          reader.readAsDataURL(file);
-        });
+      // Use the cropped image file if available
+      if (croppedImageFile) {
+        formData.append('profilePicture', croppedImageFile);
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/update-profile`, {
@@ -2230,6 +2228,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       {showTermsConditions && (
         <TermsConditions onClose={() => setShowTermsConditions(false)} />
+      )}
+
+      {showImageCropper && tempImageUrl && (
+        <ImageCropper
+          imageSrc={tempImageUrl}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
       )}
     </div>
 
