@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import VerifyEmail from './components/Auth/VerifyEmail';
+import GoogleCallback from './components/Auth/GoogleCallback';
 import Home from './components/Home/Home';
 import './App.css';
 
@@ -138,6 +139,9 @@ function App() {
     <Routes>
       {/* Email verification route - accessible without authentication */}
       <Route path="/verify-email" element={<VerifyEmail />} />
+      
+      {/* Google OAuth callback route */}
+      <Route path="/auth/callback" element={<GoogleCallback onLoginSuccess={handleLoginSuccess} />} />
       
       {/* Main app routes */}
       <Route path="/*" element={
