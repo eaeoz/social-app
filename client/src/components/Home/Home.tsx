@@ -1995,7 +1995,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <div className="messages-container">
               <div className="welcome-message">
                 <h2>👋 Welcome to the Chat App!</h2>
-                <p>You're now logged in as <strong>{user.username}</strong></p>
+                <p>You're now logged in as <strong>{user.displayName || user.nickName || user.username}</strong></p>
                 <p>Select a room from the sidebar to start chatting</p>
               </div>
             </div>

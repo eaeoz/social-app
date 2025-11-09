@@ -97,7 +97,7 @@ router.get('/user-profile/:userId', authenticateToken, async (req, res) => {
     const userResponse = {
       userId: user._id.toString(),
       username: user.username,
-      displayName: user.displayName,
+      displayName: user.displayName || user.nickName || user.username,
       nickName: user.nickName || user.username,
       status: user.status || 'offline',
       bio: user.bio || '',
@@ -207,7 +207,7 @@ router.get('/users', authenticateToken, async (req, res) => {
       const userObj = {
         userId: user._id.toString(),
         username: user.username,
-        displayName: user.displayName,
+        displayName: user.displayName || user.nickName || user.username,
         nickName: user.nickName || user.username,
         status: user.status || 'offline',
         bio: user.bio || '',
@@ -336,7 +336,7 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
           otherUser: {
             userId: otherUser._id.toString(),
             username: otherUser.username,
-            displayName: otherUser.displayName,
+            displayName: otherUser.displayName || otherUser.nickName || otherUser.username,
             nickName: otherUser.nickName || otherUser.username,
             status: otherUser.status || 'offline',
             profilePicture: profilePictureUrl
