@@ -19,12 +19,20 @@ interface User {
   reportCount?: number;
 }
 
+interface PasswordRecoveryModalProps {
+  user: User;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
 function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPasswordRecoveryModal, setShowPasswordRecoveryModal] = useState(false);
+  const [recoveryUser, setRecoveryUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -82,6 +90,11 @@ function Users() {
       console.error('Error suspending user:', error);
       alert('Failed to update user status');
     }
+  };
+
+  const handlePasswordRecovery = (user: User) => {
+    setRecoveryUser(user);
+    setShowPasswordRecoveryModal(true);
   };
 
   const handleDelete = async (userId: string, username: string) => {
@@ -324,6 +337,15 @@ function Users() {
 
               <div className="modal-actions">
                 <button 
+                  className="btn-action recovery"
+                  onClick={() => {
+                    handlePasswordRecovery(selectedUser);
+                    handleCloseModal();
+                  }}
+                >
+                  🔐 Recover Password
+                </button>
+                <button 
                   className="btn-action suspend"
                   onClick={() => {
                     handleSuspend(selectedUser._id, selectedUser.userSuspended || false);
@@ -346,6 +368,215 @@ function Users() {
           </div>
         </div>
       )}
+
+      {/* Password Recovery Modal */}
+      {showPasswordRecoveryModal && recoveryUser && (
+        <PasswordRecoveryModal
+          user={recoveryUser}
+          onClose={() => {
+            setShowPasswordRecoveryModal(false);
+            setRecoveryUser(null);
+          }}
+          onSuccess={() => {
+            setShowPasswordRecoveryModal(false);
+            setRecoveryUser(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function PasswordRecoveryModal({ user, onClose, onSuccess }: PasswordRecoveryModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [recoveryUrl, setRecoveryUrl] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [sendEmail, setSendEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [step, setStep] = useState<'confirm' | 'result'>('confirm');
+
+  const handleGenerateLink = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/users/${user._id}/password-recovery`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ sendEmail })
+        }
+      );
+
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type');
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        alert(`Server error: Received non-JSON response. Please check server logs.`);
+        setLoading(false);
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setRecoveryUrl(data.recoveryUrl);
+        setEmailSent(data.emailSent);
+        setEmailError(data.emailError || '');
+        setStep('result');
+      } else {
+        try {
+          const error = await response.json();
+          alert(`Failed to generate recovery link: ${error.error || 'Unknown error'}`);
+        } catch {
+          alert(`Failed to generate recovery link: HTTP ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error generating recovery link:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Network error';
+      alert(`Failed to generate recovery link: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(recoveryUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleConfirmAndSendEmail = async () => {
+    if (!sendEmail) {
+      alert('Please confirm that you want to send the email');
+      return;
+    }
+    await handleGenerateLink();
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content password-recovery-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>🔐 Password Recovery</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-body">
+          {step === 'confirm' ? (
+            <>
+              <div className="recovery-user-info">
+                <div className="user-avatar-small">
+                  {user.profilePicture ? (
+                    <img src={user.profilePicture} alt={user.username} />
+                  ) : (
+                    user.username.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <h3>{user.nickName || user.username}</h3>
+                  <p className="user-email">{user.email}</p>
+                </div>
+              </div>
+
+              <div className="recovery-description">
+                <p>
+                  Generate a password recovery link for this user. The link will be valid for <strong>1 hour</strong>.
+                </p>
+              </div>
+
+              <div className="email-option">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={sendEmail}
+                    onChange={(e) => setSendEmail(e.target.checked)}
+                  />
+                  <span>Send recovery link via email to <strong>{user.email}</strong></span>
+                </label>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={onClose}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={sendEmail ? handleConfirmAndSendEmail : handleGenerateLink}
+                  disabled={loading}
+                >
+                  {loading ? 'Generating...' : sendEmail ? 'Generate & Send Email' : 'Generate Link'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="recovery-success">
+                <div className="success-icon">✅</div>
+                <h3>Recovery Link Generated!</h3>
+              </div>
+
+              {emailSent && (
+                <div className="email-status success">
+                  <span>📧</span>
+                  <p>Email sent successfully to <strong>{user.email}</strong></p>
+                </div>
+              )}
+
+              {emailError && (
+                <div className="email-status error">
+                  <span>⚠️</span>
+                  <p>Failed to send email: {emailError}</p>
+                  <p className="note">You can still copy the link below and send it manually.</p>
+                </div>
+              )}
+
+              {!emailSent && !emailError && (
+                <div className="email-status info">
+                  <span>ℹ️</span>
+                  <p>Recovery link generated. Copy the link below to share with the user.</p>
+                </div>
+              )}
+
+              <div className="recovery-link-container">
+                <div className="link-box">
+                  <code>{recoveryUrl}</code>
+                </div>
+                <button
+                  className="btn-copy"
+                  onClick={handleCopyLink}
+                >
+                  {copied ? '✓ Copied!' : '📋 Copy Link'}
+                </button>
+              </div>
+
+              <div className="recovery-info">
+                <p>⏰ This link will expire in <strong>1 hour</strong></p>
+                <p>🔐 The user can use this link to set a new password</p>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn-primary"
+                  onClick={onSuccess}
+                >
+                  Done
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

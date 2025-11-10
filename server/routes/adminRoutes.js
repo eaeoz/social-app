@@ -3,6 +3,8 @@ import { ObjectId } from 'mongodb';
 import { getDatabase } from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { transferUserReportsToCollection, getUserReportsFromCollection } from '../utils/transferUserReportsToCollection.js';
+import crypto from 'crypto';
+import { sendPasswordRecoveryEmail } from '../utils/sendPasswordRecoveryEmail.js';
 
 const router = express.Router();
 
@@ -400,6 +402,68 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
   } catch (error) {
     console.error('Suspend user error:', error);
     res.status(500).json({ error: 'Failed to update user status' });
+  }
+});
+
+// Generate password recovery link for user
+router.post('/users/:userId/password-recovery', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { sendEmail } = req.body;
+    
+    const db = getDatabase();
+    
+    // Get user details
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Generate password recovery token (valid for 1 hour)
+    const passwordRecoveryToken = crypto.randomBytes(32).toString('hex');
+    const passwordRecoveryExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    
+    // Update user with recovery token
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: { 
+          passwordRecoveryToken,
+          passwordRecoveryExpires,
+          updatedAt: new Date()
+        }
+      }
+    );
+    
+    // Generate recovery URL
+    const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const recoveryUrl = `${frontendUrl}/reset-password?token=${passwordRecoveryToken}`;
+    
+    // Send email if requested
+    let emailSent = false;
+    let emailError = null;
+    
+    if (sendEmail) {
+      try {
+        await sendPasswordRecoveryEmail(user.email, user.username, passwordRecoveryToken);
+        emailSent = true;
+        console.log(`✅ Password recovery email sent to: ${user.email}`);
+      } catch (error) {
+        console.error('❌ Failed to send password recovery email:', error);
+        emailError = error.message;
+      }
+    }
+    
+    res.json({ 
+      message: 'Password recovery link generated successfully',
+      recoveryUrl,
+      expiresIn: '1 hour',
+      emailSent,
+      emailError: emailError || undefined
+    });
+  } catch (error) {
+    console.error('Generate password recovery link error:', error);
+    res.status(500).json({ error: 'Failed to generate recovery link' });
   }
 });
 
