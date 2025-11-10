@@ -988,14 +988,14 @@
 .chat-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .room-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  padding: 8px;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1453,9 +1453,9 @@
 
 /* Input Action Buttons (Emoji & Location) */
 .input-action-button {
-  width: 42px;
-  height: 52px;
-  border-radius: 8px;
+  width: 59px;
+  height: 59px;
+  border-radius: 16px;
   border: none;
   font-size: 1.3rem;
   cursor: pointer;
@@ -1467,7 +1467,7 @@
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
   float: left;
-  margin: 10px 6px 0 0;
+  margin: 6px 8px 0 0;
   padding: 0;
 }
 
@@ -2756,7 +2756,7 @@
   border: 2px solid var(--border-primary);
   border-radius: 8px;
   width: 40px;
-  height: 50px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2765,7 +2765,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   margin-left: 2px;
-  margin-right: 3px;
+  margin-right: 4px;
 }
 
 .input-action-button:first-child {
@@ -3573,7 +3573,7 @@
   
   .input-action-button {
     width: 34px;
-    height: 54px;
+    height: 56px;
     font-size: 1rem;
     margin-left: 1px;
     margin-right: 2px;
