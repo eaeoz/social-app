@@ -2316,7 +2316,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
               <div className="profile-form-section">
                 <div className="form-group">
-                  <label htmlFor="nickName">Display Name (Nickname)</label>
+                  <label htmlFor="nickName">Nick Name</label>
                   <input
                     type="text"
                     id="nickName"
@@ -2326,7 +2326,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       setNickNameError('');
                     }}
                     disabled={isUpdatingProfile}
-                    placeholder="Enter your display name"
+                    placeholder="Enter your nick name"
                     maxLength={20}
                     className="nickname-input"
                   />
