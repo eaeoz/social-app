@@ -940,7 +940,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
       socket.emit('send_private_message', {
         receiverId: selectedPrivateChat.otherUser.userId,
         senderId: user.userId,
-        senderName: user.fullName || user.username,
+        senderName: user.nickName || user.username,
         content: content,
         messageType: 'text'
       });
@@ -948,7 +948,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
       const tempMessage: Message = {
         messageId: `temp_${Date.now()}`,
         senderId: user.userId,
-        senderName: user.fullName || user.username,
+        senderName: user.nickName || user.username,
         content: content,
         timestamp: new Date(),
         messageType: 'text'
@@ -965,7 +965,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
       socket.emit('send_room_message', {
         roomId: selectedRoom.roomId,
         senderId: user.userId,
-        senderName: user.fullName || user.username,
+        senderName: user.nickName || user.username,
         content: content,
         messageType: 'text'
       });
