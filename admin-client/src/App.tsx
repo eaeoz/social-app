@@ -4,6 +4,7 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { SecureSessionManager, AuditLogger, isTokenExpired } from './utils/security';
 import './App.css';
 
 function App() {
@@ -13,6 +14,18 @@ function App() {
 
   useEffect(() => {
     checkAuth();
+    
+    // Initialize session management
+    SecureSessionManager.init(() => {
+      AuditLogger.log('SESSION_EXPIRED', { userId: admin?.id });
+      handleLogout();
+      alert('Your session has expired due to inactivity. Please log in again.');
+    });
+
+    // Cleanup on unmount
+    return () => {
+      SecureSessionManager.cleanup();
+    };
   }, []);
 
   const checkAuth = async () => {
@@ -25,16 +38,28 @@ function App() {
     }
 
     try {
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        AuditLogger.log('TOKEN_EXPIRED');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminData');
+        setIsLoading(false);
+        return;
+      }
+
       const parsedAdmin = JSON.parse(adminData);
       if (parsedAdmin.role === 'admin') {
         setAdmin(parsedAdmin);
         setIsAuthenticated(true);
+        AuditLogger.log('AUTH_CHECK_SUCCESS', { userId: parsedAdmin.id });
       } else {
+        AuditLogger.log('AUTH_CHECK_FAILED_INVALID_ROLE', { role: parsedAdmin.role });
         localStorage.removeItem('adminToken');
         localStorage.removeItem('adminData');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      AuditLogger.log('AUTH_CHECK_ERROR', { error: String(error) });
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminData');
     } finally {
@@ -47,13 +72,33 @@ function App() {
     localStorage.setItem('adminData', JSON.stringify(adminData));
     setAdmin(adminData);
     setIsAuthenticated(true);
+    
+    // Reset session timer
+    SecureSessionManager.updateActivity();
+    
+    // Log successful login
+    AuditLogger.log('LOGIN_SUCCESS', {
+      userId: adminData.id,
+      username: adminData.username,
+      timestamp: new Date().toISOString()
+    }, adminData.id);
   };
 
   const handleLogout = () => {
+    // Log logout before clearing data
+    AuditLogger.log('LOGOUT', {
+      userId: admin?.id,
+      username: admin?.username,
+      timestamp: new Date().toISOString()
+    }, admin?.id);
+    
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminData');
     setAdmin(null);
     setIsAuthenticated(false);
+    
+    // Cleanup session
+    SecureSessionManager.cleanup();
   };
 
   if (isLoading) {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { loginRateLimiter, AuditLogger, sanitizeInput } from '../utils/security';
 import './Login.css';
 
 interface LoginProps {
@@ -19,6 +20,17 @@ function Login({ onLogin }: LoginProps) {
     setIsLoading(true);
 
     try {
+      // Sanitize inputs
+      const sanitizedUsername = sanitizeInput(username.trim());
+      
+      // Check rate limiting
+      if (!loginRateLimiter.canMakeRequest('login')) {
+        setError('Too many login attempts. Please try again in 15 minutes.');
+        AuditLogger.log('LOGIN_RATE_LIMITED', { username: sanitizedUsername });
+        setIsLoading(false);
+        return;
+      }
+
       // Get reCAPTCHA token
       if (!executeRecaptcha) {
         setError('reCAPTCHA not loaded. Please refresh the page.');
@@ -27,6 +39,8 @@ function Login({ onLogin }: LoginProps) {
       }
 
       const recaptchaToken = await executeRecaptcha('admin_login');
+      
+      AuditLogger.log('LOGIN_ATTEMPT', { username: sanitizedUsername });
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
@@ -34,7 +48,7 @@ function Login({ onLogin }: LoginProps) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
-          username, 
+          username: sanitizedUsername, 
           password,
           recaptchaToken 
         })
@@ -45,15 +59,33 @@ function Login({ onLogin }: LoginProps) {
       if (response.ok) {
         // Check if user has admin role
         if (data.user.role === 'admin') {
+          AuditLogger.log('LOGIN_SUCCESS', { 
+            userId: data.user.id, 
+            username: sanitizeInput(username.trim())
+          });
+          // Reset rate limiter on successful login
+          loginRateLimiter.reset('login');
           onLogin(data.user, data.accessToken);
         } else {
+          AuditLogger.log('LOGIN_FAILED_INVALID_ROLE', { 
+            username: sanitizeInput(username.trim()),
+            role: data.user.role 
+          });
           setError('Access denied. Admin privileges required.');
         }
       } else {
+        AuditLogger.log('LOGIN_FAILED', { 
+          username: sanitizeInput(username.trim()),
+          error: data.error 
+        });
         setError(data.error || 'Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
+      AuditLogger.log('LOGIN_ERROR', { 
+        username: sanitizeInput(username.trim()),
+        error: String(error) 
+      });
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
