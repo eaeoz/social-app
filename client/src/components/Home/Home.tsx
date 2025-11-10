@@ -81,8 +81,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [profilePicture, setProfilePicture] = useState(user.profilePicture);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [nickNameError, setNickNameError] = useState('');
-  const [canChangeNickName, setCanChangeNickName] = useState(true);
-  const [nextNickNameChangeDate, setNextNickNameChangeDate] = useState<string | null>(null);
   const [inCall, setInCall] = useState(false);
   const [callType, setCallType] = useState<'voice' | 'video' | null>(null);
   const [isCallInitiator, setIsCallInitiator] = useState(false);
@@ -1458,14 +1456,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
         setProfilePicture(newProfilePicture);
         setProfileNickName(data.user.nickName);
         
-        // Update nickname change restriction info
-        if (data.canChangeNickName !== undefined) {
-          setCanChangeNickName(data.canChangeNickName);
-        }
-        if (data.nextNickNameChangeDate) {
-          setNextNickNameChangeDate(data.nextNickNameChangeDate);
-        }
-        
         localStorage.setItem('user', JSON.stringify(user));
 
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1473,18 +1463,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
         setShowProfileModal(false);
         setIsUpdatingProfile(false);
       } else {
-        // Handle specific errors
-        if (data.error && data.error.includes('nickname')) {
-          setNickNameError(data.error);
-        } else if (data.error && data.error.includes('once per year')) {
-          setNickNameError(data.error);
-          if (data.nextChangeDate) {
-            setNextNickNameChangeDate(data.nextChangeDate);
-            setCanChangeNickName(false);
-          }
-        } else {
-          setNickNameError(data.error || 'Failed to update profile');
-        }
+        // Handle errors
+        setNickNameError(data.error || 'Failed to update profile');
         setIsUpdatingProfile(false);
       }
     } catch (error) {
@@ -2345,7 +2325,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       setProfileNickName(e.target.value);
                       setNickNameError('');
                     }}
-                    disabled={isUpdatingProfile || !canChangeNickName}
+                    disabled={isUpdatingProfile}
                     placeholder="Enter your display name"
                     maxLength={20}
                     className="nickname-input"
@@ -2353,13 +2333,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   {nickNameError && (
                     <p className="error-message">{nickNameError}</p>
                   )}
-                  {!canChangeNickName && nextNickNameChangeDate && (
-                    <p className="info-message">
-                      You can change your nickname again on {new Date(nextNickNameChangeDate).toLocaleDateString()}
-                    </p>
-                  )}
                   <p className="field-hint">
-                    This name will be displayed in chats. You can change it once per year.
+                    This name will be displayed in chats and can be changed anytime.
                   </p>
                 </div>
 

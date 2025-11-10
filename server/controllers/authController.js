@@ -829,23 +829,6 @@ export async function updateProfile(req, res) {
         return res.status(400).json({ error: 'Nickname must be 30 characters or less' });
       }
 
-      // Check if user can change nickName (once per year restriction)
-      if (user.lastNickNameChange) {
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-        
-        if (user.lastNickNameChange > oneYearAgo) {
-          const nextChangeDate = new Date(user.lastNickNameChange);
-          nextChangeDate.setFullYear(nextChangeDate.getFullYear() + 1);
-          
-          return res.status(400).json({ 
-            error: 'You can only change your nickname once per year',
-            nextChangeDate: nextChangeDate.toISOString(),
-            message: `You can change your nickname again on ${nextChangeDate.toLocaleDateString()}`
-          });
-        }
-      }
-
       // Check if nickName is already taken by another user
       const existingUser = await usersCollection.findOne({
         nickName: nickName,
@@ -857,7 +840,6 @@ export async function updateProfile(req, res) {
       }
 
       updateData.nickName = nickName;
-      updateData.lastNickNameChange = new Date();
     }
 
     // Process and upload profile picture if provided

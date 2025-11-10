@@ -51,7 +51,7 @@ router.post('/submit', authenticateToken, async (req, res) => {
     // Create report object
     const report = {
       reporterId,
-      reporterUsername: reporter.username,
+      reporterEmail: reporter.email,
       reason,
       timestamp: new Date()
     };
