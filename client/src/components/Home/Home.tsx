@@ -1219,9 +1219,19 @@ function Home({ user, socket, onLogout }: HomeProps) {
       });
     }
     
+    // Clear ALL localStorage items related to auth
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    
+    // Clear any session storage as well
+    sessionStorage.clear();
+    
+    // Disconnect socket completely
+    if (socket) {
+      socket.disconnect();
+    }
+    
     onLogout();
   };
 

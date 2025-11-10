@@ -27,12 +27,24 @@ function App() {
     if (token && savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
+        
+        // Verify the session is still valid before setting user
+        // This prevents issues with stale sessions after logout
+        console.log('🔍 Validating saved session...');
         setUser(parsedUser);
       } catch (error) {
         console.error('Failed to parse saved user:', error);
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        sessionStorage.clear();
       }
+    } else {
+      // Ensure clean state if no valid session
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      sessionStorage.clear();
     }
     setIsLoading(false);
   }, []);
@@ -110,13 +122,24 @@ function App() {
   };
 
   const handleLogout = () => {
+    // Clear user state first
     setUser(null);
     setAuthView('login');
-    navigate('/');
+    
+    // Close socket connection
     if (socket) {
       socket.close();
       setSocket(null);
     }
+    
+    // Clear all auth data from storage
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+    
+    // Navigate to login using replace to prevent back navigation issues
+    navigate('/', { replace: true });
   };
 
   if (isLoading) {

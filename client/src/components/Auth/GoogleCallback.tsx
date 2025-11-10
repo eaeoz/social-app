@@ -65,11 +65,11 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         processed = true;
         clearTimeout(timeoutId);
         
-        setStatus('Redirecting to home...');
-        // Force a hard navigation to ensure page loads properly
+        setStatus('Success! Redirecting...');
+        // Use React Router navigation instead of hard reload
         setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
+          navigate('/', { replace: true });
+        }, 500);
       } catch (error) {
         processed = true;
         clearTimeout(timeoutId);
