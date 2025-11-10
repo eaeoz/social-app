@@ -84,25 +84,53 @@ function Reports() {
     }
   };
 
-  const handleResolveReport = async (reportId: string) => {
+  const handleResolveReport = async (reportId: string, reportedUserId: string, reporterId: string) => {
+    console.log('🔧 Resolving report:', {
+      reportId,
+      reportedUserId,
+      reporterId
+    });
+    
     setResolvingId(reportId);
     try {
       const token = localStorage.getItem('adminToken');
+      const requestBody = { 
+        status: 'resolved',
+        reportedUserId,
+        reporterId
+      };
+      
+      console.log('📤 Sending request:', requestBody);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/reports/${reportId}`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: 'resolved' })
+        body: JSON.stringify(requestBody)
       });
 
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Report resolved successfully:', data);
+        
+        if (data.source === 'user_array') {
+          console.log(`📝 Report removed from user's array. Remaining reports: ${data.remainingReports}`);
+        } else if (data.source === 'collection') {
+          console.log('📋 Report status updated in reports collection');
+        }
+        
         // Remove the resolved report from the list
         setReports(reports.filter(r => r._id !== reportId));
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Failed to resolve report:', errorData);
+        alert(`Failed to resolve report: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error resolving report:', error);
+      console.error('💥 Error resolving report:', error);
+      alert('An error occurred while resolving the report');
     } finally {
       setResolvingId(null);
     }
@@ -506,7 +534,11 @@ function Reports() {
                   <td className="action-cell">
                     <button 
                       className="resolve-btn"
-                      onClick={() => handleResolveReport(report._id)}
+                      onClick={() => handleResolveReport(
+                        report._id, 
+                        String(report.reportedUserId),
+                        String(report.reporterId)
+                      )}
                       disabled={resolvingId === report._id}
                       title="Mark as Resolved"
                     >

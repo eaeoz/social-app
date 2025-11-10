@@ -101,17 +101,21 @@ function Login({ onLogin }: LoginProps) {
       </div>
       
       <div className="login-card">
-        <div className="login-logo-container">
-          <img 
-            src="/logo_sedatchat.gif" 
-            alt="Netcify Logo" 
-            className="login-logo"
-          />
-        </div>
-
-        <div className="login-header">
-          <h1>Admin Dashboard</h1>
-          <p>Sign in to manage your platform</p>
+        <div className="login-logo-section">
+          <div className="auth-logo">
+            <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'Netcify'}</h1>
+          </div>
+          <div className="auth-header-with-logo">
+            <img 
+              src="/logo_sedatchat.gif" 
+              alt="Netcify Logo" 
+              className="auth-logo-image"
+            />
+            <div className="auth-header-text">
+              <h1>🔐 Admin Dashboard</h1>
+              <p className="subtitle">Sign in to manage your platform</p>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

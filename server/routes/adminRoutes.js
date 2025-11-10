@@ -293,11 +293,19 @@ router.get('/users/archived-reports/:email', authenticateToken, requireAdmin, as
   }
 });
 
-// Update report status
+// Update report status and remove from user's reports array
 router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { reportId } = req.params;
-    const { status, adminNotes } = req.body;
+    const { status, adminNotes, reportedUserId, reporterId } = req.body;
+    
+    console.log('🔧 Report resolution request:', {
+      reportId,
+      status,
+      reportedUserId,
+      reporterId,
+      hasAdminNotes: !!adminNotes
+    });
     
     if (!['pending', 'resolved', 'dismissed'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
@@ -305,6 +313,7 @@ router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, re
     
     const db = getDatabase();
     
+    // First, try to update report in the reports collection
     const updateData = {
       status,
       resolvedAt: status === 'resolved' ? new Date() : null,
@@ -315,12 +324,103 @@ router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, re
       updateData.adminNotes = adminNotes;
     }
     
-    await db.collection('reports').updateOne(
+    const collectionUpdate = await db.collection('reports').updateOne(
       { _id: new ObjectId(reportId) },
       { $set: updateData }
     );
     
-    res.json({ message: 'Report updated successfully' });
+    // If report exists in collection, we're done
+    if (collectionUpdate.matchedCount > 0) {
+      console.log(`✅ Report ${reportId} updated in reports collection (this report was already in collection, not in user array)`);
+      return res.json({ 
+        message: 'Report updated successfully',
+        source: 'collection'
+      });
+    }
+    
+    console.log(`🔍 Report ${reportId} not found in collection, checking user's reports array...`);
+    
+    // If not found in collection, it's in a user's reports array
+    // Find and remove the specific report from the user's reports array
+    if (reportedUserId && reporterId) {
+      console.log(`🔍 Looking for user with ID: ${reportedUserId}`);
+      const reportedUser = await db.collection('users').findOne({ 
+        _id: new ObjectId(reportedUserId) 
+      });
+      
+      if (!reportedUser) {
+        console.log(`❌ User ${reportedUserId} not found`);
+        return res.status(404).json({ error: 'Reported user not found' });
+      }
+      
+      console.log(`✅ Found user: ${reportedUser.username}, reports count: ${reportedUser.reports?.length || 0}`);
+      
+      if (reportedUser && reportedUser.reports && reportedUser.reports.length > 0) {
+        // Find the report by reporterId and remove it
+        const updatedReports = reportedUser.reports.filter(report => {
+          const currentReporterId = report.reporterId || report.userId;
+          return currentReporterId !== reporterId;
+        });
+        
+        console.log(`📝 Removing report from user array: Original count = ${reportedUser.reports.length}, New count = ${updatedReports.length}`);
+        
+        // Update the user with the filtered reports array
+        const userUpdate = await db.collection('users').updateOne(
+          { _id: new ObjectId(reportedUserId) },
+          { 
+            $set: { 
+              reports: updatedReports,
+              updatedAt: new Date()
+            }
+          }
+        );
+        
+        if (userUpdate.modifiedCount > 0) {
+          console.log(`✅ Successfully removed report from user ${reportedUser.username}'s reports array`);
+          
+          // Archive the resolved report to reports collection
+          const reporter = await db.collection('users').findOne(
+            { _id: new ObjectId(reporterId) },
+            { projection: { username: 1, email: 1 } }
+          );
+          
+          // Find the original report data
+          const originalReport = reportedUser.reports.find(report => {
+            const currentReporterId = report.reporterId || report.userId;
+            return currentReporterId === reporterId;
+          });
+          
+          if (originalReport) {
+            await db.collection('reports').insertOne({
+              _id: new ObjectId(reportId),
+              reportedUserId: new ObjectId(reportedUserId),
+              reporterId: new ObjectId(reporterId),
+              reason: originalReport.reason || 'Unknown',
+              description: originalReport.description || '',
+              status: 'resolved',
+              createdAt: originalReport.timestamp || originalReport.createdAt || new Date(),
+              resolvedAt: new Date(),
+              resolvedBy: req.user.userId,
+              reporterEmail: originalReport.reporterEmail || reporter?.email,
+              source: 'user_array_resolved'
+            });
+            console.log(`✅ Archived resolved report to reports collection`);
+          }
+          
+          return res.json({ 
+            message: 'Report resolved and removed from user successfully',
+            source: 'user_array',
+            remainingReports: updatedReports.length
+          });
+        }
+      }
+    }
+    
+    // If we get here, report wasn't found anywhere
+    return res.status(404).json({ 
+      error: 'Report not found in reports collection or user reports array' 
+    });
+    
   } catch (error) {
     console.error('Update report error:', error);
     res.status(500).json({ error: 'Failed to update report' });
