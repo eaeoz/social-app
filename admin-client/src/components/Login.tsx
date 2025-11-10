@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import './Login.css';
 
 interface LoginProps {
@@ -10,6 +11,7 @@ function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,12 +19,25 @@ function Login({ onLogin }: LoginProps) {
     setIsLoading(true);
 
     try {
+      // Get reCAPTCHA token
+      if (!executeRecaptcha) {
+        setError('reCAPTCHA not loaded. Please refresh the page.');
+        setIsLoading(false);
+        return;
+      }
+
+      const recaptchaToken = await executeRecaptcha('admin_login');
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ 
+          username, 
+          password,
+          recaptchaToken 
+        })
       });
 
       const data = await response.json();

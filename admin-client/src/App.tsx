@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -65,32 +66,41 @@ function App() {
   }
 
   return (
-    <ThemeProvider>
-      <Router>
-        <Routes>
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
-        />
-        <Route
-          path="/*"
-          element={
-            isAuthenticated ? (
-              <Dashboard admin={admin} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <GoogleReCaptchaProvider
+      reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''}
+      scriptProps={{
+        async: true,
+        defer: true,
+        appendTo: 'head',
+      }}
+    >
+      <ThemeProvider>
+        <Router>
+          <Routes>
+          <Route
+            path="/login"
+            element={
+              isAuthenticated ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Login onLogin={handleLogin} />
+              )
+            }
+          />
+          <Route
+            path="/*"
+            element={
+              isAuthenticated ? (
+                <Dashboard admin={admin} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </GoogleReCaptchaProvider>
   );
 }
 
