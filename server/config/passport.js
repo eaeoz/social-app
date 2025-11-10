@@ -75,6 +75,7 @@ export function configurePassport() {
             username: username,
             email: email,
             displayName: displayName,
+            nickName: username, // Initialize nickName with username for Google OAuth users
             googleId: googleId,
             profilePictureUrl: profilePicture,
             passwordHash: null, // No password for OAuth users
