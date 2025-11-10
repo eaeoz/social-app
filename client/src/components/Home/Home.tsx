@@ -55,6 +55,8 @@ interface PrivateChat {
 
 function Home({ user, socket, onLogout }: HomeProps) {
   const [connected, setConnected] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -126,6 +128,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportedUserId, setReportedUserId] = useState<string | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const maxReconnectAttempts = 5;
 
   // Handle footer visibility on mobile when input is focused
   useEffect(() => {
@@ -307,21 +311,89 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   }, [socket, connected, selectedRoom]);
 
+  // Reconnection handler
+  const handleReconnection = () => {
+    if (!socket || reconnecting) return;
+    
+    console.log('🔄 Attempting to reconnect...');
+    setReconnecting(true);
+    setConnectionError(null);
+    reconnectAttemptRef.current++;
+    
+    // Force socket to reconnect
+    if (socket.disconnected) {
+      socket.connect();
+    }
+  };
+
   useEffect(() => {
     if (socket) {
       setConnected(socket.connected);
 
       socket.on('connect', () => {
+        console.log('✅ Socket connected successfully');
         setConnected(true);
-        // Authentication now handled in App.tsx on initial connection
+        setReconnecting(false);
+        setConnectionError(null);
+        reconnectAttemptRef.current = 0;
+        
+        // Re-authenticate after reconnection
+        socket.emit('authenticate', {
+          userId: user.userId,
+          username: user.username,
+          fullName: user.fullName || user.username
+        });
+        
+        // Reload data after reconnection
+        loadRooms();
+        loadUsers();
+        loadPrivateChats();
+        
+        // Rejoin current room/chat if any
+        if (selectedRoom) {
+          socket.emit('join_room', {
+            roomId: selectedRoom.roomId,
+            userId: user.userId,
+            username: user.username
+          });
+          socket.emit('get_room_messages', {
+            roomId: selectedRoom.roomId,
+            limit: 50
+          });
+        }
+        
+        if (selectedPrivateChat) {
+          socket.emit('get_private_messages', {
+            userId: user.userId,
+            otherUserId: selectedPrivateChat.otherUser.userId,
+            limit: 50
+          });
+        }
       });
 
-      // Send activity heartbeat every 2 minutes to keep user online
+      socket.on('connect_error', (error) => {
+        console.error('❌ Connection error:', error.message);
+        setConnected(false);
+        setConnectionError('Connection failed. Retrying...');
+        
+        // Auto-retry with exponential backoff
+        if (reconnectAttemptRef.current < maxReconnectAttempts) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptRef.current), 30000);
+          setTimeout(() => {
+            handleReconnection();
+          }, delay);
+        } else {
+          setConnectionError('Unable to connect. Please refresh the page.');
+          setReconnecting(false);
+        }
+      });
+
+      // Send activity heartbeat every 90 seconds (1.5 minutes) to keep user online
       const activityInterval = setInterval(() => {
         if (socket.connected) {
           socket.emit('activity', { userId: user.userId });
         }
-      }, 120000); // 2 minutes
+      }, 90000); // 90 seconds - well before the 5-minute server timeout
 
       // Track user activity (mouse movement, keyboard, clicks)
       const sendActivity = () => {
@@ -344,8 +416,25 @@ function Home({ user, socket, onLogout }: HomeProps) {
       window.addEventListener('keydown', throttledActivity);
       window.addEventListener('click', throttledActivity);
 
-      socket.on('disconnect', () => {
+      socket.on('disconnect', (reason) => {
+        console.warn('⚠️ Socket disconnected:', reason);
         setConnected(false);
+        
+        if (reason === 'io server disconnect') {
+          // Server forcibly disconnected - don't auto-reconnect
+          setConnectionError('You have been disconnected by the server.');
+        } else {
+          // Transport error or client disconnect - attempt reconnection
+          setConnectionError('Connection lost. Reconnecting...');
+          setReconnecting(true);
+          
+          // Socket.IO will auto-reconnect, but we can force it if needed
+          setTimeout(() => {
+            if (socket.disconnected) {
+              handleReconnection();
+            }
+          }, 1000);
+        }
       });
 
       socket.on('room_message', (message: any) => {
@@ -536,6 +625,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       socket.on('error', (error: { message: string }) => {
         console.error('Socket error:', error.message);
+        setConnectionError(error.message);
       });
 
       return () => {
@@ -544,6 +634,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         window.removeEventListener('keydown', throttledActivity);
         window.removeEventListener('click', throttledActivity);
         socket.off('connect');
+        socket.off('connect_error');
         socket.off('disconnect');
         socket.off('room_message');
         socket.off('room_message_notification');
@@ -898,39 +989,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
       messageInputRef.current?.focus();
     }, 100);
   };
-
-  // Function to close private chat - currently not used but available for future use
-  // const closePrivateChat = async (chat: PrivateChat) => {
-  //   if (chat.unreadCount > 0) {
-  //     return;
-  //   }
-  //   
-  //   try {
-  //     const token = localStorage.getItem('accessToken');
-  //     await fetch(`${import.meta.env.VITE_API_URL}/rooms/close-private-chat`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${token}`
-  //       },
-  //       body: JSON.stringify({ otherUserId: chat.otherUser.userId })
-  //     });
-  //     
-  //     setPrivateChats(prev => prev.filter(c => c.chatId !== chat.chatId));
-  //     
-  //     if (selectedPrivateChat?.chatId === chat.chatId) {
-  //       if (rooms.length > 0) {
-  //         selectRoom(rooms[0]);
-  //       } else {
-  //         setSelectedPrivateChat(null);
-  //         setChatType('room');
-  //         setMessages([]);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to close chat:', error);
-  //   }
-  // };
 
   const sendMessage = (messageContent?: string) => {
     const content = messageContent || messageInput.trim();
@@ -1601,8 +1659,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
             </div>
             <div className="user-details">
               <span className="user-name">{user.nickName || user.nickName || user.username}</span>
-              <span className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
-                {connected ? '🟢 Online' : '🔴 Offline'}
+              <span className={`connection-status ${connected ? 'connected' : reconnecting ? 'reconnecting' : 'disconnected'}`}>
+                {connected ? '🟢 Online' : reconnecting ? '🟡 Reconnecting...' : '🔴 Offline'}
               </span>
             </div>
           </div>
@@ -1611,6 +1669,18 @@ function Home({ user, socket, onLogout }: HomeProps) {
           </button>
         </div>
       </header>
+
+      {/* Connection Error Banner */}
+      {connectionError && !connected && (
+        <div className="connection-error-banner">
+          <span>{connectionError}</span>
+          {reconnectAttemptRef.current < maxReconnectAttempts && (
+            <button onClick={handleReconnection} className="reconnect-button">
+              Retry Now
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="home-content">
         {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
@@ -1812,6 +1882,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           onClick={() => startCall('voice')}
                           title="Voice Call"
                           aria-label="Start voice call"
+                          disabled={!connected}
                         >
                           📞
                         </button>
@@ -1820,6 +1891,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           onClick={() => startCall('video')}
                           title="Video Call"
                           aria-label="Start video call"
+                          disabled={!connected}
                         >
                           🎥
                         </button>
@@ -1950,7 +2022,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     handleInputFocus();
                     
                     if (selectedRoom) {
-                      setRooms(prev => prev.map(r =>
+                      setRooms(prev => prev.map(r=>
                         r.roomId === selectedRoom.roomId ? { ...r, unreadCount: 0 } : r
                       ));
                       
