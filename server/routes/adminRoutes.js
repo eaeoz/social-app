@@ -2,6 +2,7 @@ import express from 'express';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { transferUserReportsToCollection, getUserReportsFromCollection } from '../utils/transferUserReportsToCollection.js';
 
 const router = express.Router();
 
@@ -86,11 +87,28 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
       .project({ passwordHash: 0 })
       .toArray();
     
+    // Add report count for each user
+    const usersWithReportCount = await Promise.all(users.map(async (user) => {
+      // Count reports from reports collection
+      const reportsCollectionCount = await db.collection('reports').countDocuments({
+        reportedUserId: user._id,
+        status: 'pending' // Only count pending reports
+      });
+      
+      // Count reports from user's reports array (if exists)
+      const userReportsCount = user.reports?.length || 0;
+      
+      // Use whichever is greater (or combine them if needed)
+      const reportCount = Math.max(reportsCollectionCount, userReportsCount);
+      
+      return { ...user, reportCount };
+    }));
+    
     // Get total count
     const total = await db.collection('users').countDocuments(searchQuery);
     
     res.json({
-      users,
+      users: usersWithReportCount,
       pagination: {
         page,
         limit,
@@ -143,6 +161,70 @@ router.get('/reports', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// Get all archived reports with search functionality
+router.get('/archived-reports', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { search } = req.query;
+    const db = getDatabase();
+    
+    // Build search query
+    const searchQuery = search ? {
+      $or: [
+        { reportedUserEmail: { $regex: search, $options: 'i' } },
+        { reportedUsername: { $regex: search, $options: 'i' } }
+      ]
+    } : {};
+    
+    // Get all archived report batches
+    const reportBatches = await db.collection('userreports')
+      .find(searchQuery)
+      .sort({ transferredAt: -1 })
+      .toArray();
+    
+    // Transform data for frontend
+    const archivedReports = reportBatches.map(batch => ({
+      reportedUserId: batch.reportedUserId,
+      reportedUserEmail: batch.reportedUserEmail,
+      reportedUsername: batch.reportedUsername,
+      totalReports: batch.reports.length,
+      firstReportDate: batch.reports[0]?.timestamp,
+      lastReportDate: batch.reports[batch.reports.length - 1]?.timestamp,
+      transferredAt: batch.transferredAt,
+      batchNumber: batch.batchNumber,
+      totalBatches: batch.totalBatches,
+      reports: batch.reports
+    }));
+    
+    res.json({ archivedReports });
+  } catch (error) {
+    console.error('Get archived reports error:', error);
+    res.status(500).json({ error: 'Failed to fetch archived reports' });
+  }
+});
+
+// Get archived reports for a specific user by email
+router.get('/users/archived-reports/:email', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    const result = await getUserReportsFromCollection(email);
+    
+    if (!result.success) {
+      return res.status(500).json({ error: result.error || 'Failed to fetch archived reports' });
+    }
+    
+    res.json({
+      email,
+      reports: result.reports || [],
+      total: result.total || 0,
+      batches: result.batches || 0
+    });
+  } catch (error) {
+    console.error('Get archived reports error:', error);
+    res.status(500).json({ error: 'Failed to fetch archived reports' });
+  }
+});
+
 // Update report status
 router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -185,18 +267,70 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
     
     const db = getDatabase();
     
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: {
-          userSuspended: suspend,
-          suspendedAt: suspend ? new Date() : null,
-          suspendedBy: suspend ? req.user.userId : null
-        }
+    // Get user details before updating
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // If unsuspending and user has reports, transfer them to collection
+    let reportsCleared = false;
+    if (!suspend && user.reports && user.reports.length > 0) {
+      console.log(`Transferring ${user.reports.length} reports to collection for user: ${user.email}`);
+      const transferResult = await transferUserReportsToCollection(
+        userId, 
+        user.email, 
+        user.username, 
+        user.reports
+      );
+      
+      if (transferResult.success) {
+        console.log(`Successfully transferred ${transferResult.transferred} reports in ${transferResult.batches} batch(es)`);
+        reportsCleared = true;
+      } else {
+        console.error('Failed to transfer reports:', transferResult.error);
+        // Continue with unsuspension even if transfer fails
       }
+    }
+    
+    // Update user suspension status and clear reports if transferred
+    const updateData = {
+      userSuspended: suspend,
+      suspendedAt: suspend ? new Date() : null,
+      suspendedBy: suspend ? req.user.userId : null,
+      unsuspendedAt: !suspend ? new Date() : null,
+      unsuspendedBy: !suspend ? req.user.userId : null
+    };
+    
+    // Clear reports array if they were successfully archived
+    if (reportsCleared) {
+      updateData.reports = [];
+      console.log('✅ Clearing reports array - users can now report this user again');
+    }
+    
+    console.log('Updating user with data:', JSON.stringify(updateData, null, 2));
+    
+    const updateResult = await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: updateData }
     );
     
-    res.json({ message: suspend ? 'User suspended' : 'User unsuspended' });
+    console.log(`Update result: matched ${updateResult.matchedCount}, modified ${updateResult.modifiedCount}`);
+    
+    // Verify the update
+    const updatedUser = await db.collection('users').findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { reports: 1, userSuspended: 1 } }
+    );
+    
+    console.log(`Verified user state: reports count = ${updatedUser?.reports?.length || 0}, suspended = ${updatedUser?.userSuspended}`);
+    
+    res.json({ 
+      message: suspend ? 'User suspended' : 'User unsuspended',
+      reportsTransferred: !suspend && user.reports ? user.reports.length : 0,
+      reportsCleared: reportsCleared,
+      currentReportCount: updatedUser?.reports?.length || 0
+    });
   } catch (error) {
     console.error('Suspend user error:', error);
     res.status(500).json({ error: 'Failed to update user status' });

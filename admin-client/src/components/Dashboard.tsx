@@ -5,6 +5,7 @@ import Reports from './Reports';
 import Settings from './Settings';
 import Statistics from './Statistics';
 import Rooms from './Rooms';
+import ArchivedReports from './ArchivedReports';
 import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
@@ -64,6 +65,14 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <span className="nav-label">Reports</span>
           </Link>
           <Link
+            to="/archived-reports"
+            className={`nav-item ${location.pathname === '/archived-reports' ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">📦</span>
+            <span className="nav-label">Archived Reports</span>
+          </Link>
+          <Link
             to="/settings"
             className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
             onClick={() => setSidebarOpen(false)}
@@ -113,6 +122,7 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <Route path="/users" element={<Users />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/archived-reports" element={<ArchivedReports />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
