@@ -8,7 +8,9 @@ const router = express.Router();
 router.get('/google', 
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
-    session: false
+    session: false,
+    prompt: 'select_account',  // Force account selection every time
+    accessType: 'offline'       // Request refresh token
   })
 );
 
