@@ -299,10 +299,19 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
 
       <div className="auth-card">
         <div className="auth-logo">
-          <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
+          <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'Netcify'}</h1>
         </div>
-        <h1>🎉 Create Account</h1>
-        <p className="subtitle">Join the chat community</p>
+        <div className="auth-header-with-logo">
+          <img 
+            src="/logo_sedatchat.gif" 
+            alt="Netcify Logo" 
+            className="auth-logo-image"
+          />
+          <div className="auth-header-text">
+            <h1>🎉 Create Account</h1>
+            <p className="subtitle">Join the chat community</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}

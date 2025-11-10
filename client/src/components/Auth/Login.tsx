@@ -220,10 +220,19 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       </button>
       <div className="auth-card">
         <div className="auth-logo">
-          <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
+          <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'Netcify'}</h1>
         </div>
-        <h1>🚀 Welcome Back!</h1>
-        <p className="subtitle">Sign in to your account</p>
+        <div className="auth-header-with-logo">
+          <img 
+            src="/logo_sedatchat.gif" 
+            alt="Netcify Logo" 
+            className="auth-logo-image"
+          />
+          <div className="auth-header-text">
+            <h1>🚀 Welcome Back!</h1>
+            <p className="subtitle">Sign in to your account</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
