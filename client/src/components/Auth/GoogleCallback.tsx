@@ -59,17 +59,15 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         localStorage.setItem('user', JSON.stringify(userData));
 
         setStatus('Logging in...');
-        // Call success handler
-        await onLoginSuccess(userData);
+        // Call success handler (non-blocking)
+        onLoginSuccess(userData);
         
         processed = true;
         clearTimeout(timeoutId);
         
         setStatus('Success! Redirecting...');
-        // Use React Router navigation instead of hard reload
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 500);
+        // Navigate immediately - don't wait
+        navigate('/', { replace: true });
       } catch (error) {
         processed = true;
         clearTimeout(timeoutId);
