@@ -37,7 +37,7 @@ interface Room {
 interface User {
   userId: string;
   username: string;
-  displayName: string;
+  nickName: string;
   status: string;
   age?: number;
   gender?: string;
@@ -87,7 +87,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [callPartner, setCallPartner] = useState<{
     userId: string;
     username: string;
-    displayName: string;
+    nickName: string;
     profilePicture?: string | null;
   } | null>(null);
   const [incomingCall, setIncomingCall] = useState<{
@@ -812,7 +812,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         // Text search filter - only apply if 3 or more characters
         if (userSearchText.trim() && userSearchText.trim().length >= 3) {
           const searchLower = userSearchText.toLowerCase();
-          return u.displayName.toLowerCase().includes(searchLower) ||
+          return u.nickName.toLowerCase().includes(searchLower) ||
                  u.username.toLowerCase().includes(searchLower);
         }
         // If less than 3 characters, show all users (no filtering)
@@ -1287,7 +1287,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     setCallPartner({
       userId: selectedPrivateChat.otherUser.userId,
       username: selectedPrivateChat.otherUser.username,
-      displayName: selectedPrivateChat.otherUser.displayName,
+      nickName: selectedPrivateChat.otherUser.nickName,
       profilePicture: selectedPrivateChat.otherUser.profilePicture
     });
     
@@ -1354,7 +1354,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
       setCallPartner({
         userId: chat.otherUser.userId,
         username: chat.otherUser.username,
-        displayName: chat.otherUser.displayName,
+        nickName: chat.otherUser.nickName,
         profilePicture: chat.otherUser.profilePicture
       });
     }
@@ -1443,7 +1443,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         user.age = data.user.age;
         user.gender = data.user.gender;
         user.nickName = data.user.nickName;
-        user.displayName = data.user.displayName;
+        user.nickName = data.user.nickName;
         
         // Add cache-busting timestamp to force browser to reload the image
         const newProfilePicture = data.user.profilePicture 
@@ -1600,7 +1600,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
               )}
             </div>
             <div className="user-details">
-              <span className="user-name">{user.displayName || user.nickName || user.username}</span>
+              <span className="user-name">{user.nickName || user.nickName || user.username}</span>
               <span className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
                 {connected ? '🟢 Online' : '🔴 Offline'}
               </span>
@@ -1678,13 +1678,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       <div className="private-chat-info">
                         <div className="private-chat-avatar">
                           {chat.otherUser.profilePicture ? (
-                            <img src={chat.otherUser.profilePicture} alt={chat.otherUser.displayName} />
+                            <img src={chat.otherUser.profilePicture} alt={chat.otherUser.nickName} />
                           ) : (
-                            chat.otherUser.displayName.charAt(0).toUpperCase()
+                            chat.otherUser.nickName.charAt(0).toUpperCase()
                           )}
                         </div>
                         <div className="private-chat-details">
-                          <div className="private-chat-name">{chat.otherUser.displayName}</div>
+                          <div className="private-chat-name">{chat.otherUser.nickName}</div>
                           {chat.lastMessage && (
                             <div className="private-chat-preview">{chat.lastMessage}</div>
                           )}
@@ -1776,13 +1776,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         title="Click to report user"
                       >
                         {selectedPrivateChat.otherUser.profilePicture ? (
-                          <img src={selectedPrivateChat.otherUser.profilePicture} alt={selectedPrivateChat.otherUser.displayName} />
+                          <img src={selectedPrivateChat.otherUser.profilePicture} alt={selectedPrivateChat.otherUser.nickName} />
                         ) : (
-                          selectedPrivateChat.otherUser.displayName.charAt(0).toUpperCase()
+                          selectedPrivateChat.otherUser.nickName.charAt(0).toUpperCase()
                         )}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <h2>{selectedPrivateChat.otherUser.displayName}</h2>
+                        <h2>{selectedPrivateChat.otherUser.nickName}</h2>
                         <p className="chat-description">
                           {selectedPrivateChat.otherUser.age && (
                             <span className="chat-header-info">{selectedPrivateChat.otherUser.age} years old</span>
@@ -1857,7 +1857,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
               >
                 {messages.length === 0 ? (
                   <div className="welcome-message">
-                    <h2>👋 {selectedRoom ? `Welcome to ${selectedRoom.name}!` : `Chat with ${selectedPrivateChat?.otherUser.displayName}`}</h2>
+                    <h2>👋 {selectedRoom ? `Welcome to ${selectedRoom.name}!` : `Chat with ${selectedPrivateChat?.otherUser.nickName}`}</h2>
                     <p>Start chatting by typing a message below</p>
                   </div>
                 ) : (
@@ -1985,7 +1985,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <div className="messages-container">
               <div className="welcome-message">
                 <h2>👋 Welcome to the Chat App!</h2>
-                <p>You're now logged in as <strong>{user.displayName || user.nickName || user.username}</strong></p>
+                <p>You're now logged in as <strong>{user.nickName || user.nickName || user.username}</strong></p>
                 <p>Select a room from the sidebar to start chatting</p>
               </div>
             </div>
@@ -2125,16 +2125,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       {showUserPictures && (
                         <div className="user-avatar">
                           {u.profilePicture ? (
-                            <img src={u.profilePicture} alt={u.displayName} />
+                            <img src={u.profilePicture} alt={u.nickName} />
                           ) : (
-                            u.displayName.charAt(0).toUpperCase()
+                            u.nickName.charAt(0).toUpperCase()
                           )}
                         </div>
                       )}
                       <div className="user-details">
                         <div className="user-line-1">
                           <span className={`user-name ${u.gender === 'Male' ? 'male' : u.gender === 'Female' ? 'female' : ''}`}>
-                            {u.displayName}
+                            {u.nickName}
                           </span>
                           <span className="user-status">
                             <span className={`status-dot ${u.status}`}></span>
@@ -2499,7 +2499,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
           reportedUser={{
             userId: selectedPrivateChat.otherUser.userId,
             username: selectedPrivateChat.otherUser.username,
-            displayName: selectedPrivateChat.otherUser.displayName
+            nickName: selectedPrivateChat.otherUser.nickName
           }}
           onClose={() => {
             setShowReportModal(false);
