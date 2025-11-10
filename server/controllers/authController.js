@@ -4,7 +4,7 @@ import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
 import { ObjectId } from 'mongodb';
 import multer from 'multer';
 import sharp from 'sharp';
-import { InputFile } from 'node-appwrite';
+import { InputFile, ID } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '../utils/sendVerificationEmail.js';
@@ -111,19 +111,20 @@ async function processAndUploadImage(buffer, username, userId) {
     const sanitizedUsername = sanitizeUsername(username);
     const filename = `${sanitizedUsername}_${userId}.jpg`;
 
-    // Upload to Appwrite
+    // Upload to Appwrite - let Appwrite generate the ID
     const file = InputFile.fromBuffer(processedBuffer, filename);
     
     const result = await storage.createFile(
       BUCKET_ID,
-      filename, // Use sanitized username_userId as file ID
+      ID.unique(), // Let Appwrite generate unique ID
       file
     );
 
-    console.log(`✅ Profile picture uploaded: ${result.$id}`);
+    console.log(`✅ Profile picture uploaded: ${result.$id} (filename: ${filename})`);
     return result.$id;
   } catch (error) {
     console.error('❌ Error processing/uploading image:', error);
+    console.error('Error details:', error.message, error.code);
     throw error;
   }
 }

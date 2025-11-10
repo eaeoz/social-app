@@ -3,7 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { getDatabase } from './database.js';
 import { ObjectId } from 'mongodb';
 import { storage, BUCKET_ID } from './appwrite.js';
-import { InputFile } from 'node-appwrite';
+import { InputFile, ID } from 'node-appwrite';
 import sharp from 'sharp';
 import fetch from 'node-fetch';
 
@@ -125,16 +125,16 @@ export function configurePassport() {
               const sanitizedNickName = username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
               const filename = `${sanitizedNickName}_${googleId}.jpg`;
 
-              // Upload to Appwrite
+              // Upload to Appwrite - let Appwrite generate unique ID
               const file = InputFile.fromBuffer(processedBuffer, filename);
               const uploadResult = await storage.createFile(
                 BUCKET_ID,
-                filename,
+                ID.unique(), // Let Appwrite generate unique ID
                 file
               );
 
               profilePictureId = uploadResult.$id;
-              console.log(`✅ Google profile picture uploaded to Appwrite: ${profilePictureId}`);
+              console.log(`✅ Google profile picture uploaded to Appwrite: ${profilePictureId} (filename: ${filename})`);
 
               // Update user with Appwrite profile picture
               const profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
