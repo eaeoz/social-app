@@ -147,16 +147,8 @@ const ArchivedReports: React.FC = () => {
         col = index - 8;
       }
       
-      // Calculate X position with centering for last row
-      let currentX;
-      if (index >= 8) {
-        // Center the 2-card row
-        const totalWidth = 2 * cardWidth + marginX;
-        const offsetX = (pageWidth - totalWidth) / 2;
-        currentX = offsetX + col * (cardWidth + marginX);
-      } else {
-        currentX = 15 + col * (cardWidth + marginX);
-      }
+      // Calculate X position - last row aligned to start
+      const currentX = 15 + col * (cardWidth + marginX);
       
       const currentY = startY + row * (cardHeight + marginY);
       
