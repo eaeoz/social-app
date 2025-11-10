@@ -49,6 +49,12 @@ router.get('/google/callback',
         { expiresIn: '7d' }
       );
 
+      // Get profile picture URL from Appwrite if available
+      let profilePictureUrl = null;
+      if (user.profilePictureId) {
+        profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+      }
+
       // Prepare user data (remove sensitive info)
       const userData = {
         _id: user._id.toString(),
@@ -56,7 +62,7 @@ router.get('/google/callback',
         email: user.email,
         displayName: user.displayName,
         nickName: user.nickName || user.username,
-        profilePictureUrl: user.profilePictureUrl,
+        profilePictureUrl: profilePictureUrl,
         age: user.age,
         gender: user.gender,
         bio: user.bio,

@@ -2,6 +2,10 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { getDatabase } from './database.js';
 import { ObjectId } from 'mongodb';
+import { storage, BUCKET_ID } from './appwrite.js';
+import { InputFile } from 'node-appwrite';
+import sharp from 'sharp';
+import fetch from 'node-fetch';
 
 export function configurePassport() {
   // Serialize user for session
@@ -77,7 +81,7 @@ export function configurePassport() {
             displayName: displayName,
             nickName: username, // Initialize nickName with username for Google OAuth users
             googleId: googleId,
-            profilePictureUrl: profilePicture,
+            profilePictureUrl: null, // Will be updated after uploading to Appwrite
             passwordHash: null, // No password for OAuth users
             age: null,
             gender: null,
@@ -95,18 +99,72 @@ export function configurePassport() {
           };
 
           const result = await usersCollection.insertOne(newUser);
-          const userId = result.insertedId;
+          const userId = result.insertedId.toString();
+
+          // Download and upload profile picture to Appwrite if available
+          let profilePictureId = null;
+          if (profilePicture) {
+            try {
+              console.log('📥 Downloading Google profile picture...');
+              const imageResponse = await fetch(profilePicture);
+              const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+              // Process image: resize to 80x80 and convert to JPG
+              const processedBuffer = await sharp(imageBuffer)
+                .resize(80, 80, {
+                  fit: 'cover',
+                  position: 'center'
+                })
+                .jpeg({
+                  quality: 90,
+                  mozjpeg: true
+                })
+                .toBuffer();
+
+              // Create filename: nickName_googleId.jpg
+              const sanitizedNickName = username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+              const filename = `${sanitizedNickName}_${googleId}.jpg`;
+
+              // Upload to Appwrite
+              const file = InputFile.fromBuffer(processedBuffer, filename);
+              const uploadResult = await storage.createFile(
+                BUCKET_ID,
+                filename,
+                file
+              );
+
+              profilePictureId = uploadResult.$id;
+              console.log(`✅ Google profile picture uploaded to Appwrite: ${profilePictureId}`);
+
+              // Update user with Appwrite profile picture
+              const profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+              
+              await usersCollection.updateOne(
+                { _id: result.insertedId },
+                { 
+                  $set: { 
+                    profilePictureId: profilePictureId,
+                    profilePictureUrl: profilePictureUrl,
+                    updatedAt: new Date()
+                  }
+                }
+              );
+            } catch (uploadError) {
+              console.error('❌ Error uploading Google profile picture to Appwrite:', uploadError);
+              // Continue without profile picture
+            }
+          }
 
           // Create user presence record
           await db.collection('userpresence').insertOne({
-            userId,
+            userId: result.insertedId,
             isOnline: false,
             lastSeen: new Date()
           });
 
           // Create default settings
           await db.collection('settings').insertOne({
-            userId,
+            userId: result.insertedId,
             theme: 'light',
             notifications: true,
             notificationSettings: {
@@ -125,7 +183,7 @@ export function configurePassport() {
           });
 
           // Fetch the created user
-          const createdUser = await usersCollection.findOne({ _id: userId });
+          const createdUser = await usersCollection.findOne({ _id: result.insertedId });
           
           done(null, createdUser);
         } catch (error) {
