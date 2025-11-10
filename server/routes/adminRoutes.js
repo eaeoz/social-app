@@ -37,8 +37,21 @@ router.get('/statistics', authenticateToken, requireAdmin, async (req, res) => {
     // Get total messages (approximate)
     const totalMessages = await db.collection('messages').countDocuments({});
     
-    // Get pending reports
-    const pendingReports = await db.collection('reports').countDocuments({ status: 'pending' });
+    // Get pending reports from reports collection
+    const pendingReportsFromCollection = await db.collection('reports').countDocuments({ status: 'pending' });
+    
+    // Get pending reports from users' reports arrays
+    const usersWithReports = await db.collection('users')
+      .find({ reports: { $exists: true, $ne: [] } })
+      .project({ reports: 1 })
+      .toArray();
+    
+    const pendingReportsFromUsers = usersWithReports.reduce((count, user) => {
+      return count + (user.reports?.length || 0);
+    }, 0);
+    
+    // Total pending reports
+    const pendingReports = pendingReportsFromCollection + pendingReportsFromUsers;
     
     // Get users registered today
     const today = new Date();
@@ -46,6 +59,8 @@ router.get('/statistics', authenticateToken, requireAdmin, async (req, res) => {
     const newUsersToday = await db.collection('users').countDocuments({
       createdAt: { $gte: today }
     });
+    
+    console.log(`📊 Statistics: ${pendingReportsFromCollection} reports in collection, ${pendingReportsFromUsers} in user arrays, ${pendingReports} total`);
     
     res.json({
       totalUsers,
@@ -128,15 +143,56 @@ router.get('/reports', authenticateToken, requireAdmin, async (req, res) => {
     const db = getDatabase();
     const status = req.query.status; // 'pending', 'resolved', or undefined for all
     
+    // Fetch reports from reports collection
     const query = status ? { status } : {};
-    
-    const reports = await db.collection('reports')
+    const reportsFromCollection = await db.collection('reports')
       .find(query)
       .sort({ createdAt: -1 })
       .toArray();
     
-    // Populate reporter and reported user details
-    const reportsWithDetails = await Promise.all(reports.map(async (report) => {
+    // Fetch reports from users' reports arrays
+    const usersWithReports = await db.collection('users')
+      .find({ 
+        reports: { $exists: true, $ne: [] }
+      })
+      .project({ _id: 1, username: 1, email: 1, reports: 1, userSuspended: 1 })
+      .toArray();
+    
+    // Transform user reports into the same format as collection reports
+    const reportsFromUsers = [];
+    for (const user of usersWithReports) {
+      if (user.reports && user.reports.length > 0) {
+        for (const report of user.reports) {
+          // Find the reporter details
+          const reporterId = report.reporterId || report.userId;
+          const reporter = reporterId ? await db.collection('users').findOne(
+            { _id: new ObjectId(reporterId) },
+            { projection: { username: 1, email: 1 } }
+          ) : null;
+          
+          reportsFromUsers.push({
+            _id: report._id || new ObjectId(),
+            reportedUserId: user._id,
+            reporterId: reporterId || null,
+            reason: report.reason || 'Unknown',
+            description: report.description || '',
+            status: 'pending', // Reports in user arrays are always pending
+            createdAt: report.timestamp || report.createdAt || new Date(),
+            reporter: reporter,
+            reportedUser: {
+              _id: user._id,
+              username: user.username,
+              email: user.email,
+              userSuspended: user.userSuspended
+            },
+            source: 'user_array' // Mark source for debugging
+          });
+        }
+      }
+    }
+    
+    // Populate details for collection reports
+    const reportsWithDetails = await Promise.all(reportsFromCollection.map(async (report) => {
       const reporter = await db.collection('users').findOne(
         { _id: report.reporterId },
         { projection: { username: 1, email: 1 } }
@@ -150,11 +206,21 @@ router.get('/reports', authenticateToken, requireAdmin, async (req, res) => {
       return {
         ...report,
         reporter,
-        reportedUser
+        reportedUser,
+        source: 'collection' // Mark source for debugging
       };
     }));
     
-    res.json({ reports: reportsWithDetails });
+    // Combine both sources and sort by date
+    const allReports = [...reportsWithDetails, ...reportsFromUsers]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    // Filter by status if needed (for user reports which are always pending)
+    const filteredReports = status ? allReports.filter(r => r.status === status) : allReports;
+    
+    console.log(`📊 Reports fetched: ${reportsFromCollection.length} from collection, ${reportsFromUsers.length} from user arrays, ${filteredReports.length} total after filter`);
+    
+    res.json({ reports: filteredReports });
   } catch (error) {
     console.error('Get reports error:', error);
     res.status(500).json({ error: 'Failed to fetch reports' });

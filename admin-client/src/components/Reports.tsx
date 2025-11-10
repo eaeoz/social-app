@@ -2,16 +2,12 @@ import { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
-  PieChart,
-  Pie,
   LineChart,
   Line,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer
 } from 'recharts';
 import './Reports.css';
@@ -44,12 +40,19 @@ interface ReportStatistics {
   reportsByStatus: { name: string; value: number }[];
 }
 
+type SortField = 'reportedUser' | 'reporter' | 'reason' | 'date';
+type SortDirection = 'asc' | 'desc';
+
 function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
   const [showStatistics, setShowStatistics] = useState(true);
   const [statistics, setStatistics] = useState<ReportStatistics | null>(null);
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reportsPerPage = 10;
 
   const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
@@ -66,7 +69,7 @@ function Reports() {
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/reports`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/reports?status=pending`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -81,8 +84,31 @@ function Reports() {
     }
   };
 
+  const handleResolveReport = async (reportId: string) => {
+    setResolvingId(reportId);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/reports/${reportId}`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'resolved' })
+      });
+
+      if (response.ok) {
+        // Remove the resolved report from the list
+        setReports(reports.filter(r => r._id !== reportId));
+      }
+    } catch (error) {
+      console.error('Error resolving report:', error);
+    } finally {
+      setResolvingId(null);
+    }
+  };
+
   const calculateStatistics = () => {
-    // Calculate reports by reason
     const reasonCounts: { [key: string]: number } = {};
     reports.forEach(report => {
       reasonCounts[report.reason] = (reasonCounts[report.reason] || 0) + 1;
@@ -92,7 +118,6 @@ function Reports() {
       value
     }));
 
-    // Calculate reports by status
     const statusCounts: { [key: string]: number } = {};
     reports.forEach(report => {
       statusCounts[report.status] = (statusCounts[report.status] || 0) + 1;
@@ -102,7 +127,6 @@ function Reports() {
       value
     }));
 
-    // Calculate reports by date (last 7 days)
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
@@ -122,7 +146,6 @@ function Reports() {
       count: dateCounts[date] || 0
     }));
 
-    // Calculate top reported users
     const userCounts: { [key: string]: number } = {};
     reports.forEach(report => {
       if (report.reportedUser?.username) {
@@ -145,9 +168,66 @@ function Reports() {
     });
   };
 
-  const filteredReports = filter === 'all' 
-    ? reports 
-    : reports.filter(r => r.status === filter);
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedReports = [...reports].sort((a, b) => {
+    let compareA: string = '';
+    let compareB: string = '';
+
+    switch (sortField) {
+      case 'reportedUser':
+        compareA = (a.reportedUser?.username || '').toLowerCase();
+        compareB = (b.reportedUser?.username || '').toLowerCase();
+        break;
+      case 'reporter':
+        compareA = (a.reporter?.username || '').toLowerCase();
+        compareB = (b.reporter?.username || '').toLowerCase();
+        break;
+      case 'reason':
+        compareA = a.reason.toLowerCase();
+        compareB = b.reason.toLowerCase();
+        break;
+      case 'date':
+        return sortDirection === 'asc' 
+          ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+
+    if (sortDirection === 'asc') {
+      return compareA.localeCompare(compareB);
+    } else {
+      return compareB.localeCompare(compareA);
+    }
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedReports.length / reportsPerPage);
+  const startIndex = (currentPage - 1) * reportsPerPage;
+  const endIndex = startIndex + reportsPerPage;
+  const paginatedReports = sortedReports.slice(startIndex, endIndex);
+
+  // Calculate progress bar percentage
+  const progressPercentage = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // Scroll to top of reports list
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Reset to page 1 when reports change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [reports.length]);
 
   if (loading) {
     return (
@@ -173,26 +253,6 @@ function Reports() {
             {showStatistics ? 'Hide Statistics' : 'Show Statistics'}
           </button>
         </div>
-        <div className="filter-buttons">
-          <button 
-            className={filter === 'all' ? 'active' : ''}
-            onClick={() => setFilter('all')}
-          >
-            All ({reports.length})
-          </button>
-          <button 
-            className={filter === 'pending' ? 'active' : ''}
-            onClick={() => setFilter('pending')}
-          >
-            Pending ({reports.filter(r => r.status === 'pending').length})
-          </button>
-          <button 
-            className={filter === 'resolved' ? 'active' : ''}
-            onClick={() => setFilter('resolved')}
-          >
-            Resolved ({reports.filter(r => r.status === 'resolved').length})
-          </button>
-        </div>
       </div>
 
       {showStatistics && statistics && (
@@ -214,8 +274,8 @@ function Reports() {
                 </svg>
               </div>
               <div className="stat-info">
-                <p className="stat-label">Total Reports</p>
-                <p className="stat-value">{statistics.totalReports}</p>
+                <p className="stat-label">Total Pending</p>
+                <p className="stat-value">{statistics.pendingReports}</p>
               </div>
             </div>
 
@@ -226,24 +286,12 @@ function Reports() {
                 </svg>
               </div>
               <div className="stat-info">
-                <p className="stat-label">Pending</p>
-                <p className="stat-value">{statistics.pendingReports}</p>
-              </div>
-            </div>
-
-            <div className="stat-card resolved">
-              <div className="stat-icon">
-                <svg viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="stat-info">
                 <p className="stat-label">Resolved</p>
                 <p className="stat-value">{statistics.resolvedReports}</p>
               </div>
             </div>
 
-            <div className="stat-card rate">
+            <div className="stat-card resolved">
               <div className="stat-icon">
                 <svg viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
@@ -262,30 +310,6 @@ function Reports() {
 
           {/* Charts Grid */}
           <div className="charts-grid">
-            {/* Reports by Status - Pie Chart */}
-            <div className="chart-card">
-              <h4 className="chart-title">Reports by Status</h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statistics.reportsByStatus}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statistics.reportsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
             {/* Reports by Reason - Bar Chart */}
             <div className="chart-card">
               <h4 className="chart-title">Reports by Reason</h4>
@@ -373,51 +397,197 @@ function Reports() {
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
           </svg>
-          All Reports
+          Pending Reports ({reports.length})
         </h3>
+        {reports.length > reportsPerPage && (
+          <div className="pagination-info">
+            <span>Page {currentPage} of {totalPages}</span>
+            <span className="showing-records">
+              Showing {startIndex + 1}-{Math.min(endIndex, reports.length)} of {reports.length}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="reports-grid">
-        {filteredReports.map((report) => (
-          <div key={report._id} className="report-card">
-            <div className="report-header">
-              <span className={`status-badge ${report.status}`}>
-                {report.status}
-              </span>
-              <span className="report-date">
-                {new Date(report.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            
-            <div className="report-body">
-              <div className="report-info">
-                <strong>Reported User:</strong> @{report.reportedUser?.username || 'Unknown'}
-              </div>
-              <div className="report-info">
-                <strong>Reporter:</strong> @{report.reporter?.username || 'Unknown'}
-              </div>
-              <div className="report-info">
-                <strong>Reason:</strong> {report.reason}
-              </div>
-              {report.description && (
-                <div className="report-description">
-                  <strong>Description:</strong>
-                  <p>{report.description}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="report-actions">
-              <button className="btn-view">View Details</button>
-              <button className="btn-resolve">Mark Resolved</button>
+      {reports.length > reportsPerPage && (
+        <div className="pagination-bar-container">
+          <div className="pagination-progress-bar">
+            <div 
+              className="pagination-progress-fill"
+              style={{ width: `${progressPercentage}%` }}
+            />
+            <div className="pagination-markers">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <div
+                  key={i}
+                  className={`pagination-marker ${currentPage === i + 1 ? 'active' : ''} ${currentPage > i + 1 ? 'completed' : ''}`}
+                  style={{ left: `${((i + 1) / totalPages) * 100}%` }}
+                  onClick={() => handlePageChange(i + 1)}
+                  title={`Page ${i + 1}`}
+                />
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {filteredReports.length === 0 && (
+      {reports.length > 0 ? (
+        <>
+        <div className="reports-table-container">
+          <table className="reports-table">
+            <thead>
+              <tr>
+                <th onClick={() => handleSort('reportedUser')} className="sortable">
+                  <div className="th-content">
+                    <span>Reported User</span>
+                    <svg className={`sort-icon ${sortField === 'reportedUser' ? 'active' : ''} ${sortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </th>
+                <th onClick={() => handleSort('reporter')} className="sortable">
+                  <div className="th-content">
+                    <span>Reporter</span>
+                    <svg className={`sort-icon ${sortField === 'reporter' ? 'active' : ''} ${sortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </th>
+                <th onClick={() => handleSort('reason')} className="sortable">
+                  <div className="th-content">
+                    <span>Reason</span>
+                    <svg className={`sort-icon ${sortField === 'reason' ? 'active' : ''} ${sortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </th>
+                <th onClick={() => handleSort('date')} className="sortable">
+                  <div className="th-content">
+                    <span>Date</span>
+                    <svg className={`sort-icon ${sortField === 'date' ? 'active' : ''} ${sortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </th>
+                <th className="action-column">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedReports.map((report) => (
+                <tr key={report._id}>
+                  <td>
+                    <div className="user-cell">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="user-icon">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                      <span>@{report.reportedUser?.username || 'Unknown'}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="user-cell">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="user-icon">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                      <span>@{report.reporter?.username || 'Unknown'}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="reason-badge">{report.reason}</span>
+                  </td>
+                  <td>
+                    <span className="date-text">
+                      {new Date(report.createdAt).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </td>
+                  <td className="action-cell">
+                    <button 
+                      className="resolve-btn"
+                      onClick={() => handleResolveReport(report._id)}
+                      disabled={resolvingId === report._id}
+                      title="Mark as Resolved"
+                    >
+                      {resolvingId === report._id ? (
+                        <div className="btn-spinner"></div>
+                      ) : (
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {reports.length > reportsPerPage && (
+          <div className="pagination-controls">
+            <button 
+              className="pagination-btn"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Previous
+            </button>
+
+            <div className="pagination-pages">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                const showPage = 
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1);
+                
+                const showEllipsis = 
+                  (page === 2 && currentPage > 3) ||
+                  (page === totalPages - 1 && currentPage < totalPages - 2);
+
+                if (showEllipsis) {
+                  return <span key={page} className="pagination-ellipsis">...</span>;
+                }
+
+                if (!showPage) {
+                  return null;
+                }
+
+                return (
+                  <button
+                    key={page}
+                    className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button 
+              className="pagination-btn"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
+        </>
+      ) : (
         <div className="no-results">
-          <p>No reports found.</p>
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          <p>No pending reports</p>
         </div>
       )}
     </div>
