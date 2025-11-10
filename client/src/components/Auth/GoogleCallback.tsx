@@ -12,34 +12,59 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
 
   useEffect(() => {
     let processed = false;
+    let isMounted = true;
 
     // Set a timeout fallback to prevent indefinite loading
     const timeoutId = setTimeout(() => {
-      if (!processed) {
-        console.error('OAuth callback timeout - redirecting to login');
-        navigate('/login?error=timeout');
+      if (!processed && isMounted) {
+        console.error('⏱️ OAuth callback timeout - redirecting to login');
+        navigate('/login?error=timeout', { replace: true });
       }
     }, 5000); // 5 second timeout
 
-    const processCallback = async () => {
+    const processCallback = () => {
       try {
+        // Prevent double processing
+        if (processed) {
+          console.log('⚠️ Callback already processed, skipping...');
+          return;
+        }
+
+        console.log('🔄 Processing OAuth callback...');
+        
         const token = searchParams.get('token');
         const refresh = searchParams.get('refresh');
         const userParam = searchParams.get('user');
 
+        console.log('📋 Callback params:', { 
+          hasToken: !!token, 
+          hasRefresh: !!refresh, 
+          hasUser: !!userParam 
+        });
+
         if (!token || !refresh || !userParam) {
           processed = true;
           clearTimeout(timeoutId);
+          console.error('❌ Missing OAuth parameters');
           setStatus('Missing parameters...');
-          setTimeout(() => navigate('/login?error=missing_params'), 1000);
+          if (isMounted) {
+            navigate('/login?error=missing_params', { replace: true });
+          }
           return;
         }
 
         setStatus('Parsing user data...');
         const user = JSON.parse(decodeURIComponent(userParam));
+        console.log('👤 Parsed user:', user.username);
         
         setStatus('Storing credentials...');
-        // Store tokens
+        
+        // Clear any existing session first
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        
+        // Store new tokens
         localStorage.setItem('accessToken', token);
         localStorage.setItem('refreshToken', refresh);
         
@@ -49,6 +74,8 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
           username: user.username,
           email: user.email,
           displayName: user.displayName || user.username,
+          nickName: user.nickName || user.username,
+          profilePicture: user.profilePictureUrl || null,
           age: user.age,
           gender: user.gender,
           bio: user.bio || '',
@@ -57,32 +84,48 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
         };
         
         localStorage.setItem('user', JSON.stringify(userData));
+        console.log('💾 User data stored in localStorage');
 
         setStatus('Logging in...');
         // Call success handler (non-blocking)
-        onLoginSuccess(userData);
+        if (isMounted) {
+          onLoginSuccess(userData);
+          console.log('✅ Login success handler called');
+        }
         
         processed = true;
         clearTimeout(timeoutId);
         
         setStatus('Success! Redirecting...');
         // Navigate immediately - don't wait
-        navigate('/', { replace: true });
+        if (isMounted) {
+          console.log('🔄 Navigating to home...');
+          navigate('/', { replace: true });
+        }
       } catch (error) {
         processed = true;
         clearTimeout(timeoutId);
-        console.error('Error parsing OAuth callback data:', error);
+        console.error('❌ Error in OAuth callback:', error);
         setStatus('Error occurred...');
-        setTimeout(() => navigate('/login?error=invalid_callback'), 1000);
+        if (isMounted) {
+          navigate('/login?error=invalid_callback', { replace: true });
+        }
       }
     };
 
-    processCallback();
+    // Small delay to ensure component is mounted
+    const processingTimer = setTimeout(() => {
+      if (isMounted) {
+        processCallback();
+      }
+    }, 100);
 
     return () => {
+      isMounted = false;
       clearTimeout(timeoutId);
+      clearTimeout(processingTimer);
     };
-  }, [searchParams, onLoginSuccess, navigate]);
+  }, []); // Empty deps to run only once
 
   return (
     <div style={{
