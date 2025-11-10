@@ -30,7 +30,9 @@ const allowedOrigins = [
   'http://localhost:4000',
   'http://localhost:8888',
   'https://netcify.netlify.app',
-  process.env.CLIENT_URL
+  'https://netcifyadmin.netlify.app', // Admin dashboard production
+  process.env.CLIENT_URL,
+  process.env.ADMIN_URL
 ].filter(Boolean);
 
 console.log('🌐 CORS Configuration:');
