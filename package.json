@@ -1,7 +1,7 @@
 {
-  "name": "social-app",
+  "name": "netcify",
   "version": "1.0.0",
-  "description": "Real-time chat application with public rooms and private messaging",
+  "description": "Netcify - A modern real-time chat and social platform for connecting, chatting, and sharing with the world. Features instant messaging, voice & video calls, and seamless global communication.",
   "main": "server/server.js",
   "type": "module",
   "scripts": {
@@ -18,12 +18,17 @@
   },
   "keywords": [
     "chat",
+    "social network",
+    "messaging",
+    "video calls",
+    "voice calls",
+    "real-time communication",
     "websocket",
     "mongodb",
-    "real-time",
-    "social"
+    "netcify",
+    "social platform"
   ],
-  "author": "",
+  "author": "Sedat ERGÖZ",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/eaeoz/social-app/issues"

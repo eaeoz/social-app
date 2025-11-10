@@ -1,8 +1,9 @@
 {
-  "name": "client",
+  "name": "netcify-client",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Netcify - A modern real-time chat and social platform for connecting with the world",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
