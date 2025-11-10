@@ -25,6 +25,7 @@ const httpServer = createServer(app);
 // Allow multiple origins for CORS
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174', // Admin dashboard
   'http://localhost:3000',
   'http://localhost:4000',
   'http://localhost:8888',
@@ -309,6 +310,7 @@ import settingsRoutes from './routes/settingsRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
@@ -330,6 +332,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/report', reportRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Serve static files from React build (for production)
 if (process.env.NODE_ENV === 'production') {

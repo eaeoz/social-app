@@ -191,6 +191,7 @@ export async function register(req, res) {
       gender,
       bio: '',
       status: 'offline',
+      role: 'user', // Default role for new users
       profilePictureId: null,
       isEmailVerified: false,
       emailVerificationToken,
@@ -495,6 +496,7 @@ export async function login(req, res) {
       nickName: user.nickName || user.username,
       age: user.age,
       gender: user.gender,
+      role: user.role || 'user',
       profilePicture: profilePictureUrl,
       profilePictureId: user.profilePictureId,
       bio: user.bio || ''

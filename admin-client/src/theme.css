@@ -1,0 +1,399 @@
+/* Theme Variables */
+:root[data-theme="light"] {
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-hover: #f1f3f5;
+  
+  /* Text Colors */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-tertiary: #adb5bd;
+  
+  /* Border Colors */
+  --border-primary: #dee2e6;
+  --border-secondary: #e9ecef;
+  
+  /* Accent Colors */
+  --accent-primary: #007bff;
+  --accent-hover: #0056b3;
+  --accent-light: #e7f1ff;
+  
+  /* Status Colors */
+  --success: #28a745;
+  --success-light: #d4edda;
+  --warning: #ffc107;
+  --warning-light: #fff3cd;
+  --danger: #dc3545;
+  --danger-light: #f8d7da;
+  --info: #17a2b8;
+  --info-light: #d1ecf1;
+  
+  /* Component Specific */
+  --sidebar-bg: #2c3e50;
+  --sidebar-text: #ecf0f1;
+  --sidebar-hover: #34495e;
+  --sidebar-active: #3498db;
+  
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.1);
+  
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
+  --input-focus: #80bdff;
+  --input-text: #212529;
+  --input-placeholder: #6c757d;
+  
+  --table-header-bg: #f8f9fa;
+  --table-row-hover: #f1f3f5;
+  --table-border: #dee2e6;
+}
+
+:root[data-theme="dark"] {
+  /* Background Colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #242424;
+  --bg-tertiary: #2d2d2d;
+  --bg-hover: #333333;
+  
+  /* Text Colors */
+  --text-primary: #e9ecef;
+  --text-secondary: #adb5bd;
+  --text-tertiary: #6c757d;
+  
+  /* Border Colors */
+  --border-primary: #404040;
+  --border-secondary: #333333;
+  
+  /* Accent Colors */
+  --accent-primary: #4a9eff;
+  --accent-hover: #3a8eef;
+  --accent-light: #1a3a5a;
+  
+  /* Status Colors */
+  --success: #2ecc71;
+  --success-light: #1a4d2e;
+  --warning: #f39c12;
+  --warning-light: #5d4e1f;
+  --danger: #e74c3c;
+  --danger-light: #5a1f1a;
+  --info: #3498db;
+  --info-light: #1a3a4d;
+  
+  /* Component Specific */
+  --sidebar-bg: #0d1117;
+  --sidebar-text: #c9d1d9;
+  --sidebar-hover: #161b22;
+  --sidebar-active: #1f6feb;
+  
+  --card-bg: #242424;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  
+  --input-bg: #2d2d2d;
+  --input-border: #404040;
+  --input-focus: #4a9eff;
+  --input-text: #e9ecef;
+  --input-placeholder: #6c757d;
+  
+  --table-header-bg: #2d2d2d;
+  --table-row-hover: #333333;
+  --table-border: #404040;
+}
+
+/* Global Theme Styles */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-primary);
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-primary);
+}
+
+.theme-toggle-slider {
+  width: 24px;
+  height: 24px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .theme-toggle-slider {
+  transform: translateX(30px);
+}
+
+.theme-toggle-icon {
+  font-size: 14px;
+}
+
+/* Card Styles */
+.card,
+.stat-card,
+.setting-card,
+.report-card,
+.login-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 2px 8px var(--card-shadow);
+}
+
+/* Input Styles */
+input,
+textarea,
+select {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 1px solid var(--input-border) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder) !important;
+  opacity: 0.7;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--input-focus) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+/* Button Styles */
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--card-shadow);
+}
+
+/* Table Styles */
+table {
+  background-color: var(--card-bg);
+  border-color: var(--table-border);
+}
+
+thead {
+  background-color: var(--table-header-bg);
+  color: var(--text-primary);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--table-border);
+}
+
+tbody tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+th, td {
+  color: var(--text-primary);
+  border-color: var(--table-border);
+}
+
+/* Sidebar Styles */
+.sidebar {
+  background-color: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--border-primary);
+}
+
+.sidebar-header {
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.sidebar h2,
+.sidebar-header h2 {
+  color: var(--sidebar-text) !important;
+}
+
+.nav-item {
+  color: var(--sidebar-text) !important;
+}
+
+.nav-item:hover {
+  background-color: var(--sidebar-hover) !important;
+}
+
+.nav-item.active {
+  background-color: var(--sidebar-active) !important;
+  color: #ffffff !important;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-badge.online {
+  background-color: var(--success-light);
+  color: var(--success);
+}
+
+.status-badge.offline {
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.status-badge.pending {
+  background-color: var(--warning-light);
+  color: var(--warning);
+}
+
+.status-badge.resolved {
+  background-color: var(--success-light);
+  color: var(--success);
+}
+
+/* Role Badges */
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.role-badge.admin {
+  background-color: var(--danger-light);
+  color: var(--danger);
+}
+
+.role-badge.user {
+  background-color: var(--info-light);
+  color: var(--info);
+}
+
+/* Loading Spinner */
+.spinner {
+  border-color: var(--border-primary);
+  border-top-color: var(--accent-primary);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Messages and Alerts */
+.message.success,
+.alert-success {
+  background-color: var(--success-light);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.message.error,
+.alert-error {
+  background-color: var(--danger-light);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.message.warning,
+.alert-warning {
+  background-color: var(--warning-light);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+/* Stat Cards */
+.stat-card.online {
+  border-left: 4px solid var(--success);
+}
+
+.stat-card.reports {
+  border-left: 4px solid var(--danger);
+}
+
+/* Toggle Switch */
+.toggle input:checked + .toggle-slider {
+  background-color: var(--accent-primary);
+}
+
+.toggle-slider {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+}
+
+/* Search Bar */
+.search-bar input {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 1px solid var(--input-border) !important;
+}
+
+/* User Avatar */
+.user-avatar {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+/* Footer */
+.settings-footer,
+.login-footer {
+  border-top: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+}
+
+/* No Results */
+.no-results {
+  color: var(--text-secondary);
+}
+
+/* Welcome Section */
+.welcome-section {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+.welcome-section h3 {
+  color: var(--text-primary);
+}
+
+.welcome-section p {
+  color: var(--text-secondary);
+}
