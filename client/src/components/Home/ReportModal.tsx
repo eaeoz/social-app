@@ -5,7 +5,7 @@ interface ReportModalProps {
   reportedUser: {
     userId: string;
     username: string;
-    displayName: string;
+    nickName: string;
   };
   onClose: () => void;
 }
@@ -73,7 +73,7 @@ function ReportModal({ reportedUser, onClose }: ReportModalProps) {
         
         <div className="modal-body report-modal-body">
           <div className="report-user-info">
-            <p>You are reporting: <strong>{reportedUser.displayName}</strong></p>
+            <p>You are reporting: <strong>{reportedUser.nickName}</strong></p>
             <p className="report-warning">
               ⚠️ Please select the reason for your report. False reports may result in action against your account.
             </p>

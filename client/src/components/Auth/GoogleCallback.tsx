@@ -73,7 +73,6 @@ function GoogleCallback({ onLoginSuccess }: GoogleCallbackProps) {
           userId: user._id,
           username: user.username,
           email: user.email,
-          displayName: user.displayName || user.username,
           nickName: user.nickName || user.username,
           profilePicture: user.profilePictureUrl || null,
           age: user.age,

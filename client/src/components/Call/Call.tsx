@@ -7,7 +7,7 @@ interface CallProps {
   otherUser: {
     userId: string;
     username: string;
-    displayName: string;
+    nickName: string;
     profilePicture?: string | null;
   };
   callType: 'voice' | 'video';
@@ -602,10 +602,10 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
         ) : (
           <div className="call-avatar-container">
             {otherUser.profilePicture ? (
-              <img src={otherUser.profilePicture} alt={otherUser.displayName} className="call-avatar-image" />
+              <img src={otherUser.profilePicture} alt={otherUser.nickName} className="call-avatar-image" />
             ) : (
               <div className="call-avatar-fallback">
-                {otherUser.displayName.charAt(0).toUpperCase()}
+                {otherUser.nickName.charAt(0).toUpperCase()}
               </div>
             )}
           </div>
@@ -635,7 +635,7 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
       {/* Call info header */}
       <div className="call-header">
         <div className="call-info">
-          <div className="call-user-name">{otherUser.displayName}</div>
+          <div className="call-user-name">{otherUser.nickName}</div>
           <div className="call-status">
             {callState === 'ringing' && (isInitiator ? 'Calling...' : 'Incoming call...')}
             {callState === 'connecting' && 'Connecting...'}
