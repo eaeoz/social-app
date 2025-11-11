@@ -46,6 +46,7 @@ router.get('/public', authenticateToken, async (req, res) => {
           roomId: room._id.toString(),
           name: room.name,
           description: room.description,
+          icon: room.icon,
           participantCount: room.participants?.length || 0,
           maxParticipants: room.maxParticipants,
           unreadCount: unreadCount,
