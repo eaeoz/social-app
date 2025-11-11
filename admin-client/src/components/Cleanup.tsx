@@ -40,11 +40,17 @@ function Cleanup() {
 
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
-        filterUsers(data);
+        console.log('Fetched users data:', data);
+        const usersList = data.users || [];
+        setUsers(usersList);
+        filterUsers(usersList);
+      } else {
+        console.error('Failed to fetch users:', response.status);
+        setMessage('❌ Failed to fetch users');
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setMessage('❌ Error fetching users');
     }
   };
 
