@@ -7,10 +7,18 @@ class RingtoneManager {
   private isPlaying: boolean = false;
   private intervalId: number | null = null;
 
-  // Initialize audio context
-  private initAudioContext() {
+  // Initialize audio context (call this early with user interaction)
+  public initAudioContext() {
     if (!this.audioContext) {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('🔊 Audio context initialized');
+    }
+    
+    // Resume audio context if suspended (mobile autoplay policy)
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      this.audioContext.resume().then(() => {
+        console.log('🔊 Audio context resumed');
+      });
     }
   }
 

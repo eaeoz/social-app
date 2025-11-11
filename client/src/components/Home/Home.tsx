@@ -261,6 +261,20 @@ function Home({ user, socket, onLogout }: HomeProps) {
       resetNotifications();
     };
 
+    // Initialize audio context early with user interaction for mobile compatibility
+    const initAudio = () => {
+      ringtoneManager.initAudioContext();
+      // Remove listeners after first interaction
+      document.removeEventListener('click', initAudio);
+      document.removeEventListener('touchstart', initAudio);
+      document.removeEventListener('keydown', initAudio);
+    };
+
+    // Listen for any user interaction to initialize audio
+    document.addEventListener('click', initAudio);
+    document.addEventListener('touchstart', initAudio);
+    document.addEventListener('keydown', initAudio);
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
@@ -268,6 +282,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
       clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('click', initAudio);
+      document.removeEventListener('touchstart', initAudio);
+      document.removeEventListener('keydown', initAudio);
     };
   }, []);
 
