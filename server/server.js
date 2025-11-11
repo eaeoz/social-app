@@ -20,6 +20,10 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
+
+// Trust proxy - required for Render.com and other reverse proxies
+app.set('trust proxy', 1);
+
 const httpServer = createServer(app);
 
 // Allow multiple origins for CORS
@@ -70,20 +74,15 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    console.log(`🔍 HTTP CORS check - Origin: ${origin || 'no-origin'}, Method: ${callback ? 'checking' : 'unknown'}`);
-    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      console.log('✅ Allowing HTTP request with no origin');
       return callback(null, true);
     }
     
     if (allowedOrigins.includes(origin)) {
-      console.log(`✅ HTTP Origin allowed: ${origin}`);
       callback(null, true);
     } else {
       console.warn(`⛔ BLOCKED HTTP CORS from origin: ${origin}`);
-      console.warn(`📋 Allowed origins are:`, allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
