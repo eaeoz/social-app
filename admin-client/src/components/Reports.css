@@ -310,6 +310,15 @@
   text-align: right;
 }
 
+/* Override for Top Users - force dark text for better visibility on light card backgrounds */
+.top-user-item .user-name {
+  color: #1e293b !important;
+}
+
+.top-user-item .user-count {
+  color: #1e293b !important;
+}
+
 .no-data {
   padding: 2rem;
   text-align: center;
