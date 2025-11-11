@@ -4,7 +4,6 @@
 class RingtoneManager {
   private audioContext: AudioContext | null = null;
   private oscillators: OscillatorNode[] = [];
-  private gainNode: GainNode | null = null;
   private isPlaying: boolean = false;
   private intervalId: number | null = null;
 
