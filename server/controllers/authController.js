@@ -499,7 +499,8 @@ export async function login(req, res) {
       role: user.role || 'user',
       profilePicture: profilePictureUrl,
       profilePictureId: user.profilePictureId,
-      bio: user.bio || ''
+      bio: user.bio || '',
+      doNotDisturb: user.doNotDisturb || false
     };
 
     res.json({
@@ -968,6 +969,45 @@ export async function changePassword(req, res) {
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ error: 'Failed to change password' });
+  }
+}
+
+// Update Do Not Disturb setting
+export async function updateDoNotDisturb(req, res) {
+  try {
+    const userId = req.user.userId;
+    const { doNotDisturb } = req.body;
+
+    // Validation
+    if (typeof doNotDisturb !== 'boolean') {
+      return res.status(400).json({ error: 'doNotDisturb must be a boolean value' });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Update user's DND setting
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: { 
+          doNotDisturb: doNotDisturb,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Do Not Disturb ${doNotDisturb ? 'enabled' : 'disabled'} for user: ${userId}`);
+
+    res.json({
+      message: `Do Not Disturb ${doNotDisturb ? 'enabled' : 'disabled'} successfully`,
+      doNotDisturb,
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Update Do Not Disturb error:', error);
+    res.status(500).json({ error: 'Failed to update Do Not Disturb setting' });
   }
 }
 

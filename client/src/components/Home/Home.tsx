@@ -145,15 +145,41 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showRateLimitWarning, setShowRateLimitWarning] = useState(false);
   const messageInputContainerRef = useRef<HTMLDivElement>(null);
   const [doNotDisturb, setDoNotDisturb] = useState(() => {
-    const saved = localStorage.getItem('doNotDisturb');
-    return saved === 'true';
+    // Initialize from user data from database
+    return user.doNotDisturb === true;
   });
 
   // Toggle Do Not Disturb mode
-  const toggleDoNotDisturb = () => {
+  const toggleDoNotDisturb = async () => {
     const newValue = !doNotDisturb;
     setDoNotDisturb(newValue);
-    localStorage.setItem('doNotDisturb', newValue.toString());
+    
+    // Sync with database
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/update-dnd`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ doNotDisturb: newValue })
+      });
+      
+      if (response.ok) {
+        // Update user object
+        user.doNotDisturb = newValue;
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        // Revert on error
+        setDoNotDisturb(!newValue);
+        console.error('Failed to update DND setting');
+      }
+    } catch (error) {
+      // Revert on error
+      setDoNotDisturb(!newValue);
+      console.error('Failed to update DND setting:', error);
+    }
   };
 
   // Handle footer visibility on mobile when input is focused
@@ -510,7 +536,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         // Trigger notification for new room message
         if (message.senderId !== user.userId) {
-          handleNewMessageNotification('New message', message.senderId, user.userId);
+          handleNewMessageNotification('New message', message.senderId, user.userId, doNotDisturb);
         }
         
         // Always add the message if it's for a room chat, let React state handle filtering
@@ -576,7 +602,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         // Trigger notification for new private message
         if (message.senderId !== user.userId) {
-          handleNewMessageNotification(`New message from ${message.senderName}`, message.senderId, user.userId);
+          handleNewMessageNotification(`New message from ${message.senderName}`, message.senderId, user.userId, doNotDisturb);
         }
         
         if (isCurrentChat) {

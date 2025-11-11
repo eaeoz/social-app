@@ -64,12 +64,11 @@ export const isPageVisible = (): boolean => {
 /**
  * Handle new message notification (both title and sound)
  */
-export const handleNewMessageNotification = (messageText: string = 'New message', senderId: string, currentUserId: string) => {
+export const handleNewMessageNotification = (messageText: string = 'New message', senderId: string, currentUserId: string, doNotDisturb: boolean = false) => {
   // Don't notify for own messages
   if (senderId === currentUserId) return;
   
   // Check if Do Not Disturb is enabled
-  const doNotDisturb = localStorage.getItem('doNotDisturb') === 'true';
   if (doNotDisturb) return;
   
   // Only notify if page is not visible/focused
