@@ -153,7 +153,8 @@ function Users() {
         />
       </div>
 
-      <div className="users-table-container">
+      {/* Desktop Table View */}
+      <div className="users-table-container desktop-view">
         <table className="users-table">
           <thead>
             <tr>
@@ -234,6 +235,87 @@ function Users() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="users-cards-container mobile-view">
+        {filteredUsers.map((user) => (
+          <div key={user._id} className={`user-card ${user.userSuspended ? 'suspended' : ''}`}>
+            <div className="user-card-header">
+              <div className="user-card-avatar">
+                {user.profilePicture ? (
+                  <img src={user.profilePicture} alt={user.username} />
+                ) : (
+                  user.username.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="user-card-info">
+                <div className="user-card-name">
+                  {user.nickName || user.username}
+                  {user.userSuspended && <span className="suspended-badge">🚫</span>}
+                </div>
+                <div className="user-card-username">@{user.username}</div>
+                <div className="user-card-email">{user.email}</div>
+              </div>
+              <div className="user-card-status-badges">
+                <span className={`status-badge ${user.status}`}>
+                  {user.status === 'online' ? '🟢' : '⚫'}
+                </span>
+                <div 
+                  className={`report-count ${
+                    (user.reportCount || 0) === 0 ? '' :
+                    (user.reportCount || 0) >= 8 ? 'danger-level' :
+                    (user.reportCount || 0) >= 5 ? 'warning-level' :
+                    'low-level'
+                  }`}
+                  title={`${user.reportCount || 0} pending report${(user.reportCount || 0) !== 1 ? 's' : ''}`}
+                >
+                  {user.reportCount || 0}
+                </div>
+              </div>
+            </div>
+            
+            <div className="user-card-details">
+              <div className="user-card-detail-item">
+                <span className="detail-label">Role:</span>
+                <span className={`role-badge ${user.role}`}>
+                  {user.role || 'user'}
+                </span>
+              </div>
+              <div className="user-card-detail-item">
+                <span className="detail-label">Joined:</span>
+                <span className="detail-value">{new Date(user.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="user-card-detail-item">
+                <span className="detail-label">Status:</span>
+                <div className={`status-indicator ${user.userSuspended ? 'suspended' : 'active'}`}>
+                  {user.userSuspended ? '🚫 Suspended' : '✅ Active'}
+                </div>
+              </div>
+            </div>
+
+            <div className="user-card-actions">
+              <button 
+                className="card-btn card-btn-view" 
+                onClick={() => handleViewDetails(user)}
+              >
+                👁️ View Details
+              </button>
+              <button 
+                className="card-btn card-btn-suspend"
+                onClick={() => handleSuspend(user._id, user.userSuspended || false)}
+              >
+                {user.userSuspended ? '✅ Unsuspend' : '🚫 Suspend'}
+              </button>
+              <button 
+                className="card-btn card-btn-delete"
+                onClick={() => handleDelete(user._id, user.username)}
+              >
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {filteredUsers.length === 0 && (
