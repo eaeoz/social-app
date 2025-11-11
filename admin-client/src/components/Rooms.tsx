@@ -50,6 +50,11 @@ function Rooms() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 Rooms data received:', data.rooms);
+        // Log icons specifically
+        data.rooms.forEach((room: Room) => {
+          console.log(`Room "${room.name}" icon:`, room.icon, typeof room.icon);
+        });
         setRooms(data.rooms);
       }
     } catch (error) {
@@ -180,8 +185,9 @@ function Rooms() {
           <div key={room._id} className="room-card">
             <div className="room-header">
               <h3>
-                <span className="room-icon">{room.icon || '💬'}</span>
-                {room.name}
+                {room.icon && <span className="room-icon">{room.icon}</span>}
+                {!room.icon && <span className="room-icon">💬</span>}
+                <span style={{ marginLeft: room.icon ? '0.5rem' : '0.5rem' }}>{room.name}</span>
               </h3>
               <span className={`room-type ${room.isPrivate ? 'private' : 'public'}`}>
                 {room.isPrivate ? '🔒 Private' : '🌐 Public'}

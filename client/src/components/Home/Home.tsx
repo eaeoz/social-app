@@ -29,6 +29,7 @@ interface Room {
   roomId: string;
   name: string;
   description: string;
+  icon?: string;
   participantCount: number;
   unreadCount?: number;
   messageCount?: number;
@@ -1757,7 +1758,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   }}
                 >
                   <span className="room-icon">
-                    {room.name === 'General' ? '💬' : room.name === 'Gaming' ? '🎮' : '💻'}
+                    {room.icon || '💬'}
                   </span>
                   <span className="room-name">{room.name}</span>
                   {room.unreadCount && room.unreadCount > 0 ? (
@@ -1877,7 +1878,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   {selectedRoom ? (
                     <>
                       <span className="room-icon">
-                        {selectedRoom.name === 'General' ? '💬' : selectedRoom.name === 'Gaming' ? '🎮' : '💻'}
+                        {selectedRoom.icon || '💬'}
                       </span>
                       <div>
                         <h2>{selectedRoom.name}</h2>
