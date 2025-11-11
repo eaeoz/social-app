@@ -21,6 +21,7 @@ function Cleanup() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [inactiveDays, setInactiveDays] = useState('');
 
   useEffect(() => {
     if (searchTerm.length >= 3) {
@@ -231,6 +232,61 @@ function Cleanup() {
     }
   };
 
+  const handleCleanupInactiveUsers = async () => {
+    if (!inactiveDays || parseInt(inactiveDays) <= 0) {
+      setMessage('❌ Please enter a valid number of days');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    const days = parseInt(inactiveDays);
+
+    if (!confirm(`⚠️ DANGER: Are you sure you want to delete ALL users inactive for ${days}+ days?\n\nThis will permanently delete:\n• All inactive user accounts (except admin "sedat")\n• All their messages (public and private)\n• All their profile pictures\n• All their reports (including archived reports)\n• All their data\n\nThis action CANNOT be undone!`)) {
+      return;
+    }
+
+    if (!confirm(`🚨 FINAL WARNING: Click OK to delete all users who haven't logged in for ${days}+ days.`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/inactive-users-and-old-data`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ inactiveDays: days }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Successfully deleted ${data.stats?.usersDeleted || 0} inactive users, ${data.stats?.messagesDeleted || 0} messages, and ${data.stats?.archivedReportsDeleted || 0} archived reports`);
+        setInactiveDays('');
+        
+        // Clear search results since users may have been deleted
+        setUsers([]);
+        setFilteredUsers([]);
+        setSelectedUser(null);
+        setSearchTerm('');
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to delete inactive users: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting inactive users:', error);
+      setMessage('❌ Error deleting inactive users');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 10000);
+    }
+  };
+
   const handleCleanupByDate = async () => {
     if (!selectedDate) {
       setMessage('❌ Please select a date');
@@ -380,6 +436,37 @@ function Cleanup() {
             </div>
           </div>
         )}
+
+        <div className="cleanup-section inactive-users-zone">
+          <h3>🕒 Inactive Users Cleanup</h3>
+          
+          <div className="inactive-users-section">
+            <h4>🗑️ Delete Inactive Users & Their Data</h4>
+            <p className="warning-text">
+              Delete all users who haven't logged in for a specified number of days.
+              This will also delete their messages, profile pictures, and archived reports.
+              Admin "sedat" will never be deleted.
+            </p>
+            <div className="inactive-cleanup-controls">
+              <input
+                type="number"
+                className="days-input"
+                placeholder="Enter number of days (e.g., 90)"
+                value={inactiveDays}
+                onChange={(e) => setInactiveDays(e.target.value)}
+                min="1"
+                disabled={loading}
+              />
+              <button
+                className="cleanup-btn inactive-cleanup"
+                onClick={handleCleanupInactiveUsers}
+                disabled={loading || !inactiveDays}
+              >
+                {loading ? '⏳ Processing...' : '🗑️ Delete Inactive Users'}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div className="cleanup-section danger-zone">
           <h3>⚠️ Danger Zone</h3>

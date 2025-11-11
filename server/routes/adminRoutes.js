@@ -1063,6 +1063,159 @@ router.delete('/cleanup/all-users-except-admin', authenticateToken, requireAdmin
   }
 });
 
+// Delete inactive users and old data by date
+router.delete('/cleanup/inactive-users-and-old-data', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { inactiveDays } = req.body;
+    
+    if (!inactiveDays || inactiveDays <= 0) {
+      return res.status(400).json({ error: 'Valid number of inactive days is required' });
+    }
+    
+    const db = getDatabase();
+    const protectedUsername = 'sedat';
+    
+    // Calculate the cutoff date for inactive users
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - parseInt(inactiveDays));
+    
+    console.log(`🔍 Finding inactive users (not active since ${cutoffDate.toISOString()})`);
+    
+    // Find inactive users (except protected user)
+    // Users must meet ONE of these criteria:
+    // 1. Have lastSeen and it's before cutoff date
+    // 2. Don't have lastSeen BUT were created before cutoff date (old users who never logged in)
+    const usersToDelete = await db.collection('users').find({
+      username: { $ne: protectedUsername },
+      $or: [
+        { lastSeen: { $lt: cutoffDate } },
+        { 
+          lastSeen: { $exists: false },
+          createdAt: { $lt: cutoffDate }
+        }
+      ]
+    }).toArray();
+    
+    if (usersToDelete.length === 0) {
+      return res.json({ 
+        message: 'No inactive users found',
+        stats: { 
+          usersDeleted: 0,
+          messagesDeleted: 0,
+          reportsDeleted: 0
+        }
+      });
+    }
+    
+    console.log(`📊 Found ${usersToDelete.length} inactive users to delete`);
+    
+    let stats = {
+      usersDeleted: 0,
+      profilePicturesDeleted: 0,
+      presenceDeleted: 0,
+      settingsDeleted: 0,
+      messagesDeleted: 0,
+      privateChatsDeleted: 0,
+      roomsUpdated: 0,
+      reportsDeleted: 0,
+      archivedReportsDeleted: 0,
+      roomActivityDeleted: 0
+    };
+    
+    // Delete each inactive user and their data
+    for (const user of usersToDelete) {
+      const userId = user._id;
+      const userEmail = user.email;
+      
+      // 1. Delete profile picture from Appwrite (if exists)
+      if (user.profilePictureId) {
+        try {
+          const { storage, BUCKET_ID } = await import('../config/appwrite.js');
+          await storage.deleteFile(BUCKET_ID, user.profilePictureId);
+          stats.profilePicturesDeleted++;
+        } catch (error) {
+          if (error.code !== 404) {
+            console.log(`⚠️ Could not delete profile picture for ${user.username}`);
+          }
+        }
+      }
+      
+      // 2. Delete archived reports from userreports collection by email
+      const archivedReportsResult = await db.collection('userreports').deleteMany({
+        reportedUserEmail: userEmail
+      });
+      stats.archivedReportsDeleted += archivedReportsResult.deletedCount;
+      
+      // 3. Delete user presence
+      const presenceResult = await db.collection('userpresence').deleteMany({ userId });
+      stats.presenceDeleted += presenceResult.deletedCount;
+      
+      // 4. Delete user settings
+      const settingsResult = await db.collection('settings').deleteMany({ userId });
+      stats.settingsDeleted += settingsResult.deletedCount;
+      
+      // 5. Delete messages
+      const messagesResult = await db.collection('messages').deleteMany({
+        $or: [{ senderId: userId }, { receiverId: userId }]
+      });
+      stats.messagesDeleted += messagesResult.deletedCount;
+      
+      // 6. Delete private chats
+      const privateChatsResult = await db.collection('privatechats').deleteMany({
+        $or: [{ user1Id: userId }, { user2Id: userId }]
+      });
+      stats.privateChatsDeleted += privateChatsResult.deletedCount;
+      
+      // 7. Remove from public rooms
+      const roomsResult = await db.collection('publicrooms').updateMany(
+        { participants: userId },
+        { 
+          $pull: { participants: userId },
+          $set: { updatedAt: new Date() }
+        }
+      );
+      stats.roomsUpdated += roomsResult.modifiedCount;
+      
+      // 8. Delete user room activity
+      const roomActivityResult = await db.collection('userroomactivity').deleteMany({ userId });
+      stats.roomActivityDeleted += roomActivityResult.deletedCount;
+      
+      // 9. Delete reports
+      const reportsResult = await db.collection('reports').deleteMany({
+        $or: [{ reporterId: userId }, { reportedUserId: userId }]
+      });
+      stats.reportsDeleted += reportsResult.deletedCount;
+      
+      // 10. Delete user account
+      const userResult = await db.collection('users').deleteOne({ _id: userId });
+      stats.usersDeleted += userResult.deletedCount;
+      
+      console.log(`✅ Deleted inactive user: ${user.username} (${user.email})`);
+    }
+    
+    console.log('🎉 Inactive users deletion complete:', stats);
+    
+    // Force disconnect deleted users via socket
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('bulk_users_deleted', { 
+        message: 'Your account has been removed due to inactivity.',
+        count: stats.usersDeleted
+      });
+    }
+    
+    res.json({ 
+      message: `Successfully deleted ${stats.usersDeleted} inactive users and their data`,
+      inactiveDays: parseInt(inactiveDays),
+      cutoffDate: cutoffDate.toISOString(),
+      stats
+    });
+  } catch (error) {
+    console.error('Delete inactive users error:', error);
+    res.status(500).json({ error: 'Failed to delete inactive users' });
+  }
+});
+
 // Delete messages created before a specific date
 router.delete('/cleanup/messages-by-date', authenticateToken, requireAdmin, async (req, res) => {
   try {

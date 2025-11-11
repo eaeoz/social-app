@@ -324,6 +324,75 @@
   color: #fb923c;
 }
 
+.inactive-users-zone {
+  border: 2px solid #f59e0b;
+  background: #fffbeb;
+}
+
+[data-theme="dark"] .inactive-users-zone {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.inactive-users-section {
+  margin-bottom: 0;
+}
+
+.inactive-users-section h4 {
+  font-size: 1.1rem;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+
+[data-theme="dark"] .inactive-users-section h4 {
+  color: #fbbf24;
+}
+
+.inactive-cleanup-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.days-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.days-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+}
+
+.days-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.days-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.cleanup-btn.inactive-cleanup {
+  background: #f59e0b;
+  color: white;
+  flex: 1;
+  min-width: 200px;
+}
+
+.cleanup-btn.inactive-cleanup:hover:not(:disabled) {
+  background: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
 .date-cleanup-section,
 .all-messages-section {
   margin-bottom: 1.5rem;
