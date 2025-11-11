@@ -78,7 +78,10 @@ export async function getSiteSettings() {
         siteEmail: '',
         verificationEmailResendCount: 4,
         maxMessageLength: 30,
-        rateLimit: 10
+        rateLimit: 10,
+        maintenanceMode: false,
+        maintenanceReason: '',
+        maintenanceEstimatedTime: ''
       };
     }
 
@@ -89,7 +92,10 @@ export async function getSiteSettings() {
       siteEmail: settings.siteEmail || '',
       verificationEmailResendCount: settings.verificationEmailResendCount !== undefined ? settings.verificationEmailResendCount : 4,
       maxMessageLength: settings.maxMessageLength !== undefined ? settings.maxMessageLength : 30,
-      rateLimit: settings.rateLimit !== undefined ? settings.rateLimit : 10
+      rateLimit: settings.rateLimit !== undefined ? settings.rateLimit : 10,
+      maintenanceMode: settings.maintenanceMode !== undefined ? settings.maintenanceMode : false,
+      maintenanceReason: settings.maintenanceReason || '',
+      maintenanceEstimatedTime: settings.maintenanceEstimatedTime || ''
     };
     
     console.log('🔍 Processed settings result:', JSON.stringify(result, null, 2));
@@ -103,7 +109,10 @@ export async function getSiteSettings() {
       defaultUsersDisplayCount: 20,
       verificationEmailResendCount: 4,
       maxMessageLength: 30,
-      rateLimit: 10
+      rateLimit: 10,
+      maintenanceMode: false,
+      maintenanceReason: '',
+      maintenanceEstimatedTime: ''
     };
   }
 }

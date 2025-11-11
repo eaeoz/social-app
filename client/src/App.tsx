@@ -7,6 +7,7 @@ import VerifyEmail from './components/Auth/VerifyEmail';
 import ResetPassword from './components/Auth/ResetPassword';
 import GoogleCallback from './components/Auth/GoogleCallback';
 import Home from './components/Home/Home';
+import Maintenance from './components/Maintenance/Maintenance';
 import './App.css';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
@@ -19,6 +20,39 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [authView, setAuthView] = useState<AuthView>('login');
   const [isLoading, setIsLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceSettings, setMaintenanceSettings] = useState<{
+    estimatedTime?: string;
+    reason?: string;
+  }>({});
+
+  // Check maintenance mode on mount and periodically
+  useEffect(() => {
+    const checkMaintenanceMode = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/site`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.settings) {
+            setMaintenanceMode(data.settings.maintenanceMode || false);
+            setMaintenanceSettings({
+              estimatedTime: data.settings.maintenanceEstimatedTime,
+              reason: data.settings.maintenanceReason
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check maintenance mode:', error);
+      }
+    };
+
+    checkMaintenanceMode();
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkMaintenanceMode, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -149,6 +183,16 @@ function App() {
         <div className="loading-spinner"></div>
         <p>Loading...</p>
       </div>
+    );
+  }
+
+  // Show maintenance page if maintenance mode is enabled
+  if (maintenanceMode) {
+    return (
+      <Maintenance 
+        estimatedTime={maintenanceSettings.estimatedTime}
+        reason={maintenanceSettings.reason}
+      />
     );
   }
 
