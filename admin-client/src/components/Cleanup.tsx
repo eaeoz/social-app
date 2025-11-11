@@ -15,7 +15,6 @@ interface User {
 
 function Cleanup() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,7 +53,6 @@ function Cleanup() {
           });
         }
         
-        setUsers(usersList);
         filterUsers(usersList);
       } else {
         console.error('Failed to fetch users:', response.status);
@@ -215,7 +213,6 @@ function Cleanup() {
         setMessage(`✅ Successfully deleted ${data.stats?.usersDeleted || 0} users and all their data. Protected user: ${data.protectedUser}`);
         
         // Clear the search results since users were deleted
-        setUsers([]);
         setFilteredUsers([]);
         setSelectedUser(null);
         setSearchTerm('');
@@ -270,7 +267,6 @@ function Cleanup() {
         setInactiveDays('');
         
         // Clear search results since users may have been deleted
-        setUsers([]);
         setFilteredUsers([]);
         setSelectedUser(null);
         setSearchTerm('');
