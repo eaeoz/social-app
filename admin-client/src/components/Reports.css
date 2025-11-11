@@ -434,7 +434,7 @@
 
 .user-cell span {
   font-weight: 500;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .reason-badge {
