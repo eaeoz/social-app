@@ -4,7 +4,6 @@ import { getDatabase } from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { transferUserReportsToCollection, getUserReportsFromCollection } from '../utils/transferUserReportsToCollection.js';
 import crypto from 'crypto';
-import { sendPasswordRecoveryEmail } from '../utils/sendPasswordRecoveryEmail.js';
 
 const router = express.Router();
 
@@ -535,7 +534,6 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
 router.post('/users/:userId/password-recovery', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { sendEmail } = req.body;
     
     const db = getDatabase();
     
@@ -565,27 +563,12 @@ router.post('/users/:userId/password-recovery', authenticateToken, requireAdmin,
     const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const recoveryUrl = `${frontendUrl}/reset-password?token=${passwordRecoveryToken}`;
     
-    // Send email if requested
-    let emailSent = false;
-    let emailError = null;
-    
-    if (sendEmail) {
-      try {
-        await sendPasswordRecoveryEmail(user.email, user.username, passwordRecoveryToken);
-        emailSent = true;
-        console.log(`✅ Password recovery email sent to: ${user.email}`);
-      } catch (error) {
-        console.error('❌ Failed to send password recovery email:', error);
-        emailError = error.message;
-      }
-    }
+    console.log(`✅ Password recovery token generated for user: ${user.email}`);
     
     res.json({ 
-      message: 'Password recovery link generated successfully',
+      message: 'Password recovery token generated successfully',
       recoveryUrl,
-      expiresIn: '1 hour',
-      emailSent,
-      emailError: emailError || undefined
+      expiresIn: '1 hour'
     });
   } catch (error) {
     console.error('Generate password recovery link error:', error);

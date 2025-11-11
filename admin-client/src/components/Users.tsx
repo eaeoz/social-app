@@ -400,7 +400,9 @@ function PasswordRecoveryModal({ user, onClose, onSuccess }: PasswordRecoveryMod
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(
+      
+      // Step 1: Generate token via backend
+      const tokenResponse = await fetch(
         `${import.meta.env.VITE_API_URL}/admin/users/${user._id}/password-recovery`,
         {
           method: 'POST',
@@ -408,35 +410,56 @@ function PasswordRecoveryModal({ user, onClose, onSuccess }: PasswordRecoveryMod
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ sendEmail })
+          body: JSON.stringify({ sendEmail: false }) // Never send email from backend
         }
       );
 
-      // Check content type before parsing
-      const contentType = response.headers.get('content-type');
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text);
-        alert(`Server error: Received non-JSON response. Please check server logs.`);
+      if (!tokenResponse.ok) {
+        const error = await tokenResponse.json();
+        alert(`Failed to generate recovery token: ${error.error || 'Unknown error'}`);
         setLoading(false);
         return;
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        setRecoveryUrl(data.recoveryUrl);
-        setEmailSent(data.emailSent);
-        setEmailError(data.emailError || '');
-        setStep('result');
-      } else {
+      const tokenData = await tokenResponse.json();
+      const resetToken = tokenData.recoveryUrl.split('token=')[1]; // Extract token from URL
+      setRecoveryUrl(tokenData.recoveryUrl);
+
+      // Step 2: If sendEmail is enabled, call Netlify function to send the email
+      if (sendEmail) {
         try {
-          const error = await response.json();
-          alert(`Failed to generate recovery link: ${error.error || 'Unknown error'}`);
-        } catch {
-          alert(`Failed to generate recovery link: HTTP ${response.status}`);
+          const emailResponse = await fetch(
+            '/.netlify/functions/send-password-reset',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                email: user.email,
+                username: user.username,
+                resetToken: resetToken
+              })
+            }
+          );
+
+          const emailData = await emailResponse.json();
+
+          if (emailData.success) {
+            setEmailSent(true);
+            setEmailError('');
+          } else {
+            setEmailSent(false);
+            setEmailError(emailData.message || emailData.note || 'Failed to send email');
+          }
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+          setEmailSent(false);
+          setEmailError('Failed to send email. You can copy the link manually.');
         }
       }
+
+      setStep('result');
     } catch (error) {
       console.error('Error generating recovery link:', error);
       const errorMessage = error instanceof Error ? error.message : 'Network error';
