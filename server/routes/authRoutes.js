@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getCurrentUser, logout, updateProfile, uploadMiddleware, verifyEmail, resendVerificationEmail, getResendAttempts, changePassword } from '../controllers/authController.js';
+import { register, login, getCurrentUser, logout, updateProfile, uploadMiddleware, verifyEmail, resendVerificationEmail, getResendAttempts, changePassword, resetPassword } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -10,6 +10,7 @@ router.post('/login', login);
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerificationEmail);
 router.post('/get-resend-attempts', getResendAttempts);
+router.post('/reset-password', resetPassword);
 
 // Protected routes
 router.get('/me', authenticateToken, getCurrentUser);

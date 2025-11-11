@@ -970,3 +970,67 @@ export async function changePassword(req, res) {
     res.status(500).json({ error: 'Failed to change password' });
   }
 }
+
+// Reset password with token
+export async function resetPassword(req, res) {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Validation
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Find user with this token
+    const user = await usersCollection.findOne({
+      passwordRecoveryToken: token,
+      passwordRecoveryExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        error: 'Invalid or expired reset token',
+        message: 'This password reset link has expired or is invalid. Please request a new one.'
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Update password and clear token
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          passwordHash: hashedPassword,
+          passwordRecoveryToken: null,
+          passwordRecoveryExpires: null,
+          updatedAt: new Date(),
+          // Clear account lockout on password reset
+          accountLocked: false,
+          accountLockedUntil: null,
+          failedLoginAttempts: 0,
+          lastFailedLogin: null
+        }
+      }
+    );
+
+    console.log(`✅ Password reset successful for user: ${user.username}`);
+
+    res.json({
+      message: 'Password reset successful! You can now log in with your new password.',
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+}
