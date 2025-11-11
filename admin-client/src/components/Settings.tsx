@@ -7,6 +7,11 @@ interface SiteSettings {
   rateLimit: number;
   maintenanceMode: boolean;
   registrationEnabled: boolean;
+  showuserlistpicture: number;
+  searchUserCount: number;
+  defaultUsersDisplayCount: number;
+  maxReportCount: number;
+  siteEmail: string;
 }
 
 function Settings() {
@@ -15,7 +20,12 @@ function Settings() {
     maxMessageLength: 500,
     rateLimit: 10,
     maintenanceMode: false,
-    registrationEnabled: true
+    registrationEnabled: true,
+    showuserlistpicture: 1,
+    searchUserCount: 4,
+    defaultUsersDisplayCount: 3,
+    maxReportCount: 2,
+    siteEmail: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,18 +38,25 @@ function Settings() {
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      console.log('🔍 Fetching settings from:', `${import.meta.env.VITE_API_URL}/admin/settings`);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/settings`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
+      console.log('📥 Fetch response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Settings fetched:', data);
         if (data.settings) {
           setSettings(data.settings);
         }
+      } else {
+        console.error('❌ Failed to fetch settings:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error('❌ Error fetching settings:', error);
     } finally {
       setLoading(false);
     }
@@ -51,23 +68,36 @@ function Settings() {
 
     try {
       const token = localStorage.getItem('adminToken');
+      console.log('💾 Saving settings to:', `${import.meta.env.VITE_API_URL}/admin/settings`);
+      
+      // Filter out MongoDB-specific fields that shouldn't be updated
+      const { _id, settingType, createdAt, updatedAt, ...settingsToSave } = settings as any;
+      
+      console.log('📤 Settings data (filtered):', settingsToSave);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settingsToSave)
       });
 
+      console.log('📥 Save response status:', response.status);
+
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Settings saved:', data);
         setMessage('Settings saved successfully!');
         setTimeout(() => setMessage(''), 3000);
       } else {
+        const errorData = await response.text();
+        console.error('❌ Failed to save settings:', response.status, errorData);
         setMessage('Failed to save settings.');
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('❌ Error saving settings:', error);
       setMessage('An error occurred while saving.');
     } finally {
       setSaving(false);
@@ -111,16 +141,16 @@ function Settings() {
           
           <div className="setting-item">
             <div className="setting-info">
-              <label>Allow User Profile Pictures</label>
+              <label>Show User List Picture</label>
               <span className="setting-description">
-                Enable users to upload profile pictures
+                Show profile pictures in user list (1=enabled, 0=disabled)
               </span>
             </div>
             <label className="toggle">
               <input
                 type="checkbox"
-                checked={settings.allowUserPictures}
-                onChange={(e) => setSettings({...settings, allowUserPictures: e.target.checked})}
+                checked={settings.showuserlistpicture === 1}
+                onChange={(e) => setSettings({...settings, showuserlistpicture: e.target.checked ? 1 : 0})}
               />
               <span className="toggle-slider"></span>
             </label>
@@ -128,19 +158,36 @@ function Settings() {
 
           <div className="setting-item">
             <div className="setting-info">
-              <label>Registration Enabled</label>
+              <label>Default Users Display Count</label>
               <span className="setting-description">
-                Allow new users to register
+                Number of users to display by default in lists
               </span>
             </div>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={settings.registrationEnabled}
-                onChange={(e) => setSettings({...settings, registrationEnabled: e.target.checked})}
-              />
-              <span className="toggle-slider"></span>
-            </label>
+            <input
+              type="number"
+              className="setting-input"
+              value={settings.defaultUsersDisplayCount || 3}
+              onChange={(e) => setSettings({...settings, defaultUsersDisplayCount: parseInt(e.target.value) || 3})}
+              min="1"
+              max="50"
+            />
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Search User Count Limit</label>
+              <span className="setting-description">
+                Maximum number of users shown in search results
+              </span>
+            </div>
+            <input
+              type="number"
+              className="setting-input"
+              value={settings.searchUserCount || 4}
+              onChange={(e) => setSettings({...settings, searchUserCount: parseInt(e.target.value) || 4})}
+              min="1"
+              max="50"
+            />
           </div>
         </div>
 
@@ -189,6 +236,39 @@ function Settings() {
           <div className="setting-header">
             <h3>System Settings</h3>
             <p>Configure system-wide options</p>
+          </div>
+          
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Site Email</label>
+              <span className="setting-description">
+                Admin contact email address for notifications
+              </span>
+            </div>
+            <input
+              type="email"
+              className="setting-input"
+              value={settings.siteEmail || ''}
+              onChange={(e) => setSettings({...settings, siteEmail: e.target.value})}
+              placeholder="admin@example.com"
+            />
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Max Report Count</label>
+              <span className="setting-description">
+                Number of reports before user suspension
+              </span>
+            </div>
+            <input
+              type="number"
+              className="setting-input"
+              value={settings.maxReportCount || 2}
+              onChange={(e) => setSettings({...settings, maxReportCount: parseInt(e.target.value) || 2})}
+              min="1"
+              max="20"
+            />
           </div>
           
           <div className="setting-item">

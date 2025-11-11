@@ -133,6 +133,11 @@
   transition: all 0.2s;
 }
 
+.setting-input[type="email"] {
+  width: 300px;
+  text-align: left;
+}
+
 .setting-input:focus {
   outline: none;
   border-color: var(--input-focus);

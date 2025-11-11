@@ -651,15 +651,19 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
     const db = getDatabase();
     const settings = req.body;
     
-    await db.collection('siteSettings').updateOne(
+    console.log('📝 Updating site settings:', settings);
+    
+    const result = await db.collection('siteSettings').updateOne(
       { settingType: 'global' },
       { $set: { ...settings, updatedAt: new Date() } },
       { upsert: true }
     );
     
+    console.log(`✅ Settings update result: matched=${result.matchedCount}, modified=${result.modifiedCount}, upserted=${result.upsertedCount}`);
+    
     res.json({ message: 'Settings updated successfully' });
   } catch (error) {
-    console.error('Update settings error:', error);
+    console.error('❌ Update settings error:', error);
     res.status(500).json({ error: 'Failed to update settings' });
   }
 });
