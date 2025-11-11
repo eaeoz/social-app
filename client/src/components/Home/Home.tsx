@@ -2543,6 +2543,22 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
               <div className="profile-form-section">
                 <div className="form-group">
+                  <label htmlFor="username">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    value={user.username}
+                    disabled
+                    className="username-input blurred-username"
+                    style={{
+                      filter: 'blur(0.8px)',
+                      cursor: 'not-allowed',
+                      opacity: 0.7
+                    }}
+                  />
+                </div>
+
+                <div className="form-group">
                   <label htmlFor="email">Email Address</label>
                   <input
                     type="email"
@@ -2551,13 +2567,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
                     disabled
                     className="email-input blurred-email"
                     style={{
-                      filter: 'blur(3px)',
+                      filter: 'blur(0.8px)',
                       cursor: 'not-allowed',
                       opacity: 0.7
                     }}
                   />
                   <p className="field-hint">
-                    Email address cannot be changed.
+                    Username and email address cannot be changed.
                   </p>
                 </div>
 
