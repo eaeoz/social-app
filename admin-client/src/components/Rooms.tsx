@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
 import './Rooms.css';
 
 interface Room {
@@ -24,18 +25,34 @@ function Rooms() {
   });
   const [error, setError] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [emojiSearch, setEmojiSearch] = useState('');
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
-  // Comprehensive emoji list with keywords
-  const emojiCategories = {
-    'Smileys': ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴'],
-    'Animals': ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈'],
-    'Food': ['🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', '🍐', '🍑', '🍒', '🍓', '🥝', '🍅', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🥒', '🥬', '🥦', '🍄', '🥜', '🌰', '🍞', '🥐', '🥖', '🥨', '🥯', '🥞', '🧇', '🧀', '🍖', '🍗', '🥩', '🥓', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', '🥙'],
-    'Activities': ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🥅', '⛳', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂', '🏋️', '🤼', '🤸', '🤺', '⛹️', '🤾', '🏌️', '🏇', '🧘', '🏄', '🏊', '🤽', '🚣', '🧗', '🚴', '🚵'],
-    'Travel': ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🦯', '🦽', '🦼', '🛴', '🚲', '🛵', '🏍️', '🛺', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '💺', '🚁', '🛰️', '🚀'],
-    'Objects': ['⌚', '📱', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙️', '🎚️', '🎛️', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', '🔋', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷'],
-    'Symbols': ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴']
+  // Get theme from localStorage or default to light
+  const [theme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('adminTheme') as 'light' | 'dark') || 'light';
+  });
+
+  // Handle emoji selection
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setFormData({ ...formData, icon: emojiData.emoji });
+    setShowEmojiPicker(false);
   };
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showEmojiPicker]);
 
   useEffect(() => {
     fetchRooms();
@@ -50,11 +67,6 @@ function Rooms() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Rooms data received:', data.rooms);
-        // Log icons specifically
-        data.rooms.forEach((room: Room) => {
-          console.log(`Room "${room.name}" icon:`, room.icon, typeof room.icon);
-        });
         setRooms(data.rooms);
       }
     } catch (error) {
@@ -96,6 +108,7 @@ function Rooms() {
       isPrivate: false
     });
     setError('');
+    setShowEmojiPicker(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,9 +198,8 @@ function Rooms() {
           <div key={room._id} className="room-card">
             <div className="room-header">
               <h3>
-                {room.icon && <span className="room-icon">{room.icon}</span>}
-                {!room.icon && <span className="room-icon">💬</span>}
-                <span style={{ marginLeft: room.icon ? '0.5rem' : '0.5rem' }}>{room.name}</span>
+                <span className="room-icon">{room.icon || '💬'}</span>
+                {room.name}
               </h3>
               <span className={`room-type ${room.isPrivate ? 'private' : 'public'}`}>
                 {room.isPrivate ? '🔒 Private' : '🌐 Public'}
@@ -268,76 +280,14 @@ function Rooms() {
                   </div>
 
                   {showEmojiPicker && (
-                    <div className="emoji-picker-popup">
-                      <div className="emoji-picker-header">
-                        <span>Select an Icon</span>
-                        <button
-                          type="button"
-                          className="emoji-picker-close"
-                          onClick={() => {
-                            setShowEmojiPicker(false);
-                            setEmojiSearch('');
-                          }}
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div className="emoji-search-box">
-                        <input
-                          type="text"
-                          placeholder="🔍 Search emojis..."
-                          value={emojiSearch}
-                          onChange={(e) => setEmojiSearch(e.target.value)}
-                          className="emoji-search-input"
-                        />
-                      </div>
-                      <div className="emoji-picker-content">
-                        {Object.entries(emojiCategories)
-                          .map(([category, emojis]) => {
-                            // Filter emojis based on search
-                            const filteredEmojis = emojiSearch
-                              ? emojis.filter(() => 
-                                  category.toLowerCase().includes(emojiSearch.toLowerCase())
-                                )
-                              : emojis;
-
-                            // Don't show category if no emojis match
-                            if (filteredEmojis.length === 0) return null;
-
-                            return (
-                              <div key={category} className="emoji-category">
-                                <div className="emoji-category-title">{category}</div>
-                                <div className="emoji-grid">
-                                  {filteredEmojis.map((emoji) => (
-                                    <button
-                                      key={emoji}
-                                      type="button"
-                                      className={`emoji-option ${formData.icon === emoji ? 'selected' : ''}`}
-                                      onClick={() => {
-                                        setFormData({ ...formData, icon: emoji });
-                                        setShowEmojiPicker(false);
-                                        setEmojiSearch('');
-                                      }}
-                                      title={emoji}
-                                    >
-                                      {emoji}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })
-                          .filter(Boolean)}
-                        {emojiSearch && 
-                          Object.entries(emojiCategories).every(([category]) => 
-                            !category.toLowerCase().includes(emojiSearch.toLowerCase())
-                          ) && (
-                          <div className="no-emoji-results">
-                            <p>No emojis found for "{emojiSearch}"</p>
-                            <p>Try searching by category: smileys, animals, food, activities, travel, objects, symbols</p>
-                          </div>
-                        )}
-                      </div>
+                    <div className="emoji-picker-wrapper" ref={emojiPickerRef}>
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
+                        searchPlaceHolder="Search emojis..."
+                        width="100%"
+                        height="400px"
+                      />
                     </div>
                   )}
                 </div>

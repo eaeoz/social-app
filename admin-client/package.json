@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "axios": "^1.6.2",
+    "emoji-picker-react": "^4.15.0",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.2.1",
     "express-slow-down": "^3.0.1",

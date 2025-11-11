@@ -315,7 +315,7 @@
   color: var(--text-secondary);
 }
 
-/* Icon Selector Styles - Compact Version with Popup */
+/* Icon Selector Styles - Using emoji-picker-react library */
 .icon-selector-compact {
   position: relative;
 }
@@ -353,6 +353,36 @@
 .emoji-picker-btn:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
+}
+
+/* Emoji Picker Wrapper */
+.emoji-picker-wrapper {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  z-index: 1000;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Override emoji-picker-react styles for better integration */
+.emoji-picker-wrapper aside {
+  border-radius: 12px !important;
+  border: 1px solid var(--border-primary) !important;
 }
 
 .emoji-picker-popup {
