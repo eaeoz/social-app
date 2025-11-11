@@ -32,7 +32,7 @@ function Cleanup() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -70,7 +70,7 @@ function Cleanup() {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/cleanup/public-messages/${selectedUser._id}`,
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/public-messages/${selectedUser._id}`,
         {
           method: 'DELETE',
           headers: {
@@ -105,7 +105,7 @@ function Cleanup() {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/cleanup/private-messages/${selectedUser._id}`,
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/private-messages/${selectedUser._id}`,
         {
           method: 'DELETE',
           headers: {
@@ -142,7 +142,7 @@ function Cleanup() {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/cleanup/all-messages`,
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/all-messages`,
         {
           method: 'DELETE',
           headers: {

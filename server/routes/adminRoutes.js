@@ -894,13 +894,30 @@ router.delete('/cleanup/all-messages', authenticateToken, requireAdmin, async (r
     const db = getDatabase();
     
     // Delete all messages
-    const result = await db.collection('messages').deleteMany({});
+    const messageResult = await db.collection('messages').deleteMany({});
     
-    console.log(`🧹 DANGER ZONE: Deleted ALL ${result.deletedCount} messages from the system`);
+    console.log(`🧹 DANGER ZONE: Deleted ALL ${messageResult.deletedCount} messages from the system`);
+    
+    // Reset private chat references (lastMessageId, lastMessageAt)
+    const chatUpdateResult = await db.collection('privatechats').updateMany(
+      {},
+      {
+        $unset: { 
+          lastMessageId: "",
+          lastMessageAt: ""
+        },
+        $set: {
+          updatedAt: new Date()
+        }
+      }
+    );
+    
+    console.log(`🔄 Updated ${chatUpdateResult.modifiedCount} private chats (reset message references)`);
     
     res.json({ 
       message: 'All messages deleted successfully',
-      deletedCount: result.deletedCount
+      deletedCount: messageResult.deletedCount,
+      chatsUpdated: chatUpdateResult.modifiedCount
     });
   } catch (error) {
     console.error('Delete all messages error:', error);
