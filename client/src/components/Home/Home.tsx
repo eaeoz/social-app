@@ -12,6 +12,7 @@ import ReportModal from './ReportModal';
 import { canSendMessage, recordMessageSent, getSecondsUntilReset } from '../../utils/rateLimiter';
 import { nsfwDetector } from '../../utils/nsfwDetector';
 import { handleNewMessageNotification, resetNotifications } from '../../utils/notificationUtils';
+import { ringtoneManager } from '../../utils/ringtoneUtils';
 import './Home.css';
 
 interface HomeProps {
@@ -632,10 +633,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
         callType: 'voice' | 'video';
       }) => {
         setIncomingCall(data);
+        // Start playing ringtone for incoming call
+        ringtoneManager.startRingtone();
       });
 
       socket.on('call-cancelled', () => {
         setIncomingCall(null);
+        // Stop ringtone when call is cancelled
+        ringtoneManager.stopRingtone();
       });
 
       socket.on('call-rejected', () => {
@@ -1550,6 +1555,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const acceptIncomingCall = async () => {
     if (!incomingCall) return;
     
+    // Stop ringtone when call is accepted
+    ringtoneManager.stopRingtone();
+    
     // Find or create private chat with the caller
     let chat = privateChats.find(c => c.otherUser.userId === incomingCall.from);
     
@@ -1614,6 +1622,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
   const declineIncomingCall = () => {
     if (!incomingCall || !socket) return;
+    
+    // Stop ringtone when call is declined
+    ringtoneManager.stopRingtone();
     
     socket.emit('call-rejected', {
       to: incomingCall.from
