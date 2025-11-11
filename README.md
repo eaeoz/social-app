@@ -26,11 +26,13 @@
 - **Smart Message Filtering** - Backend-controlled message display and chat management
 
 ### 📞 Voice & Video Calls
-- **WebRTC Voice Calls** - High-quality peer-to-peer voice communication
+- **WebRTC Voice Calls** - High-quality peer-to-peer voice communication with enhanced mobile support
 - **WebRTC Video Calls** - HD video calling with real-time streaming
 - **Call Management** - Initiate, accept, reject, and end calls
-- **Incoming Call Notifications** - Beautiful call notification UI with ringtone
+- **Incoming Call Notifications** - Beautiful call notification UI with pleasant ringtone
 - **Call Status Indicators** - Real-time call status updates
+- **Mobile-Optimized Audio** - Dedicated audio element for voice calls on mobile/tablet devices
+- **Auto-Play Support** - Proper audio playback with mobile browser compatibility
 
 ### 👤 User Profiles & Management
 - **Profile Pictures** - Upload and crop profile pictures with Appwrite storage
@@ -55,10 +57,15 @@
 - **Scroll to Bottom** - Auto-scroll and manual scroll button for messages
 
 ### 🔔 Notifications & Alerts
+- **Smart Sound Notifications** - Instant audio alerts for new messages, even when app is in focus
+- **Visual Favicon Badge** - Unread message counter displayed on browser tab/taskbar icon
+- **Browser Title Notifications** - Tab title blinks with notification when viewing other tabs
+- **Do Not Disturb Mode** - One-click toggle to mute all notifications for focused work
 - **Real-time Notifications** - Instant notifications for new messages
-- **Unread Counters** - Badge indicators for unread messages
+- **Unread Counters** - Badge indicators for unread messages in rooms and chats
 - **Activity Tracking** - Automatic activity updates to maintain online status
 - **Force Logout** - Server-side forced logout capability for security
+- **Auto-Reset Notifications** - Notifications automatically clear when returning to the app
 
 ### 🛡️ Moderation & Safety
 - **User Reporting System** - Report users for inappropriate behavior
@@ -490,23 +497,42 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 - WebRTC for peer-to-peer communication
 - The open-source community for amazing tools and libraries
 
+## 🎉 Recent Updates (v1.1.0 - January 11, 2025)
+
+### Enhanced Communication Features
+- ✅ **Voice Call Audio Fixed** - Resolved audio issues on mobile/tablet devices with dedicated audio element
+- ✅ **Smart Notifications** - Added instant sound alerts that play even when app is active
+- ✅ **Favicon Badge System** - Visual notification counter on browser tab and Windows taskbar icon
+- ✅ **Browser Title Alerts** - Tab title blinks when new messages arrive while viewing other tabs
+- ✅ **Do Not Disturb Mode** - New feature to temporarily mute all notifications
+
+### Technical Improvements
+- Improved WebRTC audio routing for voice calls
+- Enhanced notification system with multiple alert methods
+- Added favicon badge with counter (1-99+)
+- Better mobile browser compatibility for audio playback
+- Automatic notification reset when returning to the app
+
 ## 🐛 Known Issues & Solutions
 
 - **Mobile Viewport Zoom**: Fixed with proper viewport meta tag configuration
 - **Email Verification Rate Limit**: Automatic protection against spam
 - **WebRTC Connection**: STUN/TURN servers configured for NAT traversal
 - **Session Management**: Redis alternative using node-cache for serverless compatibility
+- **Voice Call Audio on Mobile**: Fixed with dedicated audio element and proper WebRTC routing
 
 ## 🔮 Roadmap
 
-- [ ] Group video calls
-- [ ] File sharing in chats
+- [ ] Screen sharing during video calls
+- [ ] Group video calls and conferences
+- [ ] File sharing and media galleries
 - [ ] Voice messages
-- [ ] Message reactions
+- [ ] Message reactions and threading
 - [ ] User blocking system
 - [ ] Advanced search filters
-- [ ] Chat encryption
+- [ ] End-to-end chat encryption
 - [ ] Mobile apps (React Native)
+- [ ] Push notifications for mobile
 
 ---
 

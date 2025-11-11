@@ -54,13 +54,17 @@ function About({ onClose }: AboutProps) {
                 <li>Real-time messaging with instant delivery</li>
                 <li>Public chat rooms for group discussions</li>
                 <li>Private one-on-one conversations</li>
-                <li>Voice and video calling capabilities</li>
+                <li><strong>Voice and video calling with enhanced mobile support</strong></li>
                 <li>Location sharing with Google Maps integration</li>
                 <li>Emoji support for expressive communication</li>
                 <li>User profiles with customizable pictures</li>
                 <li>Advanced filtering and search functionality</li>
                 <li>Dark and light theme support</li>
                 <li>Typing indicators and online status</li>
+                <li><strong>Smart notification system with sound alerts</strong></li>
+                <li><strong>Visual favicon badge for unread messages</strong></li>
+                <li><strong>Browser title notifications when tab is inactive</strong></li>
+                <li><strong>Do Not Disturb mode for focused work</strong></li>
               </ul>
             </section>
 
@@ -113,6 +117,20 @@ function About({ onClose }: AboutProps) {
             </section>
 
             <section className="legal-section">
+              <h3 className="legal-subtitle">🎉 Recent Updates</h3>
+              <p>
+                We've recently enhanced Netcify with powerful new features:
+              </p>
+              <ul className="legal-list">
+                <li><strong>Enhanced Voice Calls:</strong> Improved audio quality and mobile compatibility for voice calls, ensuring clear communication on all devices</li>
+                <li><strong>Smart Notifications:</strong> Receive instant sound alerts for new messages, even when actively using the app</li>
+                <li><strong>Visual Badge Indicators:</strong> See unread message counts directly on your browser tab and Windows taskbar icon</li>
+                <li><strong>Browser Title Alerts:</strong> Tab title blinks with notification when you're viewing other tabs</li>
+                <li><strong>Do Not Disturb Mode:</strong> Focus on your work by temporarily muting all notifications with a single click</li>
+              </ul>
+            </section>
+
+            <section className="legal-section">
               <h3 className="legal-subtitle">🚀 Future Plans</h3>
               <p>
                 We're constantly working to enhance your experience on Netcify. Upcoming features include:
@@ -124,7 +142,7 @@ function About({ onClose }: AboutProps) {
                 <li>Advanced user matching algorithms</li>
                 <li>Mobile applications for iOS and Android</li>
                 <li>Message reactions and threading</li>
-                <li>Improved notification system</li>
+                <li>Screen sharing during video calls</li>
               </ul>
             </section>
 
@@ -136,7 +154,7 @@ function About({ onClose }: AboutProps) {
             </section>
 
             <div className="legal-footer">
-              <p className="legal-updated">Version 1.0.0 • Last updated: January 8, 2025</p>
+              <p className="legal-updated">Version 1.1.0 • Last updated: January 11, 2025</p>
             </div>
           </div>
         </div>
