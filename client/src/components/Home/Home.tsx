@@ -1136,6 +1136,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
     setMessageInput('');
     setShowEmojiPicker(false);
     stopTyping();
+    
+    // Refocus the input after sending message
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 50);
   };
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {
