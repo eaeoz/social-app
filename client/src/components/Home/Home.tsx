@@ -2160,6 +2160,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       height={400}
                       searchPlaceholder="Search emoji..."
                       previewConfig={{ showPreview: false }}
+                      autoFocusSearch={false}
                     />
                   </div>
                 )}
