@@ -9,7 +9,7 @@ interface User {
   age?: number;
   gender?: string;
   suspended?: boolean;
-  emailVerified?: boolean;
+  isEmailVerified?: boolean;
   reportCount?: number;
 }
 
@@ -43,6 +43,16 @@ function Cleanup() {
         const data = await response.json();
         console.log('Fetched users data:', data);
         const usersList = data.users || [];
+        
+        // Debug: Check the first user's isEmailVerified field
+        if (usersList.length > 0) {
+          console.log('First user sample:', {
+            email: usersList[0].email,
+            isEmailVerified: usersList[0].isEmailVerified,
+            allFields: Object.keys(usersList[0])
+          });
+        }
+        
         setUsers(usersList);
         filterUsers(usersList);
       } else {
@@ -272,8 +282,8 @@ function Cleanup() {
                     <span className={`detail-badge ${user.suspended ? 'suspended' : 'active'}`}>
                       {user.suspended ? '🚫 Suspended' : '✅ Active'}
                     </span>
-                    <span className={`detail-badge ${user.emailVerified ? 'verified' : 'unverified'}`}>
-                      {user.emailVerified ? '✉️ Verified' : '✉️ Unverified'}
+                    <span className={`detail-badge ${user.isEmailVerified ? 'verified' : 'unverified'}`}>
+                      {user.isEmailVerified ? '✉️ Verified' : '✉️ Unverified'}
                     </span>
                     {user.reportCount !== undefined && (
                       <span className="detail-badge report-count">

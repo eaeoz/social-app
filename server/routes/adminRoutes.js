@@ -94,17 +94,27 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
       ]
     } : {};
     
-    // Get users
+    // Get users with explicit field selection to ensure isEmailVerified is included
     const users = await db.collection('users')
       .find(searchQuery)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .project({ passwordHash: 0 })
+      .project({ 
+        passwordHash: 0,
+        passwordRecoveryToken: 0,
+        emailVerificationToken: 0
+      })
       .toArray();
     
+    // Ensure isEmailVerified field exists (default to false if not present)
+    const usersWithVerification = users.map(user => ({
+      ...user,
+      isEmailVerified: user.isEmailVerified ?? false
+    }));
+    
     // Add report count for each user
-    const usersWithReportCount = await Promise.all(users.map(async (user) => {
+    const usersWithReportCount = await Promise.all(usersWithVerification.map(async (user) => {
       // Count reports from reports collection
       const reportsCollectionCount = await db.collection('reports').countDocuments({
         reportedUserId: user._id,
