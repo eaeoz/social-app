@@ -183,6 +183,54 @@ function Cleanup() {
     }
   };
 
+  const handleCleanupAllUsersExceptAdmin = async () => {
+    if (!confirm('☢️ EXTREME DANGER: Are you sure you want to delete ALL USERS (except admin "sedat") and ALL their data?\n\nThis will permanently delete:\n• All user accounts (except sedat)\n• All messages\n• All private chats\n• All reports\n• All profile pictures\n• All user data\n\nThis action CANNOT be undone!')) {
+      return;
+    }
+
+    if (!confirm('⚠️ FINAL WARNING: Type "DELETE ALL USERS" in your mind and click OK if you really want to proceed with this IRREVERSIBLE action.')) {
+      return;
+    }
+
+    if (!confirm('🚨 LAST CHANCE: This is your final opportunity to cancel. Click OK to DELETE ALL USERS AND DATA (keeping only admin "sedat").')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/all-users-except-admin`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Successfully deleted ${data.stats?.usersDeleted || 0} users and all their data. Protected user: ${data.protectedUser}`);
+        
+        // Clear the search results since users were deleted
+        setUsers([]);
+        setFilteredUsers([]);
+        setSelectedUser(null);
+        setSearchTerm('');
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to delete users: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting all users:', error);
+      setMessage('❌ Error deleting all users');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 10000); // Show message longer for this critical operation
+    }
+  };
+
   const handleCleanupByDate = async () => {
     if (!selectedDate) {
       setMessage('❌ Please select a date');
@@ -374,6 +422,23 @@ function Cleanup() {
               disabled={loading}
             >
               {loading ? '⏳ Processing...' : '💥 Cleanup ALL Messages'}
+            </button>
+          </div>
+
+          <div className="separator"></div>
+
+          <div className="all-users-section">
+            <h4>☢️ Delete All Users & Messages</h4>
+            <p className="warning-text">
+              ⚠️ EXTREME DANGER: This will permanently delete ALL USERS (except admin 'sedat') and ALL their data including messages, chats, reports, and profile pictures.
+              This is the nuclear option and CANNOT be undone!
+            </p>
+            <button
+              className="cleanup-btn nuclear"
+              onClick={handleCleanupAllUsersExceptAdmin}
+              disabled={loading}
+            >
+              {loading ? '⏳ Processing...' : '☢️ Delete ALL Users & Data (Keep Admin Only)'}
             </button>
           </div>
         </div>

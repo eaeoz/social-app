@@ -935,6 +935,134 @@ router.delete('/cleanup/all-messages', authenticateToken, requireAdmin, async (r
   }
 });
 
+// Delete all users except the protected admin user (dangerous operation)
+router.delete('/cleanup/all-users-except-admin', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    // Hardcoded protected username - NEVER delete this user
+    const protectedUsername = 'sedat';
+    
+    console.log('🚨 DANGER ZONE: Deleting all users except:', protectedUsername);
+    
+    // Find the protected user to ensure they exist
+    const protectedUser = await db.collection('users').findOne({ username: protectedUsername });
+    if (!protectedUser) {
+      return res.status(400).json({ error: `Protected user '${protectedUsername}' not found. Operation aborted.` });
+    }
+    
+    // Find all users except the protected one
+    const usersToDelete = await db.collection('users').find({
+      username: { $ne: protectedUsername }
+    }).toArray();
+    
+    if (usersToDelete.length === 0) {
+      return res.json({ 
+        message: 'No users to delete',
+        stats: { usersDeleted: 0 }
+      });
+    }
+    
+    console.log(`📊 Found ${usersToDelete.length} users to delete`);
+    
+    let stats = {
+      usersDeleted: 0,
+      profilePicturesDeleted: 0,
+      presenceDeleted: 0,
+      settingsDeleted: 0,
+      messagesDeleted: 0,
+      privateChatsDeleted: 0,
+      roomsUpdated: 0,
+      reportsDeleted: 0,
+      roomActivityDeleted: 0
+    };
+    
+    // Delete each user and their data
+    for (const user of usersToDelete) {
+      const userId = user._id;
+      
+      // 1. Delete profile picture from Appwrite (if exists)
+      if (user.profilePictureId) {
+        try {
+          const { storage, BUCKET_ID } = await import('../config/appwrite.js');
+          await storage.deleteFile(BUCKET_ID, user.profilePictureId);
+          stats.profilePicturesDeleted++;
+        } catch (error) {
+          if (error.code !== 404) {
+            console.log(`⚠️ Could not delete profile picture for ${user.username}`);
+          }
+        }
+      }
+      
+      // 2. Delete user presence
+      const presenceResult = await db.collection('userpresence').deleteMany({ userId });
+      stats.presenceDeleted += presenceResult.deletedCount;
+      
+      // 3. Delete user settings
+      const settingsResult = await db.collection('settings').deleteMany({ userId });
+      stats.settingsDeleted += settingsResult.deletedCount;
+      
+      // 4. Delete messages
+      const messagesResult = await db.collection('messages').deleteMany({
+        $or: [{ senderId: userId }, { receiverId: userId }]
+      });
+      stats.messagesDeleted += messagesResult.deletedCount;
+      
+      // 5. Delete private chats
+      const privateChatsResult = await db.collection('privatechats').deleteMany({
+        $or: [{ user1Id: userId }, { user2Id: userId }]
+      });
+      stats.privateChatsDeleted += privateChatsResult.deletedCount;
+      
+      // 6. Remove from public rooms
+      const roomsResult = await db.collection('publicrooms').updateMany(
+        { participants: userId },
+        { 
+          $pull: { participants: userId },
+          $set: { updatedAt: new Date() }
+        }
+      );
+      stats.roomsUpdated += roomsResult.modifiedCount;
+      
+      // 7. Delete user room activity
+      const roomActivityResult = await db.collection('userroomactivity').deleteMany({ userId });
+      stats.roomActivityDeleted += roomActivityResult.deletedCount;
+      
+      // 8. Delete reports
+      const reportsResult = await db.collection('reports').deleteMany({
+        $or: [{ reporterId: userId }, { reportedUserId: userId }]
+      });
+      stats.reportsDeleted += reportsResult.deletedCount;
+      
+      // 9. Delete user account
+      const userResult = await db.collection('users').deleteOne({ _id: userId });
+      stats.usersDeleted += userResult.deletedCount;
+      
+      console.log(`✅ Deleted user: ${user.username}`);
+    }
+    
+    console.log('🎉 Bulk deletion complete:', stats);
+    
+    // Force disconnect all deleted users via socket
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('bulk_users_deleted', { 
+        message: 'System maintenance completed. Please refresh.',
+        count: stats.usersDeleted
+      });
+    }
+    
+    res.json({ 
+      message: `Successfully deleted ${stats.usersDeleted} users and all their data`,
+      protectedUser: protectedUsername,
+      stats
+    });
+  } catch (error) {
+    console.error('Delete all users error:', error);
+    res.status(500).json({ error: 'Failed to delete users' });
+  }
+});
+
 // Delete messages created before a specific date
 router.delete('/cleanup/messages-by-date', authenticateToken, requireAdmin, async (req, res) => {
   try {
