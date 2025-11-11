@@ -53,6 +53,9 @@ function Reports() {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [resolutionDescription, setResolutionDescription] = useState('');
 
   const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
@@ -69,7 +72,8 @@ function Reports() {
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/reports?status=pending`, {
+      // Fetch ALL reports (not just pending) for accurate statistics
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/reports`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -84,11 +88,33 @@ function Reports() {
     }
   };
 
-  const handleResolveReport = async (reportId: string, reportedUserId: string, reporterId: string) => {
+  const openResolveModal = (report: Report) => {
+    setSelectedReport(report);
+    setResolutionDescription('');
+    setShowResolveModal(true);
+  };
+
+  const closeResolveModal = () => {
+    setShowResolveModal(false);
+    setSelectedReport(null);
+    setResolutionDescription('');
+  };
+
+  const handleResolveReport = async () => {
+    if (!selectedReport || !resolutionDescription.trim()) {
+      alert('Please enter a resolution description');
+      return;
+    }
+
+    const reportId = selectedReport._id;
+    const reportedUserId = String(selectedReport.reportedUserId);
+    const reporterId = String(selectedReport.reporterId);
+
     console.log('🔧 Resolving report:', {
       reportId,
       reportedUserId,
-      reporterId
+      reporterId,
+      resolutionDescription
     });
     
     setResolvingId(reportId);
@@ -97,7 +123,8 @@ function Reports() {
       const requestBody = { 
         status: 'resolved',
         reportedUserId,
-        reporterId
+        reporterId,
+        resolutionDescription: resolutionDescription.trim()
       };
       
       console.log('📤 Sending request:', requestBody);
@@ -121,8 +148,14 @@ function Reports() {
           console.log('📋 Report status updated in reports collection');
         }
         
-        // Remove the resolved report from the list
-        setReports(reports.filter(r => r._id !== reportId));
+        // Update the report status in the local state (instead of removing it)
+        // This ensures statistics are updated correctly
+        setReports(reports.map(r => 
+          r._id === reportId ? { ...r, status: 'resolved', description: resolutionDescription.trim() } : r
+        ));
+        
+        // Close the modal
+        closeResolveModal();
       } else {
         const errorData = await response.json();
         console.error('❌ Failed to resolve report:', errorData);
@@ -137,6 +170,11 @@ function Reports() {
   };
 
   const calculateStatistics = () => {
+    // Calculate total reports and status counts
+    const totalReports = reports.length;
+    const pendingReports = reports.filter(r => r.status === 'pending').length;
+    const resolvedReports = reports.filter(r => r.status === 'resolved').length;
+
     const reasonCounts: { [key: string]: number } = {};
     reports.forEach(report => {
       reasonCounts[report.reason] = (reasonCounts[report.reason] || 0) + 1;
@@ -186,9 +224,9 @@ function Reports() {
       .slice(0, 5);
 
     setStatistics({
-      totalReports: reports.length,
-      pendingReports: reports.filter(r => r.status === 'pending').length,
-      resolvedReports: reports.filter(r => r.status === 'resolved').length,
+      totalReports,
+      pendingReports,
+      resolvedReports,
       reportsByReason,
       reportsByDate,
       topReportedUsers,
@@ -205,7 +243,10 @@ function Reports() {
     }
   };
 
-  const sortedReports = [...reports].sort((a, b) => {
+  // Filter to show only pending reports in the table
+  const pendingReportsOnly = reports.filter(r => r.status === 'pending');
+  
+  const sortedReports = [...pendingReportsOnly].sort((a, b) => {
     let compareA: string = '';
     let compareB: string = '';
 
@@ -425,19 +466,19 @@ function Reports() {
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
           </svg>
-          Pending Reports ({reports.length})
+          Pending Reports ({pendingReportsOnly.length})
         </h3>
-        {reports.length > reportsPerPage && (
+        {pendingReportsOnly.length > reportsPerPage && (
           <div className="pagination-info">
             <span>Page {currentPage} of {totalPages}</span>
             <span className="showing-records">
-              Showing {startIndex + 1}-{Math.min(endIndex, reports.length)} of {reports.length}
+              Showing {startIndex + 1}-{Math.min(endIndex, pendingReportsOnly.length)} of {pendingReportsOnly.length}
             </span>
           </div>
         )}
       </div>
 
-      {reports.length > reportsPerPage && (
+      {pendingReportsOnly.length > reportsPerPage && (
         <div className="pagination-bar-container">
           <div className="pagination-progress-bar">
             <div 
@@ -459,7 +500,7 @@ function Reports() {
         </div>
       )}
 
-      {reports.length > 0 ? (
+      {pendingReportsOnly.length > 0 ? (
         <>
         <div className="reports-table-container">
           <table className="reports-table">
@@ -534,11 +575,7 @@ function Reports() {
                   <td className="action-cell">
                     <button 
                       className="resolve-btn"
-                      onClick={() => handleResolveReport(
-                        report._id, 
-                        String(report.reportedUserId),
-                        String(report.reporterId)
-                      )}
+                      onClick={() => openResolveModal(report)}
                       disabled={resolvingId === report._id}
                       title="Mark as Resolved"
                     >
@@ -557,7 +594,7 @@ function Reports() {
           </table>
         </div>
 
-        {reports.length > reportsPerPage && (
+        {pendingReportsOnly.length > reportsPerPage && (
           <div className="pagination-controls">
             <button 
               className="pagination-btn"
@@ -620,6 +657,87 @@ function Reports() {
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
           <p>No pending reports</p>
+        </div>
+      )}
+
+      {/* Resolution Modal */}
+      {showResolveModal && selectedReport && (
+        <div className="modal-overlay" onClick={closeResolveModal}>
+          <div className="modal-content resolve-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Resolve Report</h3>
+              <button className="modal-close" onClick={closeResolveModal}>
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="report-info">
+                <div className="info-row">
+                  <span className="info-label">Reported User:</span>
+                  <span className="info-value">@{selectedReport.reportedUser?.username || 'Unknown'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Reporter:</span>
+                  <span className="info-value">@{selectedReport.reporter?.username || 'Unknown'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Reason:</span>
+                  <span className="info-value reason">{selectedReport.reason}</span>
+                </div>
+                {selectedReport.description && (
+                  <div className="info-row full">
+                    <span className="info-label">Original Description:</span>
+                    <p className="info-value description">{selectedReport.description}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="resolution-input">
+                <label htmlFor="resolutionDescription">Resolution Description *</label>
+                <textarea
+                  id="resolutionDescription"
+                  value={resolutionDescription}
+                  onChange={(e) => setResolutionDescription(e.target.value)}
+                  placeholder="Enter the resolution details (e.g., 'Warned user about behavior', 'Content removed', 'No action needed - false report', etc.)"
+                  rows={5}
+                  disabled={resolvingId === selectedReport._id}
+                />
+                <p className="input-hint">Please describe the action taken to resolve this report.</p>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn-secondary"
+                onClick={closeResolveModal}
+                disabled={resolvingId === selectedReport._id}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-resolve"
+                onClick={handleResolveReport}
+                disabled={resolvingId === selectedReport._id || !resolutionDescription.trim()}
+              >
+                {resolvingId === selectedReport._id ? (
+                  <>
+                    <div className="btn-spinner"></div>
+                    Resolving...
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Mark as Resolved
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
