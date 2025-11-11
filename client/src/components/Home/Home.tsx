@@ -7,8 +7,10 @@ import TermsConditions from '../Legal/TermsConditions';
 import Contact from '../Legal/Contact';
 import About from '../Legal/About';
 import ImageCropper from '../Auth/ImageCropper';
+import NSFWWarningModal from '../Auth/NSFWWarningModal';
 import ReportModal from './ReportModal';
 import { canSendMessage, recordMessageSent, getSecondsUntilReset } from '../../utils/rateLimiter';
+import { nsfwDetector } from '../../utils/nsfwDetector';
 import './Home.css';
 
 interface HomeProps {
@@ -120,6 +122,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
   const [croppedImageFile, setCroppedImageFile] = useState<File | null>(null);
+  const [showNSFWWarning, setShowNSFWWarning] = useState(false);
+  const [nsfwWarnings, setNsfwWarnings] = useState<string[]>([]);
+  const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -1425,7 +1431,36 @@ function Home({ user, socket, onLogout }: HomeProps) {
     reader.readAsDataURL(file);
   };
 
-  const handleCropComplete = (croppedBlob: Blob) => {
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setShowImageCropper(false);
+    setTempImageUrl('');
+    setIsAnalyzing(true);
+    setNickNameError('');
+
+    try {
+      // Analyze the image for NSFW content
+      const result = await nsfwDetector.analyzeImage(croppedBlob);
+      
+      if (result.isNSFW) {
+        // Show warning modal
+        setPendingCroppedBlob(croppedBlob);
+        setNsfwWarnings(result.warnings);
+        setShowNSFWWarning(true);
+      } else {
+        // Safe image - proceed with upload
+        proceedWithProfileImageUpload(croppedBlob);
+      }
+    } catch (err: any) {
+      console.error('NSFW detection error:', err);
+      // If detection fails, allow upload but log the error
+      setNickNameError('Content detection unavailable. Proceeding with upload.');
+      proceedWithProfileImageUpload(croppedBlob);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const proceedWithProfileImageUpload = (croppedBlob: Blob) => {
     // Convert blob to File
     const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
     setCroppedImageFile(file);
@@ -1433,9 +1468,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
     // Create preview from blob
     const url = URL.createObjectURL(croppedBlob);
     setProfilePicture(url);
-    
-    setShowImageCropper(false);
-    setTempImageUrl('');
+  };
+
+  const handleNSFWCancel = () => {
+    setShowNSFWWarning(false);
+    setPendingCroppedBlob(null);
+    setNsfwWarnings([]);
+    // User can select a different image
   };
 
   const handleCropCancel = () => {
@@ -2694,6 +2733,36 @@ function Home({ user, socket, onLogout }: HomeProps) {
             setReportedUserId(null);
           }}
         />
+      )}
+
+      {showNSFWWarning && nsfwWarnings.length > 0 && (
+        <NSFWWarningModal
+          warnings={nsfwWarnings}
+          onContinue={() => {
+            if (pendingCroppedBlob) {
+              proceedWithProfileImageUpload(pendingCroppedBlob);
+            }
+            setShowNSFWWarning(false);
+            setPendingCroppedBlob(null);
+            setNsfwWarnings([]);
+          }}
+          onCancel={handleNSFWCancel}
+        />
+      )}
+
+      {isAnalyzing && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ textAlign: 'center' }}>
+            <div className="modal-icon">🔍</div>
+            <h2>Analyzing Image...</h2>
+            <p className="modal-message">
+              Checking image content for community guidelines compliance.
+            </p>
+            <div style={{ margin: '20px 0' }}>
+              <div className="loading-spinner"></div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
 
