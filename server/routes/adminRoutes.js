@@ -701,7 +701,7 @@ router.get('/rooms', authenticateToken, requireAdmin, async (req, res) => {
 // Create new room
 router.post('/rooms', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, description, isPrivate } = req.body;
+    const { name, description, icon, isPrivate } = req.body;
     
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Room name is required' });
@@ -718,6 +718,7 @@ router.post('/rooms', authenticateToken, requireAdmin, async (req, res) => {
     const newRoom = {
       name: name.trim(),
       description: description?.trim() || '',
+      icon: icon || '💬',
       isPrivate: Boolean(isPrivate),
       isActive: true,
       participants: [],
@@ -742,7 +743,7 @@ router.post('/rooms', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/rooms/:roomId', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { name, description, isPrivate } = req.body;
+    const { name, description, icon, isPrivate } = req.body;
     
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Room name is required' });
@@ -770,6 +771,7 @@ router.put('/rooms/:roomId', authenticateToken, requireAdmin, async (req, res) =
     const updateData = {
       name: name.trim(),
       description: description?.trim() || '',
+      icon: icon || '💬',
       isPrivate: Boolean(isPrivate),
       updatedAt: new Date(),
       updatedBy: req.user.userId

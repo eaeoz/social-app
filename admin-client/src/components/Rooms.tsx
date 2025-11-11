@@ -5,6 +5,7 @@ interface Room {
   _id: string;
   name: string;
   description?: string;
+  icon?: string;
   isPrivate: boolean;
   createdAt: string;
   userCount?: number;
@@ -18,6 +19,7 @@ function Rooms() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    icon: '💬',
     isPrivate: false
   });
   const [error, setError] = useState('');
@@ -50,6 +52,7 @@ function Rooms() {
       setFormData({
         name: room.name,
         description: room.description || '',
+        icon: room.icon || '💬',
         isPrivate: room.isPrivate
       });
     } else {
@@ -57,6 +60,7 @@ function Rooms() {
       setFormData({
         name: '',
         description: '',
+        icon: '💬',
         isPrivate: false
       });
     }
@@ -70,6 +74,7 @@ function Rooms() {
     setFormData({
       name: '',
       description: '',
+      icon: '💬',
       isPrivate: false
     });
     setError('');
@@ -161,7 +166,10 @@ function Rooms() {
         {rooms.map((room) => (
           <div key={room._id} className="room-card">
             <div className="room-header">
-              <h3>{room.name}</h3>
+              <h3>
+                <span className="room-icon">{room.icon || '💬'}</span>
+                {room.name}
+              </h3>
               <span className={`room-type ${room.isPrivate ? 'private' : 'public'}`}>
                 {room.isPrivate ? '🔒 Private' : '🌐 Public'}
               </span>
@@ -225,6 +233,28 @@ function Rooms() {
                   {error}
                 </div>
               )}
+
+              <div className="form-group">
+                <label htmlFor="icon">Room Icon *</label>
+                <div className="icon-selector">
+                  <div className="icon-preview">
+                    <span className="selected-icon">{formData.icon}</span>
+                  </div>
+                  <div className="icon-grid">
+                    {['💬', '🎮', '🎵', '🎨', '📚', '🎬', '⚽', '🍕', '💼', '🔧', '🌟', '🎯', '🏆', '🎪', '🎭', '🎲'].map((icon) => (
+                      <button
+                        key={icon}
+                        type="button"
+                        className={`icon-option ${formData.icon === icon ? 'selected' : ''}`}
+                        onClick={() => setFormData({ ...formData, icon })}
+                        title={`Select ${icon}`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
               <div className="form-group">
                 <label htmlFor="name">Room Name *</label>

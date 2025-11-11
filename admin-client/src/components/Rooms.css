@@ -74,6 +74,16 @@
   color: var(--text-primary);
   margin: 0;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.room-icon {
+  font-size: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .room-type {
@@ -305,6 +315,77 @@
   color: var(--text-secondary);
 }
 
+/* Icon Selector Styles */
+.icon-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.icon-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-primary);
+  border-radius: 8px;
+}
+
+.selected-icon {
+  font-size: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.5rem;
+}
+
+.icon-option {
+  aspect-ratio: 1;
+  padding: 0.75rem;
+  font-size: 1.5rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-option:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  transform: scale(1.1);
+}
+
+.icon-option.selected {
+  background: var(--accent-light);
+  border-color: var(--accent-primary);
+  border-width: 3px;
+  transform: scale(1.05);
+}
+
+.icon-option.selected:hover {
+  transform: scale(1.15);
+}
+
 .error-message {
   background: var(--danger-light);
   color: var(--danger);
@@ -399,6 +480,10 @@
   .btn-submit {
     width: 100%;
   }
+
+  .icon-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
 }
 
 @media (max-width: 480px) {
@@ -413,5 +498,18 @@
 
   .room-header h3 {
     font-size: 1.1rem;
+  }
+
+  .icon-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .icon-option {
+    font-size: 1.25rem;
+    padding: 0.5rem;
+  }
+
+  .selected-icon {
+    font-size: 2.5rem;
   }
 }
