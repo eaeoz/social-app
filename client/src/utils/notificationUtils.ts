@@ -71,10 +71,12 @@ export const handleNewMessageNotification = (messageText: string = 'New message'
   // Check if Do Not Disturb is enabled
   if (doNotDisturb) return;
   
-  // Only notify if page is not visible/focused
+  // Always play sound for new messages
+  playNotificationSound();
+  
+  // Only blink title if page is not visible/focused
   if (!isPageVisible()) {
     startTitleNotification(messageText);
-    playNotificationSound();
   }
 };
 
