@@ -189,6 +189,102 @@
   position: relative;
 }
 
+/* Dust particle effect when unread messages exist */
+.new-chat-wrapper.has-unread::before {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 30px;
+  background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+  filter: blur(8px);
+  animation: dust-ground-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes dust-ground-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1.1);
+  }
+}
+
+/* Dust particles */
+.new-chat-wrapper.has-unread::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 100px;
+  height: 20px;
+  background-image: 
+    radial-gradient(circle, rgba(239, 68, 68, 0.8) 1px, transparent 1px),
+    radial-gradient(circle, rgba(220, 38, 38, 0.6) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(239, 68, 68, 0.7) 1px, transparent 1px),
+    radial-gradient(circle, rgba(220, 38, 38, 0.5) 2px, transparent 2px);
+  background-size: 15px 15px, 20px 20px, 18px 18px, 25px 25px;
+  background-position: 0 0, 10px 5px, 5px 10px, 15px 8px;
+  animation: dust-particles-float 3s ease-in-out infinite;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: blur(0.5px);
+  z-index: 0;
+}
+
+@keyframes dust-particles-float {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateX(-50%) translateY(0) scaleX(1);
+  }
+  25% {
+    opacity: 0.7;
+    transform: translateX(-48%) translateY(-3px) scaleX(1.05);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(-52%) translateY(-5px) scaleX(1.1);
+  }
+  75% {
+    opacity: 0.6;
+    transform: translateX(-49%) translateY(-2px) scaleX(1.03);
+  }
+}
+
+/* Additional particle layer for depth */
+.new-chat-wrapper.has-unread .new-chat-button::before {
+  content: '';
+  position: absolute;
+  bottom: -25px;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: 
+    radial-gradient(ellipse at 20% 80%, rgba(239, 68, 68, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(220, 38, 38, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 85%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
+  animation: dust-ambient-glow 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes dust-ambient-glow {
+  0%, 100% {
+    opacity: 0.3;
+    filter: blur(12px);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(15px);
+  }
+}
+
 .new-chat-button {
   min-width: 80px;
   height: 38px;
@@ -206,6 +302,30 @@
   transition: all 0.3s ease;
   box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
   animation: pulse-glow 2s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* Enhanced button animation when unread */
+.new-chat-wrapper.has-unread .new-chat-button {
+  animation: button-alert-bounce 2s ease-in-out infinite;
+  box-shadow: 
+    0 4px 15px rgba(239, 68, 68, 0.4),
+    0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+@keyframes button-alert-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 
+      0 4px 15px rgba(239, 68, 68, 0.4),
+      0 0 20px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    transform: translateY(-3px);
+    box-shadow: 
+      0 6px 20px rgba(239, 68, 68, 0.5),
+      0 0 30px rgba(239, 68, 68, 0.3);
+  }
 }
 
 @keyframes pulse-glow {

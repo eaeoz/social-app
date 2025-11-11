@@ -1801,7 +1801,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
           <h1>💬 {import.meta.env.VITE_APP_NAME || 'netcify'}</h1>
         </div>
         <div className="header-center">
-          <div className="new-chat-wrapper">
+          <div className={`new-chat-wrapper ${privateChats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 ? 'has-unread' : ''}`}>
             <button 
               className="new-chat-button"
               onClick={() => setShowUserModal(true)}
