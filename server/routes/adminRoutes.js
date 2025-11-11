@@ -507,6 +507,18 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
     
     console.log(`Verified user state: reports count = ${updatedUser?.reports?.length || 0}, suspended = ${updatedUser?.userSuspended}`);
     
+    // If suspending user, force logout via socket event
+    if (suspend) {
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('user_suspended', { 
+          userId: userId,
+          message: 'Your account has been suspended by an administrator'
+        });
+        console.log(`📡 Sent user_suspended event for user: ${userId}`);
+      }
+    }
+    
     res.json({ 
       message: suspend ? 'User suspended' : 'User unsuspended',
       reportsTransferred: !suspend && user.reports ? user.reports.length : 0,
@@ -587,6 +599,14 @@ router.delete('/users/:userId', authenticateToken, requireAdmin, async (req, res
     const { userId } = req.params;
     const db = getDatabase();
     
+    // Get user details before deletion
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log(`🗑️ Admin ${req.user.userId} is deleting user: ${user.email} (${userId})`);
+    
     // Delete user's messages
     await db.collection('messages').deleteMany({
       $or: [{ senderId: new ObjectId(userId) }, { receiverId: new ObjectId(userId) }]
@@ -603,9 +623,25 @@ router.delete('/users/:userId', authenticateToken, requireAdmin, async (req, res
     // Delete user's presence
     await db.collection('userpresence').deleteOne({ userId: new ObjectId(userId) });
     
+    // Delete user's room activity
+    await db.collection('userroomactivity').deleteMany({ userId: new ObjectId(userId) });
+    
     // Delete user
     await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
     
+    // Force logout the user by emitting socket event
+    // The socket server will be accessed via req.app.get('io')
+    const io = req.app.get('io');
+    if (io) {
+      // Emit to all sockets to check if they match this user
+      io.emit('user_deleted', { 
+        userId: userId,
+        message: 'Your account has been deleted by an administrator'
+      });
+      console.log(`📡 Sent user_deleted event for user: ${userId}`);
+    }
+    
+    console.log(`✅ User ${user.email} (${userId}) deleted successfully`);
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Delete user error:', error);

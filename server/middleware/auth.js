@@ -1,6 +1,8 @@
 import { verifyAccessToken } from '../utils/jwt.js';
+import { getDatabase } from '../config/database.js';
+import { ObjectId } from 'mongodb';
 
-export function authenticateToken(req, res, next) {
+export async function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -14,8 +16,35 @@ export function authenticateToken(req, res, next) {
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
 
-  req.user = decoded;
-  next();
+  try {
+    // Check if user is suspended
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(decoded.userId) },
+      { projection: { userSuspended: 1, suspendedAt: 1 } }
+    );
+
+    if (!user) {
+      return res.status(403).json({ error: 'User not found' });
+    }
+
+    if (user.userSuspended) {
+      console.log(`🚫 Suspended user attempted to access protected route: ${decoded.username}`);
+      return res.status(403).json({ 
+        error: 'Your account has been suspended.',
+        suspended: true,
+        suspendedAt: user.suspendedAt,
+        message: 'Your account has been suspended due to multiple user reports. Please contact support if you believe this is an error.'
+      });
+    }
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return res.status(500).json({ error: 'Authentication failed' });
+  }
 }
 
 export function optionalAuth(req, res, next) {

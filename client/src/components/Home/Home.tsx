@@ -597,6 +597,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
         handleLogout();
       });
 
+      socket.on('user_deleted', (data: { userId: string; message: string }) => {
+        console.warn('⚠️ User deletion notification:', data);
+        // Check if the deleted user is the current user
+        if (data.userId === user.userId) {
+          alert(data.message || 'Your account has been deleted by an administrator. You will be logged out.');
+          handleLogout();
+        }
+      });
+
+      socket.on('user_suspended', (data: { userId: string; message: string }) => {
+        console.warn('⚠️ User suspension notification:', data);
+        // Check if the suspended user is the current user
+        if (data.userId === user.userId) {
+          alert(data.message || 'Your account has been suspended by an administrator. You will be logged out.');
+          handleLogout();
+        }
+      });
+
       socket.on('user_status_changed', (data: { userId: string; status: string; lastActiveAt: Date }) => {
         console.log('👤 User status changed:', data);
         
@@ -650,6 +668,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
         socket.off('call-rejected');
         socket.off('call-ended');
         socket.off('force_logout');
+        socket.off('user_deleted');
+        socket.off('user_suspended');
         socket.off('user_status_changed');
         socket.off('error');
       };
