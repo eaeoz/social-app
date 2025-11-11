@@ -1,0 +1,23 @@
+# Robots.txt for Netcify
+# https://netcify.netlify.app/
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /reset-password?*
+Disallow: /verify-email?*
+
+# Sitemap
+Sitemap: https://netcify.netlify.app/sitemap.xml
+
+# Crawl-delay (optional, adjust as needed)
+Crawl-delay: 10
+
+# Block specific bots (if needed)
+User-agent: AhrefsBot
+Crawl-delay: 30
+
+User-agent: SemrushBot
+Crawl-delay: 30

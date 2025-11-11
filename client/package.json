@@ -6,9 +6,11 @@
   "description": "Netcify - A modern real-time chat and social platform for connecting with the world",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run generate:sitemap && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:sitemap": "node scripts/generate-sitemap.js",
+    "seo:check": "echo Checking SEO configuration... && node -e \"console.log('✅ Sitemap:', require('fs').existsSync('public/sitemap.xml')); console.log('✅ Robots.txt:', require('fs').existsSync('public/robots.txt'));\""
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
