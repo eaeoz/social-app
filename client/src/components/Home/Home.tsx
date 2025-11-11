@@ -144,6 +144,17 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [rateLimit, setRateLimit] = useState(10);
   const [showRateLimitWarning, setShowRateLimitWarning] = useState(false);
   const messageInputContainerRef = useRef<HTMLDivElement>(null);
+  const [doNotDisturb, setDoNotDisturb] = useState(() => {
+    const saved = localStorage.getItem('doNotDisturb');
+    return saved === 'true';
+  });
+
+  // Toggle Do Not Disturb mode
+  const toggleDoNotDisturb = () => {
+    const newValue = !doNotDisturb;
+    setDoNotDisturb(newValue);
+    localStorage.setItem('doNotDisturb', newValue.toString());
+  };
 
   // Handle footer visibility on mobile when input is focused
   useEffect(() => {
@@ -632,8 +643,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
         fromPicture?: string;
         callType: 'voice' | 'video';
       }) => {
+        // If in Do Not Disturb mode, automatically reject the call
+        if (doNotDisturb) {
+          socket.emit('call-rejected', { to: data.from });
+          return;
+        }
+        
         setIncomingCall(data);
-        // Start playing ringtone for incoming call
+        // Start playing ringtone for incoming call (only if not in DND)
         ringtoneManager.startRingtone();
       });
 
@@ -1824,6 +1841,13 @@ function Home({ user, socket, onLogout }: HomeProps) {
           </div>
         </div>
         <div className="header-right">
+          <button 
+            onClick={toggleDoNotDisturb} 
+            className={`dnd-toggle ${doNotDisturb ? 'active' : ''}`}
+            title={doNotDisturb ? 'Disable Do Not Disturb' : 'Enable Do Not Disturb'}
+          >
+            {doNotDisturb ? '🔕' : '🔔'}
+          </button>
           <button 
             onClick={toggleTheme} 
             className="theme-toggle"

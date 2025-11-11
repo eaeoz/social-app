@@ -68,6 +68,10 @@ export const handleNewMessageNotification = (messageText: string = 'New message'
   // Don't notify for own messages
   if (senderId === currentUserId) return;
   
+  // Check if Do Not Disturb is enabled
+  const doNotDisturb = localStorage.getItem('doNotDisturb') === 'true';
+  if (doNotDisturb) return;
+  
   // Only notify if page is not visible/focused
   if (!isPageVisible()) {
     startTitleNotification(messageText);

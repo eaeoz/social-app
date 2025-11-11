@@ -2612,15 +2612,41 @@
 }
 
 /* Theme Toggle Button */
-.theme-toggle {
-  background: transparent;
+.dnd-toggle {
+  background: var(--surface-secondary);
   border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
-  padding: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: none;
+}
+
+.dnd-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.dnd-toggle.active {
+  background: var(--accent-color);
+  color: white;
+}
+
+.theme-toggle {
+  background: var(--surface-secondary);
+  border: none;
+  border-radius: 20px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  margin-right: 1rem;
 }
 
 .theme-toggle:focus {
