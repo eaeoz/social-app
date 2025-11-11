@@ -685,6 +685,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }
       });
 
+      // Check for suspension
+      if (response.status === 403) {
+        const data = await response.json();
+        if (data.suspended) {
+          alert(data.message || 'Your account has been suspended.');
+          handleLogout();
+          return;
+        }
+      }
+
       if (response.ok) {
         const data = await response.json();
         
@@ -727,6 +737,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }
       });
 
+      // Check for suspension
+      if (response.status === 403) {
+        const data = await response.json();
+        if (data.suspended) {
+          alert(data.message || 'Your account has been suspended.');
+          handleLogout();
+          return;
+        }
+      }
+
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users);
@@ -748,6 +768,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      // Check for suspension
+      if (response.status === 403) {
+        const data = await response.json();
+        if (data.suspended) {
+          alert(data.message || 'Your account has been suspended.');
+          handleLogout();
+          return;
+        }
+      }
 
       if (response.ok) {
         const data = await response.json();

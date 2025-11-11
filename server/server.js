@@ -445,7 +445,7 @@ io.on('connection', (socket) => {
     console.log('🔐 User authenticated:', data.username);
     console.log('👤 User data:', data);
     
-    // Validate user still exists in database
+    // Validate user still exists and is not suspended
     try {
       const { getDatabase } = await import('./config/database.js');
       const db = getDatabase();
@@ -454,6 +454,17 @@ io.on('connection', (socket) => {
       if (!user) {
         console.log(`⚠️ User ${data.userId} no longer exists, rejecting authentication`);
         socket.emit('force_logout', { reason: 'User account deleted' });
+        socket.disconnect(true);
+        return;
+      }
+      
+      // Check if user is suspended
+      if (user.userSuspended) {
+        console.log(`🚫 Suspended user ${data.userId} attempted to connect, forcing logout`);
+        socket.emit('force_logout', { 
+          reason: 'Your account has been suspended due to multiple user reports. Please contact support if you believe this is an error.',
+          suspended: true
+        });
         socket.disconnect(true);
         return;
       }
