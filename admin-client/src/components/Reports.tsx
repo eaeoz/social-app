@@ -18,8 +18,10 @@ interface Report {
   reporterId: string;
   reason: string;
   description: string;
+  resolutionDescription?: string;
   status: string;
   createdAt: string;
+  resolvedAt?: string;
   reportedUser?: {
     username: string;
     email: string;
@@ -151,7 +153,7 @@ function Reports() {
         // Update the report status in the local state (instead of removing it)
         // This ensures statistics are updated correctly
         setReports(reports.map(r => 
-          r._id === reportId ? { ...r, status: 'resolved', description: resolutionDescription.trim() } : r
+          r._id === reportId ? { ...r, status: 'resolved', resolutionDescription: resolutionDescription.trim() } : r
         ));
         
         // Close the modal
@@ -549,7 +551,7 @@ function Reports() {
                       <svg viewBox="0 0 20 20" fill="currentColor" className="user-icon">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
-                      <span>@{report.reportedUser?.username || 'Unknown'}</span>
+                      <span>{report.reportedUser?.email || 'Unknown'}</span>
                     </div>
                   </td>
                   <td>
@@ -557,7 +559,7 @@ function Reports() {
                       <svg viewBox="0 0 20 20" fill="currentColor" className="user-icon">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
-                      <span>@{report.reporter?.username || 'Unknown'}</span>
+                      <span>{report.reporter?.email || 'Unknown'}</span>
                     </div>
                   </td>
                   <td>
