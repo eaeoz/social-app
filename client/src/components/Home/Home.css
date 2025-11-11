@@ -189,99 +189,124 @@
   position: relative;
 }
 
-/* Dust particle effect when unread messages exist */
+/* Fire wave and dust particle effect when unread messages exist */
 .new-chat-wrapper.has-unread::before {
   content: '';
   position: absolute;
   bottom: -15px;
   left: 50%;
   transform: translateX(-50%);
-  width: 120%;
-  height: 30px;
-  background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
-  filter: blur(8px);
-  animation: dust-ground-pulse 2s ease-in-out infinite;
+  width: 130%;
+  height: 40px;
+  background: 
+    radial-gradient(ellipse at 30% 100%, rgba(255, 136, 0, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 100%, rgba(239, 68, 68, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(255, 200, 0, 0.3) 0%, transparent 60%);
+  filter: blur(10px);
+  animation: fire-wave-pulse 2s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
 }
 
-@keyframes dust-ground-pulse {
+@keyframes fire-wave-pulse {
   0%, 100% {
-    opacity: 0.6;
-    transform: translateX(-50%) scaleX(1);
+    opacity: 0.7;
+    transform: translateX(-50%) scaleX(1) scaleY(1);
+  }
+  25% {
+    opacity: 0.9;
+    transform: translateX(-48%) scaleX(1.1) scaleY(1.05);
   }
   50% {
     opacity: 1;
-    transform: translateX(-50%) scaleX(1.1);
+    transform: translateX(-52%) scaleX(1.15) scaleY(1.1);
+  }
+  75% {
+    opacity: 0.85;
+    transform: translateX(-50%) scaleX(1.05) scaleY(1.02);
   }
 }
 
-/* Dust particles */
+/* Fire embers and dust particles combined */
 .new-chat-wrapper.has-unread::after {
   content: '';
   position: absolute;
-  bottom: -10px;
+  bottom: -8px;
   left: 50%;
-  width: 100px;
-  height: 20px;
+  width: 110px;
+  height: 25px;
   background-image: 
+    radial-gradient(circle, rgba(255, 200, 0, 0.9) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255, 136, 0, 0.7) 2px, transparent 2px),
     radial-gradient(circle, rgba(239, 68, 68, 0.8) 1px, transparent 1px),
     radial-gradient(circle, rgba(220, 38, 38, 0.6) 1.5px, transparent 1.5px),
-    radial-gradient(circle, rgba(239, 68, 68, 0.7) 1px, transparent 1px),
-    radial-gradient(circle, rgba(220, 38, 38, 0.5) 2px, transparent 2px);
-  background-size: 15px 15px, 20px 20px, 18px 18px, 25px 25px;
-  background-position: 0 0, 10px 5px, 5px 10px, 15px 8px;
-  animation: dust-particles-float 3s ease-in-out infinite;
+    radial-gradient(circle, rgba(255, 180, 0, 0.75) 1.2px, transparent 1.2px),
+    radial-gradient(circle, rgba(255, 90, 0, 0.65) 1.8px, transparent 1.8px);
+  background-size: 15px 15px, 22px 22px, 18px 18px, 25px 25px, 20px 20px, 28px 28px;
+  background-position: 0 0, 10px 5px, 5px 10px, 15px 8px, 8px 2px, 18px 12px;
+  animation: fire-particles-rise 2.5s ease-in-out infinite;
   transform: translateX(-50%);
   pointer-events: none;
-  filter: blur(0.5px);
+  filter: blur(0.3px);
   z-index: 0;
 }
 
-@keyframes dust-particles-float {
+@keyframes fire-particles-rise {
   0%, 100% {
-    opacity: 0.4;
+    opacity: 0.5;
     transform: translateX(-50%) translateY(0) scaleX(1);
   }
-  25% {
-    opacity: 0.7;
-    transform: translateX(-48%) translateY(-3px) scaleX(1.05);
+  20% {
+    opacity: 0.8;
+    transform: translateX(-48%) translateY(-4px) scaleX(1.05);
   }
-  50% {
-    opacity: 0.5;
-    transform: translateX(-52%) translateY(-5px) scaleX(1.1);
-  }
-  75% {
+  40% {
     opacity: 0.6;
-    transform: translateX(-49%) translateY(-2px) scaleX(1.03);
+    transform: translateX(-52%) translateY(-8px) scaleX(1.1);
+  }
+  60% {
+    opacity: 0.75;
+    transform: translateX(-49%) translateY(-5px) scaleX(1.08);
+  }
+  80% {
+    opacity: 0.55;
+    transform: translateX(-51%) translateY(-2px) scaleX(1.03);
   }
 }
 
-/* Additional particle layer for depth */
+/* Fire glow and smoke layer */
 .new-chat-wrapper.has-unread .new-chat-button::before {
   content: '';
   position: absolute;
-  bottom: -25px;
+  bottom: -28px;
   left: 0;
   right: 0;
-  height: 40px;
+  height: 45px;
   background: 
-    radial-gradient(ellipse at 20% 80%, rgba(239, 68, 68, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 90%, rgba(220, 38, 38, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 85%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
-  animation: dust-ambient-glow 4s ease-in-out infinite;
+    radial-gradient(ellipse at 25% 80%, rgba(255, 136, 0, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 85%, rgba(239, 68, 68, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 90%, rgba(255, 200, 0, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 40% 75%, rgba(128, 128, 128, 0.08) 0%, transparent 50%);
+  animation: fire-smoke-ambient 3s ease-in-out infinite;
   pointer-events: none;
   z-index: -1;
 }
 
-@keyframes dust-ambient-glow {
+@keyframes fire-smoke-ambient {
   0%, 100% {
-    opacity: 0.3;
-    filter: blur(12px);
+    opacity: 0.4;
+    filter: blur(14px);
+    transform: translateY(0);
   }
-  50% {
-    opacity: 0.6;
-    filter: blur(15px);
+  33% {
+    opacity: 0.7;
+    filter: blur(16px);
+    transform: translateY(-2px);
+  }
+  66% {
+    opacity: 0.5;
+    filter: blur(18px);
+    transform: translateY(-4px);
   }
 }
 
