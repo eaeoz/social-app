@@ -186,14 +186,16 @@ export async function handler(event, context) {
             .reset-button {
               display: inline-block;
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
+              color: #ffffff !important;
               text-decoration: none;
-              padding: 16px 40px;
+              padding: 18px 50px;
               border-radius: 50px;
               font-size: 18px;
               font-weight: bold;
               box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-              transition: transform 0.2s;
+              transition: all 0.3s ease;
+              border: none;
+              cursor: pointer;
             }
             .reset-button:hover {
               transform: translateY(-2px);
