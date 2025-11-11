@@ -58,6 +58,14 @@ function Reports() {
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [resolutionDescription, setResolutionDescription] = useState('');
+  
+  // Resolved reports filtering
+  const [resolvedStartDate, setResolvedStartDate] = useState('');
+  const [resolvedEndDate, setResolvedEndDate] = useState('');
+  const [resolvedSearchEmail, setResolvedSearchEmail] = useState('');
+  const [resolvedCurrentPage, setResolvedCurrentPage] = useState(1);
+  const [resolvedSortField, setResolvedSortField] = useState<SortField>('date');
+  const [resolvedSortDirection, setResolvedSortDirection] = useState<SortDirection>('desc');
 
   const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
@@ -299,6 +307,90 @@ function Reports() {
   useEffect(() => {
     setCurrentPage(1);
   }, [reports.length]);
+
+  // Resolved reports filtering and sorting
+  const handleResolvedSort = (field: SortField) => {
+    if (resolvedSortField === field) {
+      setResolvedSortDirection(resolvedSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setResolvedSortField(field);
+      setResolvedSortDirection('asc');
+    }
+  };
+
+  // Filter resolved reports
+  let filteredResolvedReports = reports.filter(r => r.status === 'resolved');
+
+  // Apply date filters
+  if (resolvedStartDate) {
+    filteredResolvedReports = filteredResolvedReports.filter(r => {
+      const reportDate = new Date(r.createdAt).toISOString().split('T')[0];
+      return reportDate >= resolvedStartDate;
+    });
+  }
+  if (resolvedEndDate) {
+    filteredResolvedReports = filteredResolvedReports.filter(r => {
+      const reportDate = new Date(r.createdAt).toISOString().split('T')[0];
+      return reportDate <= resolvedEndDate;
+    });
+  }
+
+  // Apply email search (only if 3 or more characters)
+  if (resolvedSearchEmail && resolvedSearchEmail.length >= 3) {
+    const searchLower = resolvedSearchEmail.toLowerCase();
+    filteredResolvedReports = filteredResolvedReports.filter(r => 
+      r.reportedUser?.email?.toLowerCase().includes(searchLower) ||
+      r.reporter?.email?.toLowerCase().includes(searchLower)
+    );
+  }
+
+  // Sort resolved reports
+  const sortedResolvedReports = [...filteredResolvedReports].sort((a, b) => {
+    let compareA: string = '';
+    let compareB: string = '';
+
+    switch (resolvedSortField) {
+      case 'reportedUser':
+        compareA = (a.reportedUser?.email || '').toLowerCase();
+        compareB = (b.reportedUser?.email || '').toLowerCase();
+        break;
+      case 'reporter':
+        compareA = (a.reporter?.email || '').toLowerCase();
+        compareB = (b.reporter?.email || '').toLowerCase();
+        break;
+      case 'reason':
+        compareA = a.reason.toLowerCase();
+        compareB = b.reason.toLowerCase();
+        break;
+      case 'date':
+        return resolvedSortDirection === 'asc' 
+          ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+
+    if (resolvedSortDirection === 'asc') {
+      return compareA.localeCompare(compareB);
+    } else {
+      return compareB.localeCompare(compareA);
+    }
+  });
+
+  // Pagination for resolved reports
+  const resolvedTotalPages = Math.ceil(sortedResolvedReports.length / reportsPerPage);
+  const resolvedStartIndex = (resolvedCurrentPage - 1) * reportsPerPage;
+  const resolvedEndIndex = resolvedStartIndex + reportsPerPage;
+  const paginatedResolvedReports = sortedResolvedReports.slice(resolvedStartIndex, resolvedEndIndex);
+
+  const handleResolvedPageChange = (page: number) => {
+    if (page >= 1 && page <= resolvedTotalPages) {
+      setResolvedCurrentPage(page);
+    }
+  };
+
+  // Reset resolved page when filters change
+  useEffect(() => {
+    setResolvedCurrentPage(1);
+  }, [resolvedStartDate, resolvedEndDate, resolvedSearchEmail]);
 
   if (loading) {
     return (
@@ -659,6 +751,232 @@ function Reports() {
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
           <p>No pending reports</p>
+        </div>
+      )}
+
+      {/* Resolved Reports Section */}
+      <div className="reports-list-header" style={{ marginTop: '3rem' }}>
+        <h3>
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Resolved Reports ({filteredResolvedReports.length})
+        </h3>
+      </div>
+
+      {/* Filters for Resolved Reports */}
+      <div className="resolved-filters">
+        <div className="filter-group">
+          <label htmlFor="startDate">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+            </svg>
+            Start Date
+          </label>
+          <input
+            type="date"
+            id="startDate"
+            value={resolvedStartDate}
+            onChange={(e) => setResolvedStartDate(e.target.value)}
+          />
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="endDate">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+            </svg>
+            End Date
+          </label>
+          <input
+            type="date"
+            id="endDate"
+            value={resolvedEndDate}
+            onChange={(e) => setResolvedEndDate(e.target.value)}
+          />
+        </div>
+
+        <div className="filter-group search-group">
+          <label htmlFor="emailSearch">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+            </svg>
+            Search by Email
+          </label>
+          <input
+            type="text"
+            id="emailSearch"
+            value={resolvedSearchEmail}
+            onChange={(e) => setResolvedSearchEmail(e.target.value)}
+            placeholder="Type at least 3 characters..."
+          />
+          {resolvedSearchEmail && resolvedSearchEmail.length < 3 && (
+            <span className="search-hint">Type {3 - resolvedSearchEmail.length} more character(s) to search</span>
+          )}
+        </div>
+
+        {(resolvedStartDate || resolvedEndDate || resolvedSearchEmail) && (
+          <button
+            className="clear-filters-btn"
+            onClick={() => {
+              setResolvedStartDate('');
+              setResolvedEndDate('');
+              setResolvedSearchEmail('');
+            }}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {sortedResolvedReports.length > 0 ? (
+        <>
+          <div className="reports-table-container">
+            <table className="reports-table">
+              <thead>
+                <tr>
+                  <th onClick={() => handleResolvedSort('reportedUser')} className="sortable">
+                    <div className="th-content">
+                      <span>Reported User</span>
+                      <svg className={`sort-icon ${resolvedSortField === 'reportedUser' ? 'active' : ''} ${resolvedSortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th onClick={() => handleResolvedSort('reporter')} className="sortable">
+                    <div className="th-content">
+                      <span>Reporter</span>
+                      <svg className={`sort-icon ${resolvedSortField === 'reporter' ? 'active' : ''} ${resolvedSortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th onClick={() => handleResolvedSort('reason')} className="sortable">
+                    <div className="th-content">
+                      <span>Reason</span>
+                      <svg className={`sort-icon ${resolvedSortField === 'reason' ? 'active' : ''} ${resolvedSortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th onClick={() => handleResolvedSort('date')} className="sortable">
+                    <div className="th-content">
+                      <span>Date</span>
+                      <svg className={`sort-icon ${resolvedSortField === 'date' ? 'active' : ''} ${resolvedSortDirection}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th>Resolution</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedResolvedReports.map((report) => (
+                  <tr key={report._id}>
+                    <td>
+                      <div className="user-cell">
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="user-icon">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                        <span>{report.reportedUser?.email || 'Unknown'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="user-cell">
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="user-icon">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                        <span>{report.reporter?.email || 'Unknown'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="reason-badge">{report.reason}</span>
+                    </td>
+                    <td>
+                      <span className="date-text">
+                        {new Date(report.createdAt).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="resolution-text">{report.resolutionDescription || 'No description'}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {sortedResolvedReports.length > reportsPerPage && (
+            <div className="pagination-controls">
+              <button 
+                className="pagination-btn"
+                onClick={() => handleResolvedPageChange(resolvedCurrentPage - 1)}
+                disabled={resolvedCurrentPage === 1}
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Previous
+              </button>
+
+              <div className="pagination-pages">
+                {Array.from({ length: resolvedTotalPages }, (_, i) => i + 1).map((page) => {
+                  const showPage = 
+                    page === 1 || 
+                    page === resolvedTotalPages || 
+                    (page >= resolvedCurrentPage - 1 && page <= resolvedCurrentPage + 1);
+                  
+                  const showEllipsis = 
+                    (page === 2 && resolvedCurrentPage > 3) ||
+                    (page === resolvedTotalPages - 1 && resolvedCurrentPage < resolvedTotalPages - 2);
+
+                  if (showEllipsis) {
+                    return <span key={page} className="pagination-ellipsis">...</span>;
+                  }
+
+                  if (!showPage) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={page}
+                      className={`pagination-page ${resolvedCurrentPage === page ? 'active' : ''}`}
+                      onClick={() => handleResolvedPageChange(page)}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button 
+                className="pagination-btn"
+                onClick={() => handleResolvedPageChange(resolvedCurrentPage + 1)}
+                disabled={resolvedCurrentPage === resolvedTotalPages}
+              >
+                Next
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="no-results">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          <p>No resolved reports found</p>
         </div>
       )}
 
