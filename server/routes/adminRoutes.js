@@ -824,4 +824,88 @@ router.delete('/rooms/:roomId', authenticateToken, requireAdmin, async (req, res
   }
 });
 
+// Cleanup Operations
+
+// Delete all public messages for a specific user
+router.delete('/cleanup/public-messages/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const db = getDatabase();
+    
+    // Verify user exists
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete all public messages from this user
+    const result = await db.collection('messages').deleteMany({
+      senderId: new ObjectId(userId),
+      isPrivate: false
+    });
+    
+    console.log(`🧹 Deleted ${result.deletedCount} public messages for user: ${user.username}`);
+    
+    res.json({ 
+      message: 'Public messages deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete public messages error:', error);
+    res.status(500).json({ error: 'Failed to delete public messages' });
+  }
+});
+
+// Delete all private messages for a specific user
+router.delete('/cleanup/private-messages/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const db = getDatabase();
+    
+    // Verify user exists
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete all private messages sent by or received by this user
+    const result = await db.collection('messages').deleteMany({
+      $or: [
+        { senderId: new ObjectId(userId), isPrivate: true },
+        { receiverId: new ObjectId(userId), isPrivate: true }
+      ]
+    });
+    
+    console.log(`🧹 Deleted ${result.deletedCount} private messages for user: ${user.username}`);
+    
+    res.json({ 
+      message: 'Private messages deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete private messages error:', error);
+    res.status(500).json({ error: 'Failed to delete private messages' });
+  }
+});
+
+// Delete ALL messages from ALL users (danger zone)
+router.delete('/cleanup/all-messages', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    // Delete all messages
+    const result = await db.collection('messages').deleteMany({});
+    
+    console.log(`🧹 DANGER ZONE: Deleted ALL ${result.deletedCount} messages from the system`);
+    
+    res.json({ 
+      message: 'All messages deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete all messages error:', error);
+    res.status(500).json({ error: 'Failed to delete all messages' });
+  }
+});
+
 export default router;

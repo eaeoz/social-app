@@ -6,6 +6,7 @@ import Settings from './Settings';
 import Statistics from './Statistics';
 import Rooms from './Rooms';
 import ArchivedReports from './ArchivedReports';
+import Cleanup from './Cleanup';
 import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
@@ -72,6 +73,14 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <span className="nav-icon">⚙️</span>
             <span className="nav-label">Settings</span>
           </Link>
+          <Link
+            to="/cleanup"
+            className={`nav-item ${location.pathname === '/cleanup' ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">🧹</span>
+            <span className="nav-label">Cleanup</span>
+          </Link>
           
           <div className="nav-separator"></div>
           
@@ -127,6 +136,7 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <Route path="/reports" element={<Reports />} />
             <Route path="/archived-reports" element={<ArchivedReports />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/cleanup" element={<Cleanup />} />
           </Routes>
         </div>
       </main>
