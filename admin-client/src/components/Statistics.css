@@ -3,7 +3,7 @@
 }
 
 .statistics-container h2 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 2rem;
   font-size: 1.75rem;
 }
@@ -77,13 +77,13 @@
 }
 
 .welcome-section h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
 
 .welcome-section p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1rem;
   line-height: 1.6;
 }
