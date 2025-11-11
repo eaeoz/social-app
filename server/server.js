@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { ObjectId } from 'mongodb';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { connectToDatabase } from './config/database.js';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -337,18 +338,27 @@ app.use('/api/report', reportRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Serve static files from React build (for production)
+// Only attempt to serve if the client build directory exists
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.join(__dirname, '../client/dist');
-  app.use(express.static(clientBuildPath));
   
-  // Handle client-side routing - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
-    // Don't serve index.html for API routes
-    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
+  // Check if client build exists
+  if (fs.existsSync(clientBuildPath)) {
+    console.log(`📦 Serving static files from: ${clientBuildPath}`);
+    app.use(express.static(clientBuildPath));
+    
+    // Handle client-side routing - serve index.html for all non-API routes
+    app.get('*', (req, res) => {
+      // Don't serve index.html for API routes
+      if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    });
+  } else {
+    console.log(`⚠️ Client build directory not found: ${clientBuildPath}`);
+    console.log(`📡 Server running in API-only mode (frontend deployed separately)`);
+  }
 }
 
 // Store user socket connections and activity timestamps
