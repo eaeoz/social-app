@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import './NSFWWarningModal.css';
 
 interface NSFWWarningModalProps {
@@ -7,8 +6,7 @@ interface NSFWWarningModalProps {
   onCancel: () => void;
 }
 
-function NSFWWarningModal({ warnings, onContinue, onCancel }: NSFWWarningModalProps) {
-  const [acknowledged, setAcknowledged] = useState(false);
+function NSFWWarningModal({ warnings, onCancel }: NSFWWarningModalProps) {
 
   return (
     <div className="nsfw-modal-overlay">
@@ -40,40 +38,16 @@ function NSFWWarningModal({ warnings, onContinue, onCancel }: NSFWWarningModalPr
             </ul>
           </div>
 
-          <div className="nsfw-acknowledgment">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={acknowledged}
-                onChange={(e) => setAcknowledged(e.target.checked)}
-              />
-              <span>
-                I understand this image violates community guidelines. I will select a different image.
-              </span>
-            </label>
-          </div>
         </div>
 
-        <div className="nsfw-modal-actions">
+        <div className="nsfw-modal-actions nsfw-modal-actions-centered">
           <button
-            className="nsfw-button nsfw-button-cancel"
+            className="nsfw-button nsfw-button-primary"
             onClick={onCancel}
           >
             Choose Different Image
           </button>
-          <button
-            className="nsfw-button nsfw-button-continue"
-            onClick={onContinue}
-            disabled={!acknowledged}
-            title={!acknowledged ? 'Please acknowledge the guidelines' : ''}
-          >
-            Upload Anyway (Not Recommended)
-          </button>
         </div>
-
-        <p className="nsfw-modal-footer">
-          * False positives may occur. If you believe this is an error, you can proceed at your own risk.
-        </p>
       </div>
     </div>
   );
