@@ -47,15 +47,15 @@
 }
 
 .message.success {
-  background: #d1fae5;
-  color: #065f46;
-  border-left: 4px solid #10b981;
+  background: var(--success-light);
+  color: var(--success);
+  border-left: 4px solid var(--success);
 }
 
 .message.error {
-  background: #fee2e2;
-  color: #991b1b;
-  border-left: 4px solid #ef4444;
+  background: var(--danger-light);
+  color: var(--danger);
+  border-left: 4px solid var(--danger);
 }
 
 .settings-grid {
@@ -194,14 +194,14 @@
 }
 
 .settings-footer {
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
+  background: var(--warning-light);
+  border-left: 4px solid var(--warning);
   padding: 1.25rem 1.5rem;
   border-radius: 8px;
 }
 
 .warning-text {
-  color: #92400e;
+  color: var(--warning);
   margin: 0;
   font-weight: 500;
 }

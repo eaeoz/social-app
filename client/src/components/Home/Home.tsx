@@ -8,6 +8,7 @@ import Contact from '../Legal/Contact';
 import About from '../Legal/About';
 import ImageCropper from '../Auth/ImageCropper';
 import ReportModal from './ReportModal';
+import { canSendMessage, recordMessageSent, getSecondsUntilReset } from '../../utils/rateLimiter';
 import './Home.css';
 
 interface HomeProps {
@@ -131,6 +132,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [reportedUserId, setReportedUserId] = useState<string | null>(null);
   const reconnectAttemptRef = useRef(0);
   const maxReconnectAttempts = 5;
+  const [maxMessageLength, setMaxMessageLength] = useState(30);
+  const [rateLimit, setRateLimit] = useState(10);
+  const [showRateLimitWarning, setShowRateLimitWarning] = useState(false);
+  const messageInputContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle footer visibility on mobile when input is focused
   useEffect(() => {
@@ -189,6 +194,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     loadRooms();
     loadUsers();
     loadPrivateChats();
+    loadSiteSettings();
     
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     const initialTheme = savedTheme || 'dark';
@@ -203,6 +209,28 @@ function Home({ user, socket, onLogout }: HomeProps) {
       clearInterval(pollInterval);
     };
   }, []);
+
+  // Load site settings from backend
+  const loadSiteSettings = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/site`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📋 Loaded site settings:', data.settings);
+        if (data.settings) {
+          const newMaxLength = data.settings.maxMessageLength || 500;
+          const newRateLimit = data.settings.rateLimit || 10;
+          console.log(`✅ Max message length: ${newMaxLength}, Rate limit: ${newRateLimit}`);
+          setMaxMessageLength(newMaxLength);
+          setRateLimit(newRateLimit);
+        }
+      } else {
+        console.error('Failed to fetch settings:', response.status);
+      }
+    } catch (error) {
+      console.error('Failed to load site settings:', error);
+    }
+  };
 
   // Add keyboard shortcut listener for Alt+M to toggle user modal and Escape to close it
   useEffect(() => {
@@ -1044,6 +1072,31 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const sendMessage = (messageContent?: string) => {
     const content = messageContent || messageInput.trim();
     if (!content || !socket) return;
+
+    // Check rate limit before sending
+    if (!canSendMessage(rateLimit)) {
+      const secondsLeft = getSecondsUntilReset();
+      setShowRateLimitWarning(true);
+      
+      // Add flash effect to input container
+      if (messageInputContainerRef.current) {
+        messageInputContainerRef.current.classList.add('rate-limit-flash');
+        setTimeout(() => {
+          messageInputContainerRef.current?.classList.remove('rate-limit-flash');
+        }, 600);
+      }
+      
+      // Hide warning after 3 seconds
+      setTimeout(() => {
+        setShowRateLimitWarning(false);
+      }, 3000);
+      
+      console.log(`⚠️ Rate limit exceeded. Wait ${secondsLeft} seconds.`);
+      return;
+    }
+
+    // Record the message sent
+    recordMessageSent();
 
     if (chatType === 'private' && selectedPrivateChat) {
       socket.emit('send_private_message', {
@@ -2030,7 +2083,12 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 )}
               </div>
 
-              <div className="message-input-container">
+              <div className="message-input-container" ref={messageInputContainerRef}>
+                {showRateLimitWarning && (
+                  <div className="rate-limit-warning">
+                    ⚠️ Slow down! Wait {getSecondsUntilReset()} seconds before sending another message.
+                  </div>
+                )}
                 <button
                   className="input-action-button location-button"
                   onClick={handleLocationShare}
@@ -2069,6 +2127,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   value={messageInput}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
+                  maxLength={maxMessageLength}
+                  key={`message-input-${maxMessageLength}`}
                   onFocus={async () => {
                     handleInputFocus();
                     

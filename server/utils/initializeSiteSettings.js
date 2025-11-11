@@ -29,6 +29,8 @@ export async function initializeSiteSettings() {
         defaultUsersDisplayCount: 20, // Maximum number of users to show by default (online users only)
         siteEmail: '', // Email address to receive contact form submissions
         verificationEmailResendCount: 4, // Maximum number of verification email resend attempts
+        maxMessageLength: 30, // Maximum message length (default: 30 characters)
+        rateLimit: 10, // Maximum messages per minute (default: 10)
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -40,6 +42,8 @@ export async function initializeSiteSettings() {
       console.log('   - defaultUsersDisplayCount: 20');
       console.log('   - siteEmail: (not set)');
       console.log('   - verificationEmailResendCount: 4');
+      console.log('   - maxMessageLength: 30');
+      console.log('   - rateLimit: 10');
     } else {
       console.log('✅ Site settings already exist, skipping creation');
     }
@@ -72,7 +76,9 @@ export async function getSiteSettings() {
         searchUserCount: 50,
         defaultUsersDisplayCount: 20,
         siteEmail: '',
-        verificationEmailResendCount: 4
+        verificationEmailResendCount: 4,
+        maxMessageLength: 30,
+        rateLimit: 10
       };
     }
 
@@ -81,7 +87,9 @@ export async function getSiteSettings() {
       searchUserCount: settings.searchUserCount !== undefined ? settings.searchUserCount : 50,
       defaultUsersDisplayCount: settings.defaultUsersDisplayCount !== undefined ? settings.defaultUsersDisplayCount : 20,
       siteEmail: settings.siteEmail || '',
-      verificationEmailResendCount: settings.verificationEmailResendCount !== undefined ? settings.verificationEmailResendCount : 4
+      verificationEmailResendCount: settings.verificationEmailResendCount !== undefined ? settings.verificationEmailResendCount : 4,
+      maxMessageLength: settings.maxMessageLength !== undefined ? settings.maxMessageLength : 30,
+      rateLimit: settings.rateLimit !== undefined ? settings.rateLimit : 10
     };
     
     console.log('🔍 Processed settings result:', JSON.stringify(result, null, 2));
@@ -93,7 +101,9 @@ export async function getSiteSettings() {
       showuserlistpicture: 1,
       searchUserCount: 50,
       defaultUsersDisplayCount: 20,
-      verificationEmailResendCount: 4
+      verificationEmailResendCount: 4,
+      maxMessageLength: 30,
+      rateLimit: 10
     };
   }
 }

@@ -201,15 +201,15 @@ function Settings() {
             <div className="setting-info">
               <label>Max Message Length</label>
               <span className="setting-description">
-                Maximum characters per message
+                Maximum characters per message (minimum: 30)
               </span>
             </div>
             <input
               type="number"
               className="setting-input"
               value={settings.maxMessageLength}
-              onChange={(e) => setSettings({...settings, maxMessageLength: parseInt(e.target.value)})}
-              min="100"
+              onChange={(e) => setSettings({...settings, maxMessageLength: Math.max(30, parseInt(e.target.value) || 30)})}
+              min="30"
               max="2000"
             />
           </div>
@@ -242,7 +242,7 @@ function Settings() {
             <div className="setting-info">
               <label>Site Email</label>
               <span className="setting-description">
-                Admin contact email address for notifications
+                Admin contact email address for notifications (read-only)
               </span>
             </div>
             <input
@@ -251,6 +251,8 @@ function Settings() {
               value={settings.siteEmail || ''}
               onChange={(e) => setSettings({...settings, siteEmail: e.target.value})}
               placeholder="admin@example.com"
+              disabled
+              style={{ opacity: 0.6, cursor: 'not-allowed' }}
             />
           </div>
 
