@@ -7,6 +7,13 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# WWW Canonicalization - Force non-www (301 permanent redirect)
+[[redirects]]
+  from = "https://www.netcify.netlify.app/*"
+  to = "https://netcify.netlify.app/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
