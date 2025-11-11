@@ -81,14 +81,11 @@ function ResetPassword() {
   if (success) {
     return (
       <div className="auth-container">
-        <div className="auth-box">
-          <div className="auth-header">
-            <h1>✅ Password Reset Successful</h1>
-          </div>
-          <div className="success-message">
-            <p>Your password has been successfully reset.</p>
-            <p>Redirecting to login page...</p>
-          </div>
+        <div className="auth-card">
+          <div className="modal-icon">✅</div>
+          <h1>Password Reset Successful</h1>
+          <p className="subtitle">Your password has been successfully reset.</p>
+          <p className="subtitle">Redirecting to login page...</p>
         </div>
       </div>
     );
@@ -96,11 +93,9 @@ function ResetPassword() {
 
   return (
     <div className="auth-container">
-      <div className="auth-box">
-        <div className="auth-header">
-          <h1>🔑 Reset Your Password</h1>
-          <p>Enter your new password below</p>
-        </div>
+      <div className="auth-card">
+        <h1>🔑 Reset Your Password</h1>
+        <p className="subtitle">Enter your new password below</p>
 
         {error && (
           <div className="error-message">
@@ -109,8 +104,10 @@ function ResetPassword() {
         )}
 
         {!token ? (
-          <div className="error-message">
-            <p>Invalid or missing reset token. Please request a new password reset link.</p>
+          <>
+            <div className="error-message">
+              Invalid or missing reset token. Please request a new password reset link.
+            </div>
             <button 
               onClick={() => navigate('/')}
               className="auth-button"
@@ -118,9 +115,9 @@ function ResetPassword() {
             >
               Go to Login
             </button>
-          </div>
+          </>
         ) : (
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="newPassword">New Password</label>
               <input

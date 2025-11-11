@@ -1,79 +1,103 @@
 import nodemailer from 'nodemailer';
-import fetch from 'node-fetch';
-import { getDatabase } from '../config/database.js';
 
-/**
- * Send password recovery email to user
- */
-export async function sendPasswordRecoveryEmail(email, username, recoveryToken) {
+// SMTP credentials from Netlify environment variables
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.yandex.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
+
+// Frontend URL for reset link
+const FRONTEND_URL = process.env.VITE_FRONTEND_URL || 'http://localhost:5173';
+
+// Debug logging helper
+function debugLog(stage, data) {
+  console.log('='.repeat(80));
+  console.log(`[DEBUG] ${stage}`);
+  console.log('Timestamp:', new Date().toISOString());
+  if (data) {
+    console.log('Details:', JSON.stringify(data, null, 2));
+  }
+  console.log('='.repeat(80));
+}
+
+// Netlify serverless function handler
+export async function handler(event, context) {
+  debugLog('🚀 Reset Password Email Function Invoked', {
+    httpMethod: event.httpMethod,
+    hasBody: !!event.body
+  });
+
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
+  // Only allow POST
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        success: false,
+        message: 'Method not allowed'
+      })
+    };
+  }
+
   try {
-    const db = getDatabase();
-    
-    // Fetch SMTP settings from database
-    const siteSettings = await db.collection('siteSettings').findOne({});
-    
-    let SMTP_USER, SMTP_PASS, SMTP_HOST, SMTP_PORT, FRONTEND_URL, NETLIFY_FUNCTION_URL;
-    
-    if (siteSettings && siteSettings.smtp) {
-      // Use settings from database
-      SMTP_USER = siteSettings.smtp.user;
-      SMTP_PASS = siteSettings.smtp.pass;
-      SMTP_HOST = siteSettings.smtp.host || 'smtp.yandex.com';
-      SMTP_PORT = parseInt(siteSettings.smtp.port || '587');
-      console.log('✅ Using SMTP settings from database');
-    } else {
-      // Fallback to environment variables
-      SMTP_USER = process.env.SMTP_USER;
-      SMTP_PASS = process.env.SMTP_PASS;
-      SMTP_HOST = process.env.SMTP_HOST || 'smtp.yandex.com';
-      SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
-      console.log('⚠️ Using SMTP settings from environment variables');
-    }
-    
-    FRONTEND_URL = siteSettings?.siteEmail || process.env.CLIENT_URL || 'http://localhost:5173';
-    NETLIFY_FUNCTION_URL = process.env.NETLIFY_FUNCTION_URL;
+    // Parse request body
+    const { email, username, resetToken } = JSON.parse(event.body);
 
-    // Try Netlify function first if URL is configured
-    if (NETLIFY_FUNCTION_URL) {
-      try {
-        console.log('🚀 Attempting to send password reset email via Netlify function...');
-        const response = await fetch(`${NETLIFY_FUNCTION_URL}/.netlify/functions/reset-password`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email,
-            username,
-            resetToken: recoveryToken
-          })
-        });
+    debugLog('📝 Request Data', { email, username, hasToken: !!resetToken });
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          console.log('✅ Password reset email sent via Netlify function');
-          return {
-            success: true,
-            messageId: data.messageId,
-            method: 'netlify'
-          };
-        } else {
-          console.warn('⚠️ Netlify function failed, falling back to direct SMTP');
-        }
-      } catch (netlifyError) {
-        console.warn('⚠️ Netlify function error, falling back to direct SMTP:', netlifyError.message);
-      }
+    // Validate inputs
+    if (!email || !username || !resetToken) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: false,
+          message: 'Email, username, and reset token are required'
+        })
+      };
     }
 
-    // Fallback to direct SMTP if Netlify function is not available or failed
     // Validate SMTP configuration
     if (!SMTP_USER || !SMTP_PASS) {
-      console.error('❌ Missing SMTP credentials and Netlify function unavailable');
-      throw new Error('Email service not configured');
+      console.error('❌ Missing SMTP credentials');
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: false,
+          message: 'Email service not configured'
+        })
+      };
     }
 
     // Create transporter
+    debugLog('📮 Creating Email Transporter', {
+      host: SMTP_HOST,
+      port: SMTP_PORT
+    });
+
     const transporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port: SMTP_PORT,
@@ -89,16 +113,16 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
 
     // Verify transporter
     await transporter.verify();
-    console.log('✅ Email transporter verified');
+    debugLog('✅ Transporter Verified');
 
-    // Create recovery link
-    const recoveryLink = `${FRONTEND_URL}/reset-password?token=${recoveryToken}`;
+    // Create reset link
+    const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
 
     // Email content
     const mailOptions = {
       from: `"netcify" <${SMTP_USER}>`,
       to: email,
-      subject: '🔐 Reset Your Password - netcify',
+      subject: '🔑 Password Reset Request - netcify',
       html: `
         <!DOCTYPE html>
         <html>
@@ -153,7 +177,7 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
               text-align: center;
               margin: 40px 0;
             }
-            .recovery-button {
+            .reset-button {
               display: inline-block;
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
               color: white;
@@ -165,7 +189,7 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
               box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
               transition: transform 0.2s;
             }
-            .recovery-button:hover {
+            .reset-button:hover {
               transform: translateY(-2px);
             }
             .or-text {
@@ -194,7 +218,7 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
               font-size: 24px;
               margin-right: 10px;
             }
-            .security-note {
+            .security-notice {
               background: #e3f2fd;
               border-left: 4px solid #2196f3;
               padding: 15px;
@@ -218,30 +242,30 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
         <body>
           <div class="container">
             <div class="header">
-              <div class="icon">🔐</div>
-              <h1>Reset Your Password</h1>
+              <div class="icon">🔑</div>
+              <h1>Password Reset Request</h1>
             </div>
             <div class="content">
               <div class="greeting">Hello ${username}! 👋</div>
               <div class="message">
-                We received a request to reset the password for your <strong>netcify</strong> account.
+                We received a request to reset your password for your <strong>netcify</strong> account.
                 <br><br>
-                If you made this request, click the button below to reset your password:
+                Click the button below to create a new password:
               </div>
               <div class="button-container">
-                <a href="${recoveryLink}" class="recovery-button">🔐 Reset Password</a>
+                <a href="${resetLink}" class="reset-button">🔑 Reset Password</a>
               </div>
               <div class="or-text">Or copy and paste this link into your browser:</div>
-              <div class="link-box">${recoveryLink}</div>
+              <div class="link-box">${resetLink}</div>
               <div class="warning">
                 <span class="warning-icon">⏰</span>
                 <strong>Important:</strong> This password reset link will expire in <strong>1 hour</strong>. 
-                If it expires, you'll need to request a new password reset link.
+                If it expires, you'll need to request a new password reset.
               </div>
-              <div class="security-note">
-                <span style="font-size: 24px; margin-right: 10px;">🛡️</span>
+              <div class="security-notice">
+                <span class="warning-icon">🔒</span>
                 <strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email. 
-                Your account is secure and your password has not been changed.
+                Your account is still secure, and your current password will remain unchanged.
               </div>
             </div>
             <div class="footer">
@@ -260,15 +284,15 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
       text: `
 Hello ${username}!
 
-We received a request to reset the password for your netcify account.
+We received a request to reset your password for your netcify account.
 
-If you made this request, click the link below to reset your password:
+To reset your password, please click the link below:
 
-${recoveryLink}
+${resetLink}
 
 ⏰ Important: This password reset link will expire in 1 hour.
 
-🛡️ Security Notice: If you didn't request a password reset, please ignore this email. Your account is secure and your password has not been changed.
+🔒 Security Notice: If you didn't request a password reset, please ignore this email. Your account is still secure.
 
 ---
 Need help? Contact us at ${SMTP_USER}
@@ -277,19 +301,42 @@ Need help? Contact us at ${SMTP_USER}
     };
 
     // Send email
+    debugLog('📤 Sending Password Reset Email');
     const info = await transporter.sendMail(mailOptions);
 
-    console.log(`✅ Password recovery email sent to: ${email} (via direct SMTP)`);
-    console.log(`   Message ID: ${info.messageId}`);
+    debugLog('✅ Email Sent Successfully', {
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected
+    });
 
     return {
-      success: true,
-      messageId: info.messageId,
-      method: 'smtp'
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        success: true,
+        message: 'Password reset email sent successfully',
+        messageId: info.messageId
+      })
     };
 
   } catch (error) {
-    console.error('❌ Error sending password recovery email:', error);
-    throw error;
+    console.error('❌ Error sending password reset email:', error);
+    
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        success: false,
+        message: 'Failed to send password reset email',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      })
+    };
   }
 }
