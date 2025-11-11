@@ -286,12 +286,6 @@ function Users() {
                 <span className="detail-label">Joined:</span>
                 <span className="detail-value">{new Date(user.createdAt).toLocaleDateString()}</span>
               </div>
-              <div className="user-card-detail-item">
-                <span className="detail-label">Status:</span>
-                <div className={`status-indicator ${user.userSuspended ? 'suspended' : 'active'}`}>
-                  {user.userSuspended ? '🚫 Suspended' : '✅ Active'}
-                </div>
-              </div>
             </div>
 
             <div className="user-card-actions">
