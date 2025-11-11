@@ -92,7 +92,7 @@ export class SecureSessionManager {
   private static readonly SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
   private static readonly ACTIVITY_CHECK_INTERVAL = 60 * 1000; // 1 minute
   private static lastActivity: number = Date.now();
-  private static checkInterval: NodeJS.Timeout | null = null;
+  private static checkInterval: ReturnType<typeof setInterval> | null = null;
 
   static init(onSessionExpired: () => void): void {
     this.updateActivity();
@@ -152,8 +152,6 @@ export function getTokenExpiration(token: string): Date | null {
  * Secure Storage with encryption
  */
 export class SecureStorage {
-  private static readonly SALT = 'admin-dashboard-salt';
-
   private static simpleEncrypt(data: string): string {
     // Simple obfuscation (for production, use a proper encryption library)
     return btoa(encodeURIComponent(data));

@@ -297,14 +297,18 @@ router.get('/users/archived-reports/:email', authenticateToken, requireAdmin, as
 router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { reportId } = req.params;
-    const { status, adminNotes, reportedUserId, reporterId } = req.body;
+    const { status, adminNotes, resolutionDescription, reportedUserId, reporterId } = req.body;
+    
+    // Use resolutionDescription if provided, otherwise fall back to adminNotes
+    const description = resolutionDescription || adminNotes;
     
     console.log('🔧 Report resolution request:', {
       reportId,
       status,
       reportedUserId,
       reporterId,
-      hasAdminNotes: !!adminNotes
+      hasDescription: !!description,
+      descriptionLength: description?.length || 0
     });
     
     if (!['pending', 'resolved', 'dismissed'].includes(status)) {
@@ -320,8 +324,10 @@ router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, re
       resolvedBy: status === 'resolved' ? req.user.userId : null
     };
     
-    if (adminNotes) {
-      updateData.adminNotes = adminNotes;
+    // Add resolution description if provided
+    if (description) {
+      updateData.resolutionDescription = description;
+      console.log(`💾 Saving resolution description: "${description}"`);
     }
     
     const collectionUpdate = await db.collection('reports').updateOne(
@@ -391,7 +397,7 @@ router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, re
           });
           
           if (originalReport) {
-            await db.collection('reports').insertOne({
+            const archivedReport = {
               _id: new ObjectId(reportId),
               reportedUserId: new ObjectId(reportedUserId),
               reporterId: new ObjectId(reporterId),
@@ -403,7 +409,15 @@ router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, re
               resolvedBy: req.user.userId,
               reporterEmail: originalReport.reporterEmail || reporter?.email,
               source: 'user_array_resolved'
-            });
+            };
+            
+            // Add resolution description if provided
+            if (description) {
+              archivedReport.resolutionDescription = description;
+              console.log(`💾 Archiving with resolution description: "${description}"`);
+            }
+            
+            await db.collection('reports').insertOne(archivedReport);
             console.log(`✅ Archived resolved report to reports collection`);
           }
           
