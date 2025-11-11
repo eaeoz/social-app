@@ -1,1 +1,10 @@
+# Static files - serve as-is
+/sitemap.xml    /sitemap.xml    200
+/robots.txt     /robots.txt     200
+/ads.txt        /ads.txt        200
+
+# Google verification and other static files
+/google*.html   /google*.html   200
+
+# SPA fallback - must be last
 /*    /index.html   200
