@@ -231,3 +231,84 @@
     align-self: flex-start;
   }
 }
+
+@media (max-width: 480px) {
+  .settings-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .btn-save {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .setting-card {
+    padding: 1.25rem;
+  }
+
+  .setting-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .setting-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .setting-header p {
+    font-size: 0.85rem;
+  }
+
+  .setting-item {
+    padding: 1rem 0;
+  }
+
+  .setting-info label {
+    font-size: 0.95rem;
+  }
+
+  .setting-description {
+    font-size: 0.8rem;
+  }
+
+  .setting-input {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .setting-input[type="email"] {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .toggle {
+    width: 52px;
+    height: 28px;
+  }
+
+  .toggle-slider:before {
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+  }
+
+  .toggle input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+  }
+
+  .message {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .settings-footer {
+    padding: 1rem 1.25rem;
+  }
+
+  .warning-text {
+    font-size: 0.9rem;
+  }
+}
