@@ -11,6 +11,7 @@ import NSFWWarningModal from '../Auth/NSFWWarningModal';
 import ReportModal from './ReportModal';
 import { canSendMessage, recordMessageSent, getSecondsUntilReset } from '../../utils/rateLimiter';
 import { nsfwDetector } from '../../utils/nsfwDetector';
+import { handleNewMessageNotification, resetNotifications } from '../../utils/notificationUtils';
 import './Home.css';
 
 interface HomeProps {
@@ -211,8 +212,24 @@ function Home({ user, socket, onLogout }: HomeProps) {
       loadPrivateChats();
     }, 5000);
 
+    // Add visibility change listener to reset notifications when user returns
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        resetNotifications();
+      }
+    };
+
+    const handleFocus = () => {
+      resetNotifications();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
     return () => {
       clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
@@ -479,6 +496,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
           timestamp: new Date()
         });
         
+        // Trigger notification for new room message
+        if (message.senderId !== user.userId) {
+          handleNewMessageNotification('New message', message.senderId, user.userId);
+        }
+        
         // Always add the message if it's for a room chat, let React state handle filtering
         setMessages(prev => [...prev, {
           messageId: message.messageId,
@@ -539,6 +561,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
       socket.on('private_message', async (message: any) => {
         const otherUserId = message.senderId === user.userId ? message.receiverId : message.senderId;
         const isCurrentChat = chatType === 'private' && selectedPrivateChat?.otherUser.userId === otherUserId;
+        
+        // Trigger notification for new private message
+        if (message.senderId !== user.userId) {
+          handleNewMessageNotification(`New message from ${message.senderName}`, message.senderId, user.userId);
+        }
         
         if (isCurrentChat) {
           setMessages(prev => {
