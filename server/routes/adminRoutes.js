@@ -925,4 +925,92 @@ router.delete('/cleanup/all-messages', authenticateToken, requireAdmin, async (r
   }
 });
 
+// Delete messages created before a specific date
+router.delete('/cleanup/messages-by-date', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { date } = req.body;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+    
+    const db = getDatabase();
+    const cutoffDate = new Date(date);
+    
+    // Validate date
+    if (isNaN(cutoffDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    
+    console.log(`🗓️ Deleting all messages created before: ${cutoffDate.toISOString()}`);
+    
+    // Delete all messages created before the specified date
+    const messageResult = await db.collection('messages').deleteMany({
+      timestamp: { $lt: cutoffDate }
+    });
+    
+    console.log(`🧹 Deleted ${messageResult.deletedCount} messages created before ${cutoffDate.toLocaleDateString()}`);
+    
+    // Update private chats that had their last message deleted
+    // Find chats where the lastMessageAt is before the cutoff date
+    const chatsToUpdate = await db.collection('privatechats').find({
+      lastMessageAt: { $lt: cutoffDate }
+    }).toArray();
+    
+    // For each affected chat, find the newest remaining message
+    for (const chat of chatsToUpdate) {
+      const newestMessage = await db.collection('messages').findOne(
+        {
+          $or: [
+            { senderId: chat.user1Id, receiverId: chat.user2Id },
+            { senderId: chat.user2Id, receiverId: chat.user1Id }
+          ],
+          isPrivate: true
+        },
+        { sort: { timestamp: -1 } }
+      );
+      
+      if (newestMessage) {
+        // Update chat with new last message
+        await db.collection('privatechats').updateOne(
+          { _id: chat._id },
+          {
+            $set: {
+              lastMessageId: newestMessage._id,
+              lastMessageAt: newestMessage.timestamp,
+              updatedAt: new Date()
+            }
+          }
+        );
+      } else {
+        // No messages left, remove last message references
+        await db.collection('privatechats').updateOne(
+          { _id: chat._id },
+          {
+            $unset: {
+              lastMessageId: "",
+              lastMessageAt: ""
+            },
+            $set: {
+              updatedAt: new Date()
+            }
+          }
+        );
+      }
+    }
+    
+    console.log(`🔄 Updated ${chatsToUpdate.length} private chats affected by deletion`);
+    
+    res.json({ 
+      message: `Messages deleted successfully`,
+      deletedCount: messageResult.deletedCount,
+      chatsUpdated: chatsToUpdate.length,
+      cutoffDate: cutoffDate.toISOString()
+    });
+  } catch (error) {
+    console.error('Delete messages by date error:', error);
+    res.status(500).json({ error: 'Failed to delete messages by date' });
+  }
+});
+
 export default router;

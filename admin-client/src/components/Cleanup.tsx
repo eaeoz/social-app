@@ -20,6 +20,7 @@ function Cleanup() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
   useEffect(() => {
     if (searchTerm.length >= 3) {
@@ -172,6 +173,55 @@ function Cleanup() {
     }
   };
 
+  const handleCleanupByDate = async () => {
+    if (!selectedDate) {
+      setMessage('❌ Please select a date');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    const dateObj = new Date(selectedDate);
+    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+    if (!confirm(`⚠️ Are you sure you want to delete ALL messages created before ${formattedDate}? This action cannot be undone!`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/messages-by-date`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ date: selectedDate }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Successfully deleted ${data.deletedCount || 0} messages before ${formattedDate}`);
+        setSelectedDate('');
+      } else {
+        setMessage('❌ Failed to delete messages by date');
+      }
+    } catch (error) {
+      console.error('Error deleting messages by date:', error);
+      setMessage('❌ Error deleting messages by date');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
   return (
     <div className="cleanup-container">
       <div className="cleanup-header">
@@ -275,17 +325,47 @@ function Cleanup() {
 
         <div className="cleanup-section danger-zone">
           <h3>⚠️ Danger Zone</h3>
-          <p className="warning-text">
-            The action below will permanently delete ALL messages from ALL users in the system.
-            This cannot be undone!
-          </p>
-          <button
-            className="cleanup-btn danger"
-            onClick={handleCleanupAllMessages}
-            disabled={loading}
-          >
-            {loading ? '⏳ Processing...' : '💥 Cleanup ALL Messages'}
-          </button>
+          
+          <div className="date-cleanup-section">
+            <h4>📅 Delete Messages by Date</h4>
+            <p className="warning-text">
+              Select a date to delete all messages created before that date.
+            </p>
+            <div className="date-cleanup-controls">
+              <input
+                type="date"
+                className="date-input"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                disabled={loading}
+              />
+              <button
+                className="cleanup-btn date-cleanup"
+                onClick={handleCleanupByDate}
+                disabled={loading || !selectedDate}
+              >
+                {loading ? '⏳ Processing...' : '🗑️ Delete Older Messages'}
+              </button>
+            </div>
+          </div>
+
+          <div className="separator"></div>
+
+          <div className="all-messages-section">
+            <h4>💥 Delete All Messages</h4>
+            <p className="warning-text">
+              This will permanently delete ALL messages from ALL users in the system.
+              This cannot be undone!
+            </p>
+            <button
+              className="cleanup-btn danger"
+              onClick={handleCleanupAllMessages}
+              disabled={loading}
+            >
+              {loading ? '⏳ Processing...' : '💥 Cleanup ALL Messages'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

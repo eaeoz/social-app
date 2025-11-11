@@ -279,6 +279,66 @@
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
+.date-cleanup-section,
+.all-messages-section {
+  margin-bottom: 1.5rem;
+}
+
+.date-cleanup-section h4,
+.all-messages-section h4 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.date-cleanup-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.date-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cleanup-btn.date-cleanup {
+  background: #f59e0b;
+  color: white;
+  flex: 1;
+  min-width: 200px;
+}
+
+.cleanup-btn.date-cleanup:hover:not(:disabled) {
+  background: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.separator {
+  height: 2px;
+  background: var(--border-primary);
+  margin: 1.5rem 0;
+}
+
 @media (max-width: 768px) {
   .cleanup-actions {
     flex-direction: column;
@@ -286,5 +346,14 @@
 
   .cleanup-btn {
     min-width: 100%;
+  }
+
+  .date-cleanup-controls {
+    flex-direction: column;
+  }
+
+  .date-input,
+  .cleanup-btn.date-cleanup {
+    width: 100%;
   }
 }
