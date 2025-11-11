@@ -2086,7 +2086,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
               <div className="message-input-container" ref={messageInputContainerRef}>
                 {showRateLimitWarning && (
                   <div className="rate-limit-warning">
-                    ⚠️ Slow down! Wait {getSecondsUntilReset()} seconds before sending another message.
+                    Slow down! Wait {getSecondsUntilReset()}s
                   </div>
                 )}
                 <button
