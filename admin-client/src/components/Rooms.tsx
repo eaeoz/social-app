@@ -24,8 +24,9 @@ function Rooms() {
   });
   const [error, setError] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiSearch, setEmojiSearch] = useState('');
 
-  // Comprehensive emoji list
+  // Comprehensive emoji list with keywords
   const emojiCategories = {
     'Smileys': ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴'],
     'Animals': ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈'],
@@ -267,33 +268,69 @@ function Rooms() {
                         <button
                           type="button"
                           className="emoji-picker-close"
-                          onClick={() => setShowEmojiPicker(false)}
+                          onClick={() => {
+                            setShowEmojiPicker(false);
+                            setEmojiSearch('');
+                          }}
                         >
                           ×
                         </button>
                       </div>
+                      <div className="emoji-search-box">
+                        <input
+                          type="text"
+                          placeholder="🔍 Search emojis..."
+                          value={emojiSearch}
+                          onChange={(e) => setEmojiSearch(e.target.value)}
+                          className="emoji-search-input"
+                        />
+                      </div>
                       <div className="emoji-picker-content">
-                        {Object.entries(emojiCategories).map(([category, emojis]) => (
-                          <div key={category} className="emoji-category">
-                            <div className="emoji-category-title">{category}</div>
-                            <div className="emoji-grid">
-                              {emojis.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  type="button"
-                                  className={`emoji-option ${formData.icon === emoji ? 'selected' : ''}`}
-                                  onClick={() => {
-                                    setFormData({ ...formData, icon: emoji });
-                                    setShowEmojiPicker(false);
-                                  }}
-                                  title={emoji}
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
+                        {Object.entries(emojiCategories)
+                          .map(([category, emojis]) => {
+                            // Filter emojis based on search
+                            const filteredEmojis = emojiSearch
+                              ? emojis.filter(() => 
+                                  category.toLowerCase().includes(emojiSearch.toLowerCase())
+                                )
+                              : emojis;
+
+                            // Don't show category if no emojis match
+                            if (filteredEmojis.length === 0) return null;
+
+                            return (
+                              <div key={category} className="emoji-category">
+                                <div className="emoji-category-title">{category}</div>
+                                <div className="emoji-grid">
+                                  {filteredEmojis.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      type="button"
+                                      className={`emoji-option ${formData.icon === emoji ? 'selected' : ''}`}
+                                      onClick={() => {
+                                        setFormData({ ...formData, icon: emoji });
+                                        setShowEmojiPicker(false);
+                                        setEmojiSearch('');
+                                      }}
+                                      title={emoji}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })
+                          .filter(Boolean)}
+                        {emojiSearch && 
+                          Object.entries(emojiCategories).every(([category]) => 
+                            !category.toLowerCase().includes(emojiSearch.toLowerCase())
+                          ) && (
+                          <div className="no-emoji-results">
+                            <p>No emojis found for "{emojiSearch}"</p>
+                            <p>Try searching by category: smileys, animals, food, activities, travel, objects, symbols</p>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   )}
