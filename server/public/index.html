@@ -487,10 +487,10 @@
                     </div>
 
                     <div class="button-group">
-                        <button class="btn btn-primary" onclick="testEndpoint()">🚀 Test Endpoint</button>
-                        <button class="btn btn-secondary" onclick="copyUrl()">📋 Copy URL</button>
-                        <button class="btn btn-secondary" onclick="copyCurl()">📝 Copy as cURL</button>
-                        <button class="btn btn-clear" onclick="clearResponse()">🗑️ Clear Response</button>
+                        <button class="btn btn-primary" id="testBtn">🚀 Test Endpoint</button>
+                        <button class="btn btn-secondary" id="copyUrlBtn">📋 Copy URL</button>
+                        <button class="btn btn-secondary" id="copyCurlBtn">📝 Copy as cURL</button>
+                        <button class="btn btn-clear" id="clearBtn">🗑️ Clear Response</button>
                     </div>
 
                     <div id="responseContainer" style="display: none;">
@@ -1104,6 +1104,12 @@
 
         // Update WebSocket URL
         document.getElementById('wsUrl').textContent = baseUrl.replace('http', 'ws');
+
+        // Add event listeners to buttons
+        document.getElementById('testBtn').addEventListener('click', testEndpoint);
+        document.getElementById('copyUrlBtn').addEventListener('click', copyUrl);
+        document.getElementById('copyCurlBtn').addEventListener('click', copyCurl);
+        document.getElementById('clearBtn').addEventListener('click', clearResponse);
 
         select.addEventListener('change', function() {
             const value = this.value;
