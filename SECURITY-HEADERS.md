@@ -28,11 +28,11 @@ Security headers have been implemented in both frontend applications (client and
 **Configuration**:
 ```
 default-src 'self';
-script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.gstatic.com;
-style-src 'self' 'unsafe-inline' https://accounts.google.com;
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google.com https://cct.google;
+style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com;
 img-src 'self' data: https: blob:;
-font-src 'self' data:;
-connect-src 'self' https://social-app-5hge.onrender.com wss://social-app-5hge.onrender.com;
+font-src 'self' data: https://fonts.gstatic.com;
+connect-src 'self' https://social-app-5hge.onrender.com https://accounts.google.com https://www.google-analytics.com https://analytics.google.com https://*.google.com https://*.google-analytics.com wss://social-app-5hge.onrender.com;
 frame-src 'self' https://accounts.google.com;
 object-src 'none';
 base-uri 'self';
@@ -43,16 +43,22 @@ upgrade-insecure-requests;
 
 **Protection**:
 - **default-src 'self'**: Only allow resources from the same origin by default
-- **script-src**: Control which scripts can execute (allows Google OAuth)
-- **style-src**: Control stylesheet sources
+- **script-src**: Control which scripts can execute (allows Google OAuth, Analytics, and Tag Manager)
+- **style-src**: Control stylesheet sources (allows Google services and fonts)
 - **img-src**: Allow images from same origin, data URIs, HTTPS sources, and blobs
-- **connect-src**: Restrict API endpoints and WebSocket connections
+- **font-src**: Allow fonts from same origin and Google Fonts
+- **connect-src**: Restrict API endpoints, WebSocket connections, and analytics endpoints
 - **frame-src**: Allow iframes only from trusted sources (Google OAuth)
 - **object-src 'none'**: Block plugins like Flash
 - **frame-ancestors 'none'**: Prevent the page from being embedded in iframes
 - **upgrade-insecure-requests**: Automatically upgrade HTTP to HTTPS
 
-**Status**: ✅ Implemented with appropriate allowances for Google OAuth and backend API
+**Status**: ✅ Implemented with appropriate allowances for:
+- Google OAuth (authentication)
+- Google Analytics (tracking)
+- Google Tag Manager (tag management)
+- Google Fonts (typography)
+- Backend API (social-app-5hge.onrender.com)
 
 ---
 
