@@ -12,6 +12,7 @@ interface SiteSettings {
   defaultUsersDisplayCount: number;
   maxReportCount: number;
   siteEmail: string;
+  sessionTimeout: number;
 }
 
 function Settings() {
@@ -25,7 +26,8 @@ function Settings() {
     searchUserCount: 4,
     defaultUsersDisplayCount: 3,
     maxReportCount: 2,
-    siteEmail: ''
+    siteEmail: '',
+    sessionTimeout: 10080
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -238,6 +240,27 @@ function Settings() {
             <p>Configure system-wide options</p>
           </div>
           
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Session Timeout (Minutes)</label>
+              <span className="setting-description">
+                How long users stay logged in (in minutes). Examples: 3 = 3 minutes, 1440 = 1 day, 10080 = 7 days.
+              </span>
+              <span className="setting-description" style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', display: 'block' }}>
+                Current: {Math.round((settings.sessionTimeout || 10080) / 60 / 24 * 10) / 10} days
+              </span>
+            </div>
+            <input
+              type="number"
+              className="setting-input"
+              value={settings.sessionTimeout || 10080}
+              onChange={(e) => setSettings({...settings, sessionTimeout: parseInt(e.target.value) || 10080})}
+              min="1"
+              max="525600"
+              placeholder="10080 (7 days)"
+            />
+          </div>
+
           <div className="setting-item">
             <div className="setting-info">
               <label>Site Email</label>

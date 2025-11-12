@@ -510,7 +510,7 @@ async function updateUserStatus(userId, status) {
 }
 
 // Function to handle user activity
-function handleUserActivity(userId) {
+async function handleUserActivity(userId) {
   const activity = userActivity.get(userId);
   
   // Clear existing timeout if any
@@ -521,13 +521,26 @@ function handleUserActivity(userId) {
   // Set user as online
   updateUserStatus(userId, 'online');
   
-  // Set new timeout for 5 minutes (300000ms)
+  // Get session timeout from database (in MINUTES)
+  let sessionTimeoutMs = 604800000; // Default: 10080 minutes = 7 days
+  try {
+    const { getSiteSettings } = await import('./utils/initializeSiteSettings.js');
+    const settings = await getSiteSettings();
+    const sessionTimeoutMinutes = settings.sessionTimeout || 10080; // Default 10080 minutes (7 days)
+    sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000; // Convert minutes to milliseconds
+    console.log(`⏰ Using session timeout from database: ${sessionTimeoutMinutes} minutes (${Math.round(sessionTimeoutMinutes / 60 / 24 * 10) / 10} days)`);
+  } catch (error) {
+    console.warn('⚠️ Failed to get session timeout from database, using default: 10080 minutes (7 days)');
+  }
+  
+  // Set new timeout based on database setting
+  // This way users stay online as long as their token is valid
   const timeoutId = setTimeout(() => {
-    // Mark user as offline after 5 minutes of inactivity
+    // Mark user as offline after session timeout
     updateUserStatus(userId, 'offline');
     userActivity.delete(userId);
     console.log(`⏰ User ${userId} marked as offline due to inactivity`);
-  }, 300000); // 5 minutes
+  }, sessionTimeoutMs);
   
   // Update activity record
   userActivity.set(userId, {

@@ -31,6 +31,7 @@ export async function initializeSiteSettings() {
         verificationEmailResendCount: 4, // Maximum number of verification email resend attempts
         maxMessageLength: 30, // Maximum message length (default: 30 characters)
         rateLimit: 10, // Maximum messages per minute (default: 10)
+        sessionTimeout: 10080, // Session timeout in MINUTES (default: 10080 = 7 days)
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -44,6 +45,7 @@ export async function initializeSiteSettings() {
       console.log('   - verificationEmailResendCount: 4');
       console.log('   - maxMessageLength: 30');
       console.log('   - rateLimit: 10');
+      console.log('   - sessionTimeout: 10080 minutes (7 days)');
     } else {
       console.log('✅ Site settings already exist, skipping creation');
     }
@@ -79,6 +81,7 @@ export async function getSiteSettings() {
         verificationEmailResendCount: 4,
         maxMessageLength: 30,
         rateLimit: 10,
+        sessionTimeout: 10080, // 7 days in minutes
         maintenanceMode: false,
         maintenanceReason: '',
         maintenanceEstimatedTime: ''
@@ -93,6 +96,7 @@ export async function getSiteSettings() {
       verificationEmailResendCount: settings.verificationEmailResendCount !== undefined ? settings.verificationEmailResendCount : 4,
       maxMessageLength: settings.maxMessageLength !== undefined ? settings.maxMessageLength : 30,
       rateLimit: settings.rateLimit !== undefined ? settings.rateLimit : 10,
+      sessionTimeout: settings.sessionTimeout !== undefined ? settings.sessionTimeout : 10080, // Default 7 days in minutes
       maintenanceMode: settings.maintenanceMode !== undefined ? settings.maintenanceMode : false,
       maintenanceReason: settings.maintenanceReason || '',
       maintenanceEstimatedTime: settings.maintenanceEstimatedTime || ''
@@ -110,6 +114,7 @@ export async function getSiteSettings() {
       verificationEmailResendCount: 4,
       maxMessageLength: 30,
       rateLimit: 10,
+      sessionTimeout: 10080, // 7 days in minutes
       maintenanceMode: false,
       maintenanceReason: '',
       maintenanceEstimatedTime: ''

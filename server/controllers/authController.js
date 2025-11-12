@@ -248,8 +248,8 @@ export async function register(req, res) {
     });
 
     // Generate tokens
-    const accessToken = generateAccessToken(userId, username);
-    const refreshToken = generateRefreshToken(userId);
+    const accessToken = await generateAccessToken(userId, username);
+    const refreshToken = await generateRefreshToken(userId);
 
     // Get profile picture URL if available
     let profilePictureUrl = null;
@@ -478,8 +478,8 @@ export async function login(req, res) {
 
     // Generate tokens
     const userId = user._id.toString();
-    const accessToken = generateAccessToken(userId, user.username);
-    const refreshToken = generateRefreshToken(userId);
+    const accessToken = await generateAccessToken(userId, user.username);
+    const refreshToken = await generateRefreshToken(userId);
 
     // Get profile picture URL if available (with cache-busting timestamp)
     let profilePictureUrl = null;
