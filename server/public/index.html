@@ -396,100 +396,20 @@
 
             <!-- API Tester Section -->
             <div class="section">
-                <h2>🧪 API Endpoint Tester</h2>
+                <h2>🧪 Quick API Test</h2>
                 <div class="api-tester">
                     <div class="form-group">
-                        <label for="endpointSelect">Select API Endpoint</label>
-                        <select id="endpointSelect" aria-label="Select API Endpoint to test">
-                            <option value="">-- Select an endpoint --</option>
-                            <optgroup label="Public Endpoints (No Auth)">
-                                <option value="/api|GET|{}">GET /api - API Information</option>
-                                <option value="/health|GET|{}">GET /health - Health Check</option>
-                                <option value="/api/settings/site|GET|{}">GET /api/settings/site - Get Site Settings</option>
-                            </optgroup>
-                            <optgroup label="Authentication Endpoints">
-                                <option value='/api/auth/register|POST|{"username":"testuser","email":"test@example.com","password":"Test123!"}'>POST /api/auth/register - Register User</option>
-                                <option value='/api/auth/login|POST|{"username":"testuser","password":"Test123!"}'>POST /api/auth/login - Login</option>
-                                <option value="/api/auth/me|GET|{}|AUTH">GET /api/auth/me - Get Current User</option>
-                                <option value="/api/auth/logout|POST|{}|AUTH">POST /api/auth/logout - Logout</option>
-                                <option value='/api/auth/verify-email|POST|{"token":"verification-token"}'>POST /api/auth/verify-email - Verify Email</option>
-                                <option value='/api/auth/resend-verification|POST|{"email":"test@example.com"}'>POST /api/auth/resend-verification - Resend Verification</option>
-                                <option value='/api/auth/get-resend-attempts|POST|{"email":"test@example.com"}'>POST /api/auth/get-resend-attempts - Get Resend Attempts</option>
-                                <option value='/api/auth/reset-password|POST|{"email":"test@example.com"}'>POST /api/auth/reset-password - Reset Password</option>
-                                <option value='/api/auth/change-password|PUT|{"currentPassword":"old","newPassword":"new"}|AUTH'>PUT /api/auth/change-password - Change Password</option>
-                                <option value='/api/auth/update-dnd|PUT|{"doNotDisturb":true}|AUTH'>PUT /api/auth/update-dnd - Update DND Status</option>
-                            </optgroup>
-                            <optgroup label="Contact Endpoint">
-                                <option value='/api/contact|POST|{"name":"John Doe","email":"john@example.com","message":"Hello"}'>POST /api/contact - Submit Contact Form</option>
-                            </optgroup>
-                            <optgroup label="Room Endpoints (Auth Required)">
-                                <option value="/api/rooms/public|GET|{}|AUTH">GET /api/rooms/public - Get All Public Rooms</option>
-                                <option value="/api/rooms/users|GET|{}|AUTH">GET /api/rooms/users - Get All Users</option>
-                                <option value="/api/rooms/user-profile/:userId|GET|{}|AUTH">GET /api/rooms/user-profile/:userId - Get User Profile</option>
-                                <option value="/api/rooms/private-chats|GET|{}|AUTH">GET /api/rooms/private-chats - Get Private Chats</option>
-                                <option value='/api/rooms/mark-room-read|POST|{"roomId":"room123"}|AUTH'>POST /api/rooms/mark-room-read - Mark Room as Read</option>
-                                <option value='/api/rooms/close-private-chat|POST|{"otherUserId":"user123"}|AUTH'>POST /api/rooms/close-private-chat - Close Private Chat</option>
-                            </optgroup>
-                            <optgroup label="Settings Endpoints (Auth Required)">
-                                <option value="/api/settings/site|GET|{}">GET /api/settings/site - Get Site Settings</option>
-                                <option value='/api/settings/site|PUT|{"siteName":"My Site"}|AUTH'>PUT /api/settings/site - Update Site Settings</option>
-                            </optgroup>
-                            <optgroup label="Report Endpoints (Auth Required)">
-                                <option value='/api/report/submit|POST|{"reportedUserId":"user123","reason":"spam"}|AUTH'>POST /api/report/submit - Submit Report</option>
-                                <option value='/api/report/check-suspension|POST|{"userId":"user123"}'>POST /api/report/check-suspension - Check User Suspension</option>
-                            </optgroup>
-                            <optgroup label="Admin Endpoints (Admin Only)">
-                                <option value="/api/admin/statistics|GET|{}|AUTH|ADMIN">GET /api/admin/statistics - Get Statistics</option>
-                                <option value="/api/admin/users|GET|{}|AUTH|ADMIN">GET /api/admin/users - Get All Users</option>
-                                <option value="/api/admin/reports|GET|{}|AUTH|ADMIN">GET /api/admin/reports - Get Reports</option>
-                                <option value="/api/admin/archived-reports|GET|{}|AUTH|ADMIN">GET /api/admin/archived-reports - Get Archived Reports</option>
-                                <option value="/api/admin/users/archived-reports/:email|GET|{}|AUTH|ADMIN">GET /api/admin/users/archived-reports/:email - Get User Archived Reports</option>
-                                <option value='/api/admin/reports/:reportId|PUT|{"status":"resolved"}|AUTH|ADMIN'>PUT /api/admin/reports/:reportId - Update Report</option>
-                                <option value='/api/admin/users/:userId/suspend|PUT|{"suspend":true,"reason":"violation"}|AUTH|ADMIN'>PUT /api/admin/users/:userId/suspend - Suspend/Unsuspend User</option>
-                                <option value="/api/admin/users/:userId/password-recovery|POST|{}|AUTH|ADMIN">POST /api/admin/users/:userId/password-recovery - Generate Password Recovery</option>
-                                <option value="/api/admin/users/:userId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/users/:userId - Delete User</option>
-                                <option value="/api/admin/settings|GET|{}|AUTH|ADMIN">GET /api/admin/settings - Get Admin Settings</option>
-                                <option value='/api/admin/settings|PUT|{"settingKey":"value"}|AUTH|ADMIN'>PUT /api/admin/settings - Update Admin Settings</option>
-                                <option value="/api/admin/rooms|GET|{}|AUTH|ADMIN">GET /api/admin/rooms - Get All Rooms</option>
-                                <option value='/api/admin/rooms|POST|{"name":"New Room","description":"Description"}|AUTH|ADMIN'>POST /api/admin/rooms - Create Room</option>
-                                <option value='/api/admin/rooms/:roomId|PUT|{"name":"Updated Room"}|AUTH|ADMIN'>PUT /api/admin/rooms/:roomId - Update Room</option>
-                                <option value="/api/admin/rooms/:roomId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/rooms/:roomId - Delete Room</option>
-                                <option value="/api/admin/cleanup/public-messages/:userId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/public-messages/:userId - Delete User Public Messages</option>
-                                <option value="/api/admin/cleanup/private-messages/:userId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/private-messages/:userId - Delete User Private Messages</option>
-                                <option value="/api/admin/cleanup/all-messages|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/all-messages - Delete All Messages</option>
-                                <option value="/api/admin/cleanup/all-users-except-admin|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/all-users-except-admin - Delete All Users Except Admin</option>
-                                <option value='/api/admin/cleanup/inactive-users-and-old-data|DELETE|{"daysInactive":30}|AUTH|ADMIN'>DELETE /api/admin/cleanup/inactive-users-and-old-data - Delete Inactive Users</option>
-                                <option value='/api/admin/cleanup/messages-by-date|DELETE|{"beforeDate":"2024-01-01"}|AUTH|ADMIN'>DELETE /api/admin/cleanup/messages-by-date - Delete Messages by Date</option>
-                            </optgroup>
-                            <optgroup label="Google OAuth">
-                                <option value="/api/auth/google|GET|{}">GET /api/auth/google - Initiate Google OAuth</option>
-                                <option value="/api/auth/google/callback|GET|{}">GET /api/auth/google/callback - Google OAuth Callback</option>
-                            </optgroup>
+                        <label for="endpointSelect">Test Public Endpoints</label>
+                        <select id="endpointSelect" aria-label="Select public API endpoint to test">
+                            <option value="">-- Select a public endpoint --</option>
+                            <option value="/api|GET|{}">GET /api - API Information</option>
+                            <option value="/health|GET|{}">GET /health - Health Check</option>
+                            <option value="/api/settings/site|GET|{}">GET /api/settings/site - Get Site Settings</option>
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="fullUrl">Full URL</label>
-                        <input type="text" id="fullUrl" readonly placeholder="Select an endpoint to see the full URL" aria-label="Full URL of the selected API endpoint">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="requestBody">Request Body (JSON) - Edit as needed</label>
-                        <textarea id="requestBody" placeholder='{"key": "value"}' aria-label="Request body in JSON format for POST, PUT, or DELETE requests"></textarea>
-                        <div class="info-box">
-                            💡 For endpoints requiring authentication, add your JWT token below. For admin endpoints, ensure your token has admin privileges.
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="authToken">Authorization Token (Optional - for protected endpoints)</label>
-                        <input type="text" id="authToken" placeholder="Bearer your-jwt-token-here" aria-label="JWT authorization token for protected endpoints">
-                    </div>
-
                     <div class="button-group">
-                        <button class="btn btn-primary" id="testBtn" aria-label="Test the selected API endpoint">🚀 Test Endpoint</button>
-                        <button class="btn btn-secondary" id="copyUrlBtn" aria-label="Copy the full URL to clipboard">📋 Copy URL</button>
-                        <button class="btn btn-secondary" id="copyCurlBtn" aria-label="Copy the request as a cURL command">📝 Copy as cURL</button>
+                        <button class="btn btn-primary" id="testBtn" aria-label="Test the selected public API endpoint">🚀 Test Endpoint</button>
                         <button class="btn btn-clear" id="clearBtn" aria-label="Clear the response display">🗑️ Clear Response</button>
                     </div>
 
@@ -1095,9 +1015,6 @@
 
     <script>
         const select = document.getElementById('endpointSelect');
-        const urlInput = document.getElementById('fullUrl');
-        const requestBody = document.getElementById('requestBody');
-        const authToken = document.getElementById('authToken');
         const responseContainer = document.getElementById('responseContainer');
         const responseBox = document.getElementById('responseBox');
         const baseUrl = window.location.origin;
@@ -1107,25 +1024,7 @@
 
         // Add event listeners to buttons
         document.getElementById('testBtn').addEventListener('click', testEndpoint);
-        document.getElementById('copyUrlBtn').addEventListener('click', copyUrl);
-        document.getElementById('copyCurlBtn').addEventListener('click', copyCurl);
         document.getElementById('clearBtn').addEventListener('click', clearResponse);
-
-        select.addEventListener('change', function() {
-            const value = this.value;
-            if (value) {
-                const parts = value.split('|');
-                const path = parts[0];
-                const method = parts[1];
-                const body = parts[2] || '{}';
-                
-                urlInput.value = baseUrl + path;
-                requestBody.value = JSON.stringify(JSON.parse(body), null, 2);
-            } else {
-                urlInput.value = '';
-                requestBody.value = '';
-            }
-        });
 
         async function testEndpoint() {
             const value = select.value;
@@ -1137,22 +1036,7 @@
             const parts = value.split('|');
             const path = parts[0];
             const method = parts[1] || 'GET';
-            const requiresAuth = parts.includes('AUTH');
-            const requiresAdmin = parts.includes('ADMIN');
             const url = baseUrl + path;
-
-            // Check if auth is required but not provided
-            if (requiresAuth && !authToken.value.trim()) {
-                if (!confirm('This endpoint requires authentication. Do you want to test it anyway? (It will likely fail with 401 Unauthorized)')) {
-                    return;
-                }
-            }
-
-            if (requiresAdmin && !authToken.value.trim()) {
-                if (!confirm('This endpoint requires ADMIN privileges. Do you want to test it anyway? (It will likely fail with 401/403)')) {
-                    return;
-                }
-            }
 
             responseContainer.style.display = 'block';
             responseBox.textContent = 'Loading...';
@@ -1164,25 +1048,6 @@
                         'Content-Type': 'application/json'
                     }
                 };
-
-                // Add authorization header if token is provided
-                if (authToken.value.trim()) {
-                    options.headers['Authorization'] = authToken.value.trim().startsWith('Bearer ') 
-                        ? authToken.value.trim() 
-                        : 'Bearer ' + authToken.value.trim();
-                }
-
-                // Add body for POST/PUT/DELETE methods
-                if (['POST', 'PUT', 'DELETE'].includes(method) && requestBody.value.trim()) {
-                    try {
-                        // Validate JSON
-                        JSON.parse(requestBody.value);
-                        options.body = requestBody.value;
-                    } catch (e) {
-                        responseBox.textContent = 'Error: Invalid JSON in request body\n' + e.message;
-                        return;
-                    }
-                }
 
                 const startTime = Date.now();
                 const response = await fetch(url, options);
@@ -1223,82 +1088,10 @@
             }
         }
 
-        function copyUrl() {
-            const url = urlInput.value;
-            if (!url) {
-                alert('Please select an endpoint first');
-                return;
-            }
-
-            navigator.clipboard.writeText(url).then(() => {
-                showNotification('✓ URL copied to clipboard!');
-            }).catch(err => {
-                alert('Failed to copy: ' + err);
-            });
-        }
-
-        function copyCurl() {
-            const value = select.value;
-            if (!value) {
-                alert('Please select an endpoint first');
-                return;
-            }
-
-            const parts = value.split('|');
-            const path = parts[0];
-            const method = parts[1] || 'GET';
-            const url = baseUrl + path;
-
-            let curlCommand = `curl -X ${method} "${url}"`;
-            
-            // Add headers
-            curlCommand += ' -H "Content-Type: application/json"';
-            
-            if (authToken.value.trim()) {
-                const token = authToken.value.trim().startsWith('Bearer ') 
-                    ? authToken.value.trim() 
-                    : 'Bearer ' + authToken.value.trim();
-                curlCommand += ` -H "Authorization: ${token}"`;
-            }
-
-            // Add body for POST/PUT/DELETE
-            if (['POST', 'PUT', 'DELETE'].includes(method) && requestBody.value.trim()) {
-                try {
-                    JSON.parse(requestBody.value);
-                    curlCommand += ` -d '${requestBody.value}'`;
-                } catch (e) {
-                    alert('Invalid JSON in request body');
-                    return;
-                }
-            }
-
-            navigator.clipboard.writeText(curlCommand).then(() => {
-                showNotification('✓ cURL command copied to clipboard!');
-            }).catch(err => {
-                alert('Failed to copy: ' + err);
-            });
-        }
-
         function clearResponse() {
             responseContainer.style.display = 'none';
             responseBox.textContent = '';
         }
-
-        function showNotification(message) {
-            const notification = document.getElementById('copyNotification');
-            notification.textContent = message;
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 2000);
-        }
-
-        // Allow Enter key to test endpoint
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                testEndpoint();
-            }
-        });
     </script>
 </body>
 </html>
