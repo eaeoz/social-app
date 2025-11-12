@@ -112,7 +112,7 @@ function Login({ onLogin }: LoginProps) {
               className="auth-logo-image"
             />
             <div className="auth-header-text">
-              <h1>🔐 Admin Dashboard</h1>
+              <h1>🔐 Netcify Admin Dashboard</h1>
               <p className="subtitle">Sign in to manage your platform</p>
             </div>
           </div>

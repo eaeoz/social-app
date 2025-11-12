@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SecureSessionManager, AuditLogger, isTokenExpired } from './utils/security';
+import { updatePageMetadata } from './utils/seo';
 import './App.css';
+
+// SEO metadata updater component
+function SEOUpdater() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Update page metadata when route changes
+    updatePageMetadata(location.pathname);
+  }, [location.pathname]);
+
+  return null;
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -121,6 +134,7 @@ function App() {
     >
       <ThemeProvider>
         <Router>
+          <SEOUpdater />
           <Routes>
           <Route
             path="/login"

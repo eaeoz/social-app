@@ -1,0 +1,6 @@
+# Admin Dashboard - Disallow all search engine crawlers
+User-agent: *
+Disallow: /
+
+# Sitemap (if needed for internal tracking)
+# Sitemap: https://yourdomain.com/admin/sitemap.xml

@@ -124,7 +124,7 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <span className="hamburger-line"></span>
             <span className="hamburger-line"></span>
           </button>
-          <h1>{import.meta.env.VITE_APP_NAME}</h1>
+          <h1>Netcify Admin Dashboard</h1>
           <ThemeToggle />
         </header>
 
