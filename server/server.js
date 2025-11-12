@@ -108,6 +108,7 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false, // Allow loading external resources
   crossOriginResourcePolicy: { policy: "cross-origin" },
+  xssFilter: true, // Enable XSS filter (sets X-XSS-Protection: 1; mode=block)
 }));
 
 app.use(express.json());
