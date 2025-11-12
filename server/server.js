@@ -108,8 +108,34 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false, // Allow loading external resources
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  xssFilter: true, // Enable XSS filter (sets X-XSS-Protection: 1; mode=block)
+  xssFilter: false, // Disable Helmet's default X-XSS-Protection (we'll set custom one)
 }));
+
+// Add custom security headers to fix security audit issues
+app.use((req, res, next) => {
+  // Fix X-XSS-Protection: Enable XSS protection (was disabled by Cloudflare)
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Add Permissions-Policy to control browser features
+  res.setHeader('Permissions-Policy', 
+    'geolocation=(), microphone=(), camera=(), payment=(), usb=(), ' +
+    'magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()'
+  );
+  
+  // Add Feature-Policy for older browser compatibility
+  res.setHeader('Feature-Policy', 
+    "geolocation 'none'; microphone 'none'; camera 'none'; payment 'none'; usb 'none'"
+  );
+  
+  // Override X-Frame-Options to DENY for better security (currently SAMEORIGIN)
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  // Remove Server header to avoid revealing technology stack
+  res.removeHeader('Server');
+  res.removeHeader('X-Powered-By');
+  
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -285,8 +311,13 @@ app.use('/api/auth/login', checkIPBlock);
 app.use('/api/auth/register', checkIPBlock);
 
 console.log('🛡️ Security features enabled:');
-console.log('  ✅ Helmet security headers (XSS, clickjacking, MIME sniffing protection)');
-console.log('  ✅ General rate limiting: 100 requests per 15 minutes');
+console.log('  ✅ Helmet security headers (CSP, HSTS, MIME sniffing protection)');
+console.log('  ✅ X-XSS-Protection: 1; mode=block (XSS filter enabled)');
+console.log('  ✅ X-Frame-Options: DENY (clickjacking protection)');
+console.log('  ✅ Permissions-Policy (browser feature control)');
+console.log('  ✅ Feature-Policy (legacy browser support)');
+console.log('  ✅ Server header removed (technology stack hidden)');
+console.log('  ✅ General rate limiting: 300 requests per 15 minutes');
 console.log('  ✅ Login rate limiting: 5 attempts per 15 minutes');
 console.log('  ✅ Registration rate limiting: 3 accounts per hour');
 console.log('  ✅ Email action rate limiting: 3 requests per hour');
