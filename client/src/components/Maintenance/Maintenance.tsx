@@ -126,7 +126,7 @@ function Maintenance({ estimatedTime, reason }: MaintenanceProps) {
           </div>
           <div className="footer-info">
             <p>For urgent matters, please contact us at:</p>
-            <a href={`mailto:${contactEmail}`} className="contact-link">
+            <a href={`mailto:${contactEmail}`} className="contact-link" aria-label={`Send email to ${contactEmail}`}>
               {contactEmail}
             </a>
           </div>

@@ -410,8 +410,8 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
           <div className="recaptcha-notice">
             <small>
               This site is protected by reCAPTCHA and the Google{' '}
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and{' '}
-              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" aria-label="Read Google's Privacy Policy">Privacy Policy</a> and{' '}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" aria-label="Read Google's Terms of Service">Terms of Service</a> apply.
             </small>
           </div>
         </form>

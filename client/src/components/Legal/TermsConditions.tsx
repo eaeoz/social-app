@@ -22,7 +22,7 @@ function TermsConditions({ onClose }: TermsConditionsProps) {
           <div className="legal-content">
             <section className="legal-section">
               <p className="legal-intro">
-                Please read these Terms of Service ("Terms", "Terms of Service") carefully before using the <a href="https://netcify.netlify.app" target="_blank" rel="noopener noreferrer">https://netcify.netlify.app</a> website (the "Service") operated by Netcify ("us", "we", or "our").
+                Please read these Terms of Service ("Terms", "Terms of Service") carefully before using the <a href="https://netcify.netlify.app" target="_blank" rel="noopener noreferrer" aria-label="Visit Netcify website">https://netcify.netlify.app</a> website (the "Service") operated by Netcify ("us", "we", or "our").
               </p>
               <p className="legal-intro">
                 Your access to and use of the Service is conditioned on your acceptance of and compliance with these Terms. These Terms apply to all visitors, users and others who access or use the Service.
