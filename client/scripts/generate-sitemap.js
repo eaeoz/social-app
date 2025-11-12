@@ -16,38 +16,6 @@ const routes = [
     changefreq: 'daily',
     priority: 1.0,
     comment: 'Homepage'
-  },
-  {
-    path: '/login',
-    changefreq: 'monthly',
-    priority: 0.8,
-    comment: 'Authentication Pages'
-  },
-  {
-    path: '/register',
-    changefreq: 'monthly',
-    priority: 0.8
-  },
-  {
-    path: '/about',
-    changefreq: 'monthly',
-    priority: 0.7,
-    comment: 'Legal Pages'
-  },
-  {
-    path: '/contact',
-    changefreq: 'monthly',
-    priority: 0.7
-  },
-  {
-    path: '/privacy',
-    changefreq: 'monthly',
-    priority: 0.6
-  },
-  {
-    path: '/terms',
-    changefreq: 'monthly',
-    priority: 0.6
   }
 ];
 
