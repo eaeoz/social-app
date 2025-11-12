@@ -345,7 +345,6 @@ app.get('/api', (req, res) => {
 import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
-import contactRoutes from './routes/contactRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -368,7 +367,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/auth', googleAuthRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
-app.use('/api/contact', contactRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/admin', adminRoutes);
 
