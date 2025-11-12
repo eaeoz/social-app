@@ -418,11 +418,6 @@ function Cleanup() {
 
   return (
     <div className="cleanup-container">
-      <div className="cleanup-header">
-        <h2>🧹 Cleanup Messages</h2>
-        <p>Search for a user and cleanup their messages, or cleanup all messages system-wide</p>
-      </div>
-
       {/* Storage Stats Section */}
       {storageLoading ? (
         <div className="storage-stats-section loading">
@@ -492,6 +487,11 @@ function Cleanup() {
           </div>
         </div>
       ) : null}
+
+      <div className="cleanup-header">
+        <h2>🧹 Cleanup Messages</h2>
+        <p>Search for a user and cleanup their messages, or cleanup all messages system-wide</p>
+      </div>
 
       {message && (
         <div className={`cleanup-message ${message.includes('✅') ? 'success' : 'error'}`}>
