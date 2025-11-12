@@ -400,7 +400,7 @@
                 <div class="api-tester">
                     <div class="form-group">
                         <label for="endpointSelect">Select API Endpoint</label>
-                        <select id="endpointSelect">
+                        <select id="endpointSelect" aria-label="Select API Endpoint to test">
                             <option value="">-- Select an endpoint --</option>
                             <optgroup label="Public Endpoints (No Auth)">
                                 <option value="/api|GET|{}">GET /api - API Information</option>
@@ -470,12 +470,12 @@
 
                     <div class="form-group">
                         <label for="fullUrl">Full URL</label>
-                        <input type="text" id="fullUrl" readonly placeholder="Select an endpoint to see the full URL">
+                        <input type="text" id="fullUrl" readonly placeholder="Select an endpoint to see the full URL" aria-label="Full URL of the selected API endpoint">
                     </div>
 
                     <div class="form-group">
                         <label for="requestBody">Request Body (JSON) - Edit as needed</label>
-                        <textarea id="requestBody" placeholder='{"key": "value"}'></textarea>
+                        <textarea id="requestBody" placeholder='{"key": "value"}' aria-label="Request body in JSON format for POST, PUT, or DELETE requests"></textarea>
                         <div class="info-box">
                             💡 For endpoints requiring authentication, add your JWT token below. For admin endpoints, ensure your token has admin privileges.
                         </div>
@@ -483,14 +483,14 @@
 
                     <div class="form-group">
                         <label for="authToken">Authorization Token (Optional - for protected endpoints)</label>
-                        <input type="text" id="authToken" placeholder="Bearer your-jwt-token-here">
+                        <input type="text" id="authToken" placeholder="Bearer your-jwt-token-here" aria-label="JWT authorization token for protected endpoints">
                     </div>
 
                     <div class="button-group">
-                        <button class="btn btn-primary" id="testBtn">🚀 Test Endpoint</button>
-                        <button class="btn btn-secondary" id="copyUrlBtn">📋 Copy URL</button>
-                        <button class="btn btn-secondary" id="copyCurlBtn">📝 Copy as cURL</button>
-                        <button class="btn btn-clear" id="clearBtn">🗑️ Clear Response</button>
+                        <button class="btn btn-primary" id="testBtn" aria-label="Test the selected API endpoint">🚀 Test Endpoint</button>
+                        <button class="btn btn-secondary" id="copyUrlBtn" aria-label="Copy the full URL to clipboard">📋 Copy URL</button>
+                        <button class="btn btn-secondary" id="copyCurlBtn" aria-label="Copy the request as a cURL command">📝 Copy as cURL</button>
+                        <button class="btn btn-clear" id="clearBtn" aria-label="Clear the response display">🗑️ Clear Response</button>
                     </div>
 
                     <div id="responseContainer" style="display: none;">
