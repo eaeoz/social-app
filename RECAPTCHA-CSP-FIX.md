@@ -8,11 +8,13 @@
 
 ## Solution
 
-Updated the CSP configuration in `server/server.js` to allow Google reCAPTCHA domains while maintaining strong security.
+Updated the CSP configuration in **both** `server/server.js` (backend) and `client/netlify.toml` (frontend on Netlify) to allow Google reCAPTCHA domains while maintaining strong security.
 
 ### Changes Made
 
-#### 1. Updated `scriptSrc` Directive
+#### Backend (server/server.js)
+
+##### 1. Updated `scriptSrc` Directive
 Added Google reCAPTCHA script sources:
 
 ```javascript
@@ -25,7 +27,7 @@ scriptSrc: [
 ]
 ```
 
-#### 2. Updated `frameSrc` Directive
+##### 2. Updated `frameSrc` Directive
 Changed from blocking all frames to allowing reCAPTCHA frames:
 
 **Before:**
@@ -41,6 +43,24 @@ frameSrc: [
   "https://recaptcha.google.com/recaptcha/"
 ]
 ```
+
+#### Frontend (client/netlify.toml)
+
+##### 1. Updated `script-src` in CSP
+Added reCAPTCHA domains to the existing script sources:
+
+```toml
+script-src 'self' 'unsafe-inline' 'unsafe-eval' ... https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/;
+```
+
+##### 2. Updated `frame-src` in CSP
+Added reCAPTCHA frame sources:
+
+```toml
+frame-src 'self' https://accounts.google.com https://www.googletagmanager.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/;
+```
+
+**Note:** The Netlify configuration was the PRIMARY issue blocking reCAPTCHA in production since Netlify serves the frontend.
 
 ## Security Considerations
 
@@ -144,7 +164,8 @@ The following Google domains are now allowed in the CSP:
 
 ## Related Files
 
-- `server/server.js` - Main CSP configuration
+- `server/server.js` - Backend CSP configuration
+- `client/netlify.toml` - **Frontend CSP configuration (PRIMARY FIX)**
 - `client/src/components/Auth/Login.tsx` - reCAPTCHA implementation
 - `.env` - Environment variables (VITE_RECAPTCHA_SITE_KEY)
 
