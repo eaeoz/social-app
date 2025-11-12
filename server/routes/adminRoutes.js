@@ -76,6 +76,55 @@ router.get('/statistics', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// Get MongoDB storage statistics
+router.get('/storage-stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    // Get database stats
+    const stats = await db.stats();
+    
+    // MongoDB stats explanation:
+    // - dataSize: uncompressed size of data in collections
+    // - storageSize: compressed/allocated storage for data
+    // - indexSize: size of all indexes
+    // - fsUsedSize & fsTotalSize: file system level stats (if available)
+    
+    const dataSize = stats.dataSize || 0;
+    const indexSize = stats.indexSize || 0;
+    
+    // Calculate total used space
+    const totalUsed = dataSize + indexSize;
+    
+    // MongoDB Atlas Free Tier quota: 512 MB
+    const MONGODB_FREE_TIER_QUOTA = 512 * 1024 * 1024; // 512 MB in bytes
+    
+    // Use filesystem stats if available, otherwise use free tier quota
+    let totalStorage = MONGODB_FREE_TIER_QUOTA;
+    let freeStorageSize = MONGODB_FREE_TIER_QUOTA - totalUsed;
+    
+    if (stats.fsUsedSize && stats.fsTotalSize) {
+      // File system level stats (most accurate if available)
+      totalStorage = stats.fsTotalSize;
+      freeStorageSize = stats.fsTotalSize - stats.fsUsedSize;
+    }
+    
+    console.log(`💾 Storage Stats: Total=${totalStorage}, Data=${dataSize}, Index=${indexSize}, Used=${totalUsed}, Free=${freeStorageSize}`);
+    
+    res.json({
+      storageSize: totalStorage,
+      dataSize,
+      indexSize,
+      freeStorageSize,
+      collections: stats.collections || 0,
+      objects: stats.objects || 0
+    });
+  } catch (error) {
+    console.error('Get storage stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch storage statistics' });
+  }
+});
+
 // Get all users with pagination
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {

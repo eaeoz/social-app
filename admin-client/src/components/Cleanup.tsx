@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import './Cleanup.css';
 
 interface User {
@@ -13,6 +14,15 @@ interface User {
   reportCount?: number;
 }
 
+interface StorageStats {
+  storageSize: number;
+  dataSize: number;
+  indexSize: number;
+  freeStorageSize: number;
+  collections: number;
+  objects: number;
+}
+
 function Cleanup() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -21,6 +31,12 @@ function Cleanup() {
   const [message, setMessage] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [inactiveDays, setInactiveDays] = useState('');
+  const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
+  const [storageLoading, setStorageLoading] = useState(false);
+
+  useEffect(() => {
+    fetchStorageStats();
+  }, []);
 
   useEffect(() => {
     if (searchTerm.length >= 3) {
@@ -29,6 +45,29 @@ function Cleanup() {
       setFilteredUsers([]);
     }
   }, [searchTerm]);
+
+  const fetchStorageStats = async () => {
+    setStorageLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/storage-stats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStorageStats(data);
+      } else {
+        console.error('Failed to fetch storage stats:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching storage stats:', error);
+    } finally {
+      setStorageLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -332,12 +371,127 @@ function Cleanup() {
     }
   };
 
+  // Format bytes to MB
+  const formatBytes = (bytes: number): string => {
+    return (bytes / (1024 * 1024)).toFixed(2);
+  };
+
+  // Prepare data for pie chart - only show non-zero values
+  const getPieChartData = () => {
+    if (!storageStats) return [];
+    
+    const data = [];
+    
+    if (storageStats.dataSize > 0) {
+      data.push({ name: 'Data Used', value: storageStats.dataSize, color: '#3b82f6' });
+    }
+    
+    if (storageStats.indexSize > 0) {
+      data.push({ name: 'Free', value: storageStats.indexSize, color: '#10b981' });
+    }
+    
+    if (storageStats.freeStorageSize > 0) {
+      data.push({ name: 'Available Space', value: storageStats.freeStorageSize, color: '#8b5cf6' });
+    }
+    
+    return data;
+  };
+
+  const COLORS = ['#3b82f6', '#10b981', '#8b5cf6'];
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length && storageStats) {
+      const dataUsed = storageStats.dataSize;
+      const free = storageStats.indexSize;
+      const dataUsedPercent = ((dataUsed / storageStats.storageSize) * 100).toFixed(1);
+      const freePercent = ((free / storageStats.storageSize) * 100).toFixed(1);
+      
+      return (
+        <div className="custom-tooltip">
+          <p className="percentage">Data Used: {dataUsedPercent}%</p>
+          <p className="percentage">Free: {freePercent}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="cleanup-container">
       <div className="cleanup-header">
         <h2>🧹 Cleanup Messages</h2>
         <p>Search for a user and cleanup their messages, or cleanup all messages system-wide</p>
       </div>
+
+      {/* Storage Stats Section */}
+      {storageLoading ? (
+        <div className="storage-stats-section loading">
+          <p>⏳ Loading storage statistics...</p>
+        </div>
+      ) : storageStats ? (
+        <div className="storage-stats-section">
+          <h3>💾 MongoDB Storage Overview</h3>
+          <div className="storage-content">
+            <div className="storage-chart">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={getPieChartData()}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={false}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {getPieChartData().map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    formatter={(value, entry: any) => {
+                      const percent = ((entry.payload.value / storageStats!.storageSize) * 100).toFixed(1);
+                      return `${value} (${percent}%)`;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="storage-details">
+              <div className="storage-stat">
+                <span className="stat-label">Total Used:</span>
+                <span className="stat-value">{formatBytes(storageStats.storageSize)} MB</span>
+              </div>
+              <div className="storage-stat">
+                <span className="stat-label">Documents Data:</span>
+                <span className="stat-value">{formatBytes(storageStats.dataSize)} MB</span>
+              </div>
+              <div className="storage-stat">
+                <span className="stat-label">Indexes Data:</span>
+                <span className="stat-value">{formatBytes(storageStats.indexSize)} MB</span>
+              </div>
+              {storageStats.freeStorageSize > 0 && (
+                <div className="storage-stat">
+                  <span className="stat-label">Available Space:</span>
+                  <span className="stat-value">{formatBytes(storageStats.freeStorageSize)} MB</span>
+                </div>
+              )}
+              <div className="storage-stat">
+                <span className="stat-label">Collections:</span>
+                <span className="stat-value">{storageStats.collections}</span>
+              </div>
+              <div className="storage-stat">
+                <span className="stat-label">Total Objects:</span>
+                <span className="stat-value">{storageStats.objects.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {message && (
         <div className={`cleanup-message ${message.includes('✅') ? 'success' : 'error'}`}>

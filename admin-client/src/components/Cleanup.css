@@ -18,6 +18,100 @@
   font-size: 1rem;
 }
 
+/* Storage Stats Section */
+.storage-stats-section {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px var(--card-shadow);
+  margin-bottom: 2rem;
+  border: 2px solid var(--accent-primary);
+}
+
+.storage-stats-section.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.storage-stats-section h3 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.storage-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.storage-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.storage-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.storage-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid var(--accent-primary);
+  transition: all 0.2s;
+}
+
+.storage-stat:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px var(--card-shadow);
+}
+
+.stat-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.stat-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+/* Custom Tooltip for Recharts */
+.custom-tooltip {
+  background: var(--card-bg);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--accent-primary);
+  box-shadow: 0 4px 12px var(--card-shadow);
+}
+
+.custom-tooltip .label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.custom-tooltip .percentage {
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.85rem;
+}
+
 .cleanup-message {
   padding: 1rem;
   border-radius: 8px;
@@ -453,6 +547,21 @@
   margin: 1.5rem 0;
 }
 
+@media (max-width: 968px) {
+  .storage-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .storage-chart {
+    order: 1;
+  }
+
+  .storage-details {
+    order: 2;
+  }
+}
+
 @media (max-width: 768px) {
   .cleanup-actions {
     flex-direction: column;
@@ -469,5 +578,42 @@
   .date-input,
   .cleanup-btn.date-cleanup {
     width: 100%;
+  }
+
+  .storage-stats-section {
+    padding: 1rem;
+  }
+
+  .storage-content {
+    gap: 1rem;
+  }
+
+  .storage-stat {
+    padding: 0.75rem 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .storage-stats-section h3 {
+    font-size: 1.25rem;
+  }
+
+  .storage-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+    color: var(--accent-primary);
   }
 }
