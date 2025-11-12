@@ -306,6 +306,42 @@ const emailActionLimiter = rateLimit({
   }
 });
 
+// Rate limiter for public info endpoints (60 requests per 15 minutes per IP)
+const publicInfoLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60, // 60 requests per window
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    console.log(`🚨 Public info rate limit exceeded for IP: ${ip}`);
+    res.status(429).json({
+      error: 'Too many requests',
+      message: 'You have exceeded the rate limit for this endpoint. Please try again later.',
+      retryAfter: '15 minutes'
+    });
+  }
+});
+
+// Rate limiter for OAuth endpoints (10 attempts per 15 minutes per IP)
+const oauthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 OAuth attempts per window
+  message: 'Too many OAuth requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    console.log(`🚨 OAuth rate limit exceeded for IP: ${ip}`);
+    res.status(429).json({
+      error: 'Too many OAuth attempts',
+      message: 'You have exceeded the limit for OAuth attempts. Please try again in 15 minutes.',
+      retryAfter: '15 minutes'
+    });
+  }
+});
+
 // Apply general rate limiter to all routes
 app.use('/api/', generalLimiter);
 
@@ -324,6 +360,8 @@ console.log('  ✅ General rate limiting: 300 requests per 15 minutes');
 console.log('  ✅ Login rate limiting: 5 attempts per 15 minutes');
 console.log('  ✅ Registration rate limiting: 3 accounts per hour');
 console.log('  ✅ Email action rate limiting: 3 requests per hour');
+console.log('  ✅ Public info rate limiting: 60 requests per 15 minutes');
+console.log('  ✅ OAuth rate limiting: 10 attempts per 15 minutes');
 console.log('  ✅ IP blocking: 30 minutes after 10 failed attempts');
 console.log('  ✅ Account lockout: After 5 failed attempts within 30 minutes');
 
@@ -361,6 +399,12 @@ authRouter.post('/login', loginLimiter, authRoutes);
 authRouter.post('/register', registerLimiter, authRoutes);
 authRouter.post('/resend-verification', emailActionLimiter, authRoutes);
 authRouter.post('/verify-email', emailActionLimiter, authRoutes);
+
+// Apply rate limiters to specific public endpoints
+app.use('/api/auth/get-resend-attempts', publicInfoLimiter);
+app.use('/api/auth/google', oauthLimiter);
+app.use('/api/auth/google/callback', oauthLimiter);
+app.use('/api/settings/site', publicInfoLimiter);
 
 // Use routes
 app.use('/api/auth', authRoutes);

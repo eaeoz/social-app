@@ -523,8 +523,9 @@
                         <h3>
                             <span class="method-badge method-post">POST</span>
                             <span class="endpoint-path">/api/auth/get-resend-attempts</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
-                        <p>Get remaining email verification resend attempts.</p>
+                        <p>Get remaining email verification resend attempts. Limited to 60 requests per 15 minutes.</p>
                         <div class="example-body">
                             POST Body: { "email": "john@example.com" }
                         </div>
@@ -582,16 +583,18 @@
                         <h3>
                             <span class="method-badge method-get">GET</span>
                             <span class="endpoint-path">/api/auth/google</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
-                        <p>Initiate Google OAuth authentication flow. Redirects to Google login.</p>
+                        <p>Initiate Google OAuth authentication flow. Redirects to Google login. Limited to 10 attempts per 15 minutes.</p>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-get">GET</span>
                             <span class="endpoint-path">/api/auth/google/callback</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
-                        <p>Google OAuth callback endpoint. Handles the OAuth response from Google.</p>
+                        <p>Google OAuth callback endpoint. Handles the OAuth response from Google. Limited to 10 attempts per 15 minutes.</p>
                     </li>
                 </ul>
 
@@ -691,8 +694,9 @@
                         <h3>
                             <span class="method-badge method-get">GET</span>
                             <span class="endpoint-path">/api/settings/site</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
-                        <p>Get public site settings. No authentication required.</p>
+                        <p>Get public site settings. No authentication required. Limited to 60 requests per 15 minutes.</p>
                     </li>
 
                     <li class="endpoint-item">
