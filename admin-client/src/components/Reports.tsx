@@ -403,6 +403,7 @@ function Reports() {
 
   return (
     <div className="reports-container">
+      <h1 className="visually-hidden">Reports - Netcify Admin Dashboard</h1>
       <div className="reports-header">
         <div className="header-content">
           <h2>Reports Management</h2>

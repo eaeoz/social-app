@@ -48,6 +48,7 @@ function Statistics() {
 
   return (
     <div className="statistics-container">
+      <h1 className="visually-hidden">Statistics - Netcify Admin Dashboard</h1>
       <h2>Dashboard Overview</h2>
       
       <div className="stats-grid">

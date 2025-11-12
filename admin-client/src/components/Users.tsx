@@ -136,6 +136,7 @@ function Users() {
 
   return (
     <div className="users-container">
+      <h1 className="visually-hidden">User Management - Netcify Admin Dashboard</h1>
       <div className="users-header">
         <h2>User Management</h2>
         <div className="users-stats">

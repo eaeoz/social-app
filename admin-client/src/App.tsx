@@ -13,11 +13,18 @@ function SEOUpdater() {
   const location = useLocation();
 
   useEffect(() => {
-    // Update page metadata when route changes
+    // Update page metadata when route changes or on initial load
     updatePageMetadata(location.pathname);
   }, [location.pathname]);
 
-  return null;
+  return (
+    <>
+      {/* Hidden H1 for SEO - each page component should have its own visible H1 */}
+      <h1 style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
+        Netcify Admin Dashboard
+      </h1>
+    </>
+  );
 }
 
 function App() {

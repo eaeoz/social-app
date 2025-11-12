@@ -97,12 +97,41 @@ export const updateMetaKeywords = (path: string): void => {
 };
 
 /**
+ * Update Open Graph meta tags
+ */
+export const updateOpenGraphTags = (path: string): void => {
+  const metadata = pageMetadata[path];
+  if (!metadata) return;
+
+  // Update OG Title
+  let ogTitle = document.querySelector('meta[property="og:title"]');
+  if (!ogTitle) {
+    ogTitle = document.createElement('meta');
+    ogTitle.setAttribute('property', 'og:title');
+    document.head.appendChild(ogTitle);
+  }
+  ogTitle.setAttribute('content', metadata.title);
+
+  // Update OG Description
+  if (metadata.description) {
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (!ogDesc) {
+      ogDesc = document.createElement('meta');
+      ogDesc.setAttribute('property', 'og:description');
+      document.head.appendChild(ogDesc);
+    }
+    ogDesc.setAttribute('content', metadata.description);
+  }
+};
+
+/**
  * Update all SEO metadata for the current page
  */
 export const updatePageMetadata = (path: string): void => {
   updatePageTitle(path);
   updateMetaDescription(path);
   updateMetaKeywords(path);
+  updateOpenGraphTags(path);
 };
 
 /**
