@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './Auth.css';
 import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
@@ -18,6 +19,8 @@ declare global {
 }
 
 function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -35,6 +38,26 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [showContact, setShowContact] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  // Handle direct URL access to modal pages
+  useEffect(() => {
+    const path = location.pathname;
+    
+    // Open corresponding modal based on URL path
+    if (path === '/about') {
+      setShowAbout(true);
+      navigate('/', { replace: true }); // Reset URL to home
+    } else if (path === '/contact') {
+      setShowContact(true);
+      navigate('/', { replace: true });
+    } else if (path === '/privacy') {
+      setShowPrivacyPolicy(true);
+      navigate('/', { replace: true });
+    } else if (path === '/terms') {
+      setShowTerms(true);
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const handleGoogleLogin = () => {
     // Redirect to Google OAuth

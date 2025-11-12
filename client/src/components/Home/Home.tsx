@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Socket } from 'socket.io-client';
 import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
 import Call from '../Call/Call';
@@ -60,6 +61,8 @@ interface PrivateChat {
 }
 
 function Home({ user, socket, onLogout }: HomeProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [connected, setConnected] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -214,6 +217,26 @@ function Home({ user, socket, onLogout }: HomeProps) {
     
     setShowScrollButton(!isNearBottom);
   };
+
+  // Handle direct URL access to modal pages
+  useEffect(() => {
+    const path = location.pathname;
+    
+    // Open corresponding modal based on URL path
+    if (path === '/about') {
+      setShowAbout(true);
+      navigate('/', { replace: true }); // Reset URL to home
+    } else if (path === '/contact') {
+      setShowContact(true);
+      navigate('/', { replace: true });
+    } else if (path === '/privacy') {
+      setShowPrivacyPolicy(true);
+      navigate('/', { replace: true });
+    } else if (path === '/terms') {
+      setShowTermsConditions(true);
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   useEffect(() => {
     scrollToBottom();

@@ -16,6 +16,30 @@ const routes = [
     changefreq: 'daily',
     priority: 1.0,
     comment: 'Homepage'
+  },
+  {
+    path: '/about',
+    changefreq: 'monthly',
+    priority: 0.8,
+    comment: 'Information Pages'
+  },
+  {
+    path: '/contact',
+    changefreq: 'monthly',
+    priority: 0.8,
+    comment: 'Information Pages'
+  },
+  {
+    path: '/privacy',
+    changefreq: 'monthly',
+    priority: 0.7,
+    comment: 'Information Pages'
+  },
+  {
+    path: '/terms',
+    changefreq: 'monthly',
+    priority: 0.7,
+    comment: 'Information Pages'
   }
 ];
 
