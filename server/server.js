@@ -125,15 +125,17 @@ app.use((req, res, next) => {
   
   // Add Feature-Policy for older browser compatibility
   res.setHeader('Feature-Policy', 
-    "geolocation 'none'; microphone 'none'; camera 'none'; payment 'none'; usb 'none'"
+    "geolocation 'none'; microphone 'none'; camera 'none'; camera 'none'; payment 'none'; usb 'none'"
   );
   
   // Override X-Frame-Options to DENY for better security (currently SAMEORIGIN)
   res.setHeader('X-Frame-Options', 'DENY');
   
-  // Remove Server header to avoid revealing technology stack
+  // Remove technology-revealing headers
   res.removeHeader('Server');
   res.removeHeader('X-Powered-By');
+  res.removeHeader('X-AspNet-Version');
+  res.removeHeader('X-AspNetMvc-Version');
   
   next();
 });
