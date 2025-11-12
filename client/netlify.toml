@@ -24,5 +24,17 @@
   to = "/index.html"
   status = 200
 
+# Cache control headers
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Robots-Tag = "all"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 [build.environment]
   NODE_VERSION = "20"
