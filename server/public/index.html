@@ -430,8 +430,9 @@
                         <h3>
                             <span class="method-badge method-get">GET</span>
                             <span class="endpoint-path">/api</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
-                        <p>Get API version and basic information. Public endpoint, no authentication required.</p>
+                        <p>Get API version and basic information. Public endpoint, no authentication required. Limited to 300 requests per 15 minutes (general API rate limit).</p>
                     </li>
 
                     <li class="endpoint-item">
@@ -439,15 +440,16 @@
                             <span class="method-badge method-get">GET</span>
                             <span class="endpoint-path">/health</span>
                         </h3>
-                        <p>Health check endpoint to verify server status. Returns JSON with status information.</p>
+                        <p>Health check endpoint to verify server status. Returns JSON with status information. <strong>No rate limit</strong> (exempt for monitoring purposes).</p>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-get">GET</span>
                             <span class="endpoint-path">/api/settings/site</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
-                        <p>Get public site settings and configuration (site name, description, etc.). No authentication required.</p>
+                        <p>Get public site settings and configuration (site name, description, etc.). No authentication required. Limited to 60 requests per 15 minutes.</p>
                     </li>
                 </ul>
 
