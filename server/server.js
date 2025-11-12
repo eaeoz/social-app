@@ -369,6 +369,35 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Serve static API documentation from public folder
+const publicPath = path.join(__dirname, 'public');
+if (fs.existsSync(publicPath)) {
+  console.log(`📚 Serving API documentation from: ${publicPath}`);
+  app.use(express.static(publicPath));
+}
+
+// Serve API documentation at root
+app.get('/', (req, res) => {
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({ 
+      message: 'Social App API Server',
+      version: '1.0.0',
+      status: 'online',
+      endpoints: {
+        api: '/api',
+        health: '/health',
+        auth: '/api/auth/*',
+        rooms: '/api/rooms/*',
+        settings: '/api/settings',
+        admin: '/api/admin/*'
+      }
+    });
+  }
+});
+
 // Serve static files from React build (for production)
 // Only attempt to serve if the client build directory exists
 if (process.env.NODE_ENV === 'production') {
@@ -382,7 +411,7 @@ if (process.env.NODE_ENV === 'production') {
     // Handle client-side routing - serve index.html for all non-API routes
     app.get('*', (req, res) => {
       // Don't serve index.html for API routes
-      if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path === '/') {
         return res.status(404).json({ error: 'Not found' });
       }
       res.sendFile(path.join(clientBuildPath, 'index.html'));

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social App API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .status {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .api-tester {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .method-get { background: #10b981; color: white; }
+        .method-post { background: #3b82f6; color: white; }
+        .method-put { background: #f59e0b; color: white; }
+        .method-delete { background: #ef4444; color: white; }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .response-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .endpoint-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .endpoint-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            background: #e0e7ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .copy-notification.show {
+            display: block;
+        }
+
+        .auth-required {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .security-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+
+        .security-info {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .security-info h3 {
+            color: #166534;
+            margin-bottom: 15px;
+        }
+
+        .security-list {
+            list-style: none;
+        }
+
+        .security-list li {
+            padding: 8px 0;
+            color: #166534;
+        }
+
+        .security-list li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="copy-notification" id="copyNotification">
+        ✓ URL copied to clipboard!
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Social App API</h1>
+            <p>Real-time Chat & Social Platform API Documentation</p>
+            <div class="status">
+                <span class="status-dot"></span>
+                Server Online
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Security Status Section -->
+            <div class="section">
+                <h2>🛡️ Security Status</h2>
+                <div class="security-info">
+                    <h3>Active Security Headers</h3>
+                    <ul class="security-list">
+                        <li>X-XSS-Protection: 1; mode=block</li>
+                        <li>X-Frame-Options: DENY</li>
+                        <li>X-Content-Type-Options: nosniff</li>
+                        <li>Strict-Transport-Security: Enabled</li>
+                        <li>Content-Security-Policy: Active</li>
+                        <li>Permissions-Policy: Configured</li>
+                        <li>Feature-Policy: Configured</li>
+                        <li>Rate Limiting: Active (300 req/15min)</li>
+                        <li>IP Blocking: Active (after 10 failed attempts)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- API Tester Section -->
+            <div class="section">
+                <h2>🧪 API Endpoint Tester</h2>
+                <div class="api-tester">
+                    <div class="form-group">
+                        <label for="endpointSelect">Select API Endpoint</label>
+                        <select id="endpointSelect">
+                            <option value="">-- Select an endpoint --</option>
+                            <optgroup label="Public Endpoints (No Auth Required)">
+                                <option value="/api|GET|Get API info">GET /api - API Information</option>
+                                <option value="/health|GET|Health check">GET /health - Health Check</option>
+                            </optgroup>
+                            <optgroup label="Authentication Endpoints">
+                                <option value="/api/auth/register|POST|Register new user">POST /api/auth/register - Register User</option>
+                                <option value="/api/auth/login|POST|User login">POST /api/auth/login - Login</option>
+                                <option value="/api/auth/logout|POST|User logout">POST /api/auth/logout - Logout</option>
+                                <option value="/api/auth/verify-email|POST|Verify email">POST /api/auth/verify-email - Verify Email</option>
+                            </optgroup>
+                            <optgroup label="Room Endpoints (Auth Required)">
+                                <option value="/api/rooms|GET|Get all rooms">GET /api/rooms - Get All Rooms</option>
+                                <option value="/api/rooms/create|POST|Create new room">POST /api/rooms/create - Create Room</option>
+                            </optgroup>
+                            <optgroup label="Settings Endpoints (Auth Required)">
+                                <option value="/api/settings|GET|Get site settings">GET /api/settings - Get Settings</option>
+                            </optgroup>
+                            <optgroup label="Admin Endpoints (Admin Only)">
+                                <option value="/api/admin/users|GET|Get all users">GET /api/admin/users - Get All Users</option>
+                                <option value="/api/admin/reports|GET|Get reports">GET /api/admin/reports - Get Reports</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fullUrl">Full URL</label>
+                        <input type="text" id="fullUrl" readonly placeholder="Select an endpoint to see the full URL">
+                    </div>
+
+                    <div>
+                        <button class="btn btn-primary" onclick="testEndpoint()">Test Endpoint</button>
+                        <button class="btn btn-secondary" onclick="copyUrl()">Copy URL</button>
+                    </div>
+
+                    <div id="responseContainer" style="display: none;">
+                        <h3 style="margin-top: 20px; color: #333;">Response:</h3>
+                        <div class="response-box" id="responseBox"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Endpoints Section -->
+            <div class="section">
+                <h2>📚 Available Endpoints</h2>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api</span>
+                        </h3>
+                        <p>Get API version and basic information. Public endpoint, no authentication required.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/health</span>
+                        </h3>
+                        <p>Health check endpoint to verify server status. Returns JSON with status information.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/auth/register</span>
+                            <span class="auth-required">Rate Limited</span>
+                        </h3>
+                        <p>Register a new user account. Requires username, email, and password. Limited to 3 registrations per hour per IP.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/auth/login</span>
+                            <span class="auth-required">Rate Limited</span>
+                        </h3>
+                        <p>Authenticate user and receive JWT token. Limited to 5 attempts per 15 minutes per IP.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/rooms</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Get list of all available chat rooms. Requires valid JWT token in Authorization header.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/rooms/create</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Create a new chat room. Requires authentication and room details (name, description).</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/settings</span>
+                        </h3>
+                        <p>Get public site settings and configuration. No authentication required.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/report</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Report a user or content. Requires authentication and report details.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/*</span>
+                            <span class="auth-required">Admin Only</span>
+                        </h3>
+                        <p>Admin endpoints for managing users, reports, and system statistics. Requires admin role.</p>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Additional Info Section -->
+            <div class="section">
+                <h2>ℹ️ Additional Information</h2>
+                <div class="endpoint-item">
+                    <h3>WebSocket Connection</h3>
+                    <p>
+                        <strong>Endpoint:</strong> <code>wss://your-domain.com</code><br>
+                        Real-time messaging uses Socket.IO. Connect using the Socket.IO client library.
+                    </p>
+                </div>
+
+                <div class="endpoint-item">
+                    <h3>Rate Limiting</h3>
+                    <p>
+                        • General API: 300 requests per 15 minutes<br>
+                        • Login: 5 attempts per 15 minutes<br>
+                        • Registration: 3 accounts per hour<br>
+                        • Email actions: 3 requests per hour<br>
+                        • IP blocked for 30 minutes after 10 failed attempts
+                    </p>
+                </div>
+
+                <div class="endpoint-item">
+                    <h3>Authentication</h3>
+                    <p>
+                        Most endpoints require JWT authentication. Include the token in the Authorization header:<br>
+                        <code>Authorization: Bearer <your-jwt-token></code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const select = document.getElementById('endpointSelect');
+        const urlInput = document.getElementById('fullUrl');
+        const responseContainer = document.getElementById('responseContainer');
+        const responseBox = document.getElementById('responseBox');
+        const baseUrl = window.location.origin;
+
+        select.addEventListener('change', function() {
+            const value = this.value;
+            if (value) {
+                const [path] = value.split('|');
+                urlInput.value = baseUrl + path;
+            } else {
+                urlInput.value = '';
+            }
+        });
+
+        async function testEndpoint() {
+            const value = select.value;
+            if (!value) {
+                alert('Please select an endpoint first');
+                return;
+            }
+
+            const [path, method] = value.split('|');
+            const url = baseUrl + path;
+
+            responseContainer.style.display = 'block';
+            responseBox.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(url, {
+                    method: method || 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                const formatted = JSON.stringify({
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: {
+                        'content-type': response.headers.get('content-type'),
+                        'x-xss-protection': response.headers.get('x-xss-protection'),
+                        'x-frame-options': response.headers.get('x-frame-options'),
+                        'permissions-policy': response.headers.get('permissions-policy'),
+                        'feature-policy': response.headers.get('feature-policy')
+                    },
+                    data: data
+                }, null, 2);
+
+                responseBox.textContent = formatted;
+            } catch (error) {
+                responseBox.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function copyUrl() {
+            const url = urlInput.value;
+            if (!url) {
+                alert('Please select an endpoint first');
+                return;
+            }
+
+            navigator.clipboard.writeText(url).then(() => {
+                const notification = document.getElementById('copyNotification');
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+    </script>
+</body>
+</html>
