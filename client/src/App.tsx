@@ -69,14 +69,16 @@ function App() {
   // Function to handle automatic logout on token expiration
   const handleAutoLogout = () => {
     console.warn('⚠️ Session expired - logging out automatically');
-    setUser(null);
-    setAuthView('login');
     
-    // Close socket connection
+    // Emit logout event before closing socket to notify server and other users
     if (socket) {
+      socket.emit('user-logout', { reason: 'session-expired' });
       socket.close();
       setSocket(null);
     }
+    
+    setUser(null);
+    setAuthView('login');
     
     // Clear all auth data
     localStorage.removeItem('accessToken');
@@ -219,15 +221,16 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Clear user state first
-    setUser(null);
-    setAuthView('login');
-    
-    // Close socket connection
+    // Emit logout event before closing socket
     if (socket) {
+      socket.emit('user-logout', { reason: 'manual-logout' });
       socket.close();
       setSocket(null);
     }
+    
+    // Clear user state first
+    setUser(null);
+    setAuthView('login');
     
     // Clear all auth data from storage
     localStorage.removeItem('accessToken');

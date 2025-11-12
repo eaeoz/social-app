@@ -557,4 +557,28 @@ export function setupMessageHandlers(io, socket, userSockets) {
       console.error('Error logging call:', error);
     }
   });
+
+  // User logout event - notify others and end active calls
+  socket.on('user-logout', (data) => {
+    try {
+      const { reason } = data;
+      const userId = socket.userId;
+      
+      if (!userId) return;
+      
+      console.log(`🚪 User ${userId} logging out (reason: ${reason})`);
+      
+      // Notify all connected users that this user is logging out
+      // This is particularly important for ending active calls
+      io.emit('user-logged-out', {
+        userId,
+        reason,
+        timestamp: new Date()
+      });
+      
+      console.log(`📡 Broadcasted logout event for user ${userId}`);
+    } catch (error) {
+      console.error('Error handling user logout:', error);
+    }
+  });
 }

@@ -76,6 +76,7 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
       socket.on('call-offer', handleCallOffer);
       socket.on('call-answer', handleCallAnswer);
       socket.on('call-ended', handleRemoteCallEnd);
+      socket.on('user-logged-out', handleUserLoggedOut);
     }
 
     return () => {
@@ -95,6 +96,7 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
         socket.off('call-offer', handleCallOffer);
         socket.off('call-answer', handleCallAnswer);
         socket.off('call-ended', handleRemoteCallEnd);
+        socket.off('user-logged-out', handleUserLoggedOut);
       }
     };
   }, []);
@@ -504,6 +506,15 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
   const handleRemoteCallEnd = () => {
     console.log('📞 Remote user ended the call');
     endCall();
+  };
+
+  const handleUserLoggedOut = ({ userId, reason }: { userId: string; reason: string }) => {
+    // Check if the logged out user is the one we're in a call with
+    if (userId === otherUser.userId) {
+      console.log(`🚪 ${otherUser.nickName} logged out (${reason}) - ending call`);
+      setError(`${otherUser.nickName} has ${reason === 'session-expired' ? 'been logged out due to inactivity' : 'logged out'}`);
+      setTimeout(() => endCall(), 2000);
+    }
   };
 
   const startCallTimer = () => {
