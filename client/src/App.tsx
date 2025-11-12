@@ -54,17 +54,64 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Check for existing session on mount
+  // Function to check if JWT token is expired
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000; // Convert to milliseconds
+      return Date.now() >= expirationTime;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
+      return true; // Treat as expired if we can't parse it
+    }
+  };
+
+  // Function to handle automatic logout on token expiration
+  const handleAutoLogout = () => {
+    console.warn('⚠️ Session expired - logging out automatically');
+    setUser(null);
+    setAuthView('login');
+    
+    // Close socket connection
+    if (socket) {
+      socket.close();
+      setSocket(null);
+    }
+    
+    // Clear all auth data
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+    
+    // Show alert to user
+    alert('Your session has expired. Please log in again.');
+    
+    // Navigate to login
+    navigate('/', { replace: true });
+  };
+
+  // Check for existing session on mount and verify token
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const savedUser = localStorage.getItem('user');
 
     if (token && savedUser) {
       try {
+        // Check if token is expired
+        if (isTokenExpired(token)) {
+          console.warn('⚠️ Token expired on mount - clearing session');
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          sessionStorage.clear();
+          setIsLoading(false);
+          return;
+        }
+
         const parsedUser = JSON.parse(savedUser);
         
         // Verify the session is still valid before setting user
-        // This prevents issues with stale sessions after logout
         console.log('🔍 Validating saved session...');
         setUser(parsedUser);
       } catch (error) {
@@ -82,7 +129,22 @@ function App() {
       sessionStorage.clear();
     }
     setIsLoading(false);
-  }, []);
+  }, [navigate]);
+
+  // Periodically check token expiration (every minute)
+  useEffect(() => {
+    if (!user) return;
+
+    const checkTokenInterval = setInterval(() => {
+      const token = localStorage.getItem('accessToken');
+      
+      if (!token || isTokenExpired(token)) {
+        handleAutoLogout();
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(checkTokenInterval);
+  }, [user, socket, navigate]);
 
   // Initialize Socket.IO connection when user is authenticated
   useEffect(() => {

@@ -835,11 +835,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }
       });
 
-      // Check for suspension
-      if (response.status === 403) {
+      // Check for authentication errors (token expired)
+      if (response.status === 401 || response.status === 403) {
         const data = await response.json();
+        
+        // Check if it's a suspension
         if (data.suspended) {
           alert(data.message || 'Your account has been suspended.');
+          handleLogout();
+          return;
+        }
+        
+        // Check if it's an expired/invalid token
+        if (data.error && (data.error.includes('expired') || data.error.includes('Invalid'))) {
+          console.warn('⚠️ Token expired during API call - logging out');
+          alert('Your session has expired. Please log in again.');
           handleLogout();
           return;
         }
@@ -887,11 +897,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }
       });
 
-      // Check for suspension
-      if (response.status === 403) {
+      // Check for authentication errors (token expired)
+      if (response.status === 401 || response.status === 403) {
         const data = await response.json();
+        
+        // Check if it's a suspension
         if (data.suspended) {
           alert(data.message || 'Your account has been suspended.');
+          handleLogout();
+          return;
+        }
+        
+        // Check if it's an expired/invalid token
+        if (data.error && (data.error.includes('expired') || data.error.includes('Invalid'))) {
+          console.warn('⚠️ Token expired during API call - logging out');
+          alert('Your session has expired. Please log in again.');
           handleLogout();
           return;
         }
@@ -919,11 +939,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
         }
       });
 
-      // Check for suspension
-      if (response.status === 403) {
+      // Check for authentication errors (token expired)
+      if (response.status === 401 || response.status === 403) {
         const data = await response.json();
+        
+        // Check if it's a suspension
         if (data.suspended) {
           alert(data.message || 'Your account has been suspended.');
+          handleLogout();
+          return;
+        }
+        
+        // Check if it's an expired/invalid token
+        if (data.error && (data.error.includes('expired') || data.error.includes('Invalid'))) {
+          console.warn('⚠️ Token expired during API call - logging out');
+          alert('Your session has expired. Please log in again.');
           handleLogout();
           return;
         }
