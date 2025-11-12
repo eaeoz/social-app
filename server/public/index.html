@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -102,16 +102,22 @@
             font-weight: 600;
         }
 
-        select, input {
+        select, input, textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 1em;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
 
-        select:focus, input:focus {
+        textarea {
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+        }
+
+        select:focus, input:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -139,6 +145,7 @@
             cursor: pointer;
             transition: all 0.3s;
             margin-right: 10px;
+            margin-bottom: 10px;
         }
 
         .btn-primary {
@@ -160,6 +167,15 @@
             background: #4b5563;
         }
 
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #dc2626;
+        }
+
         .response-box {
             background: #1e293b;
             color: #e2e8f0;
@@ -168,7 +184,7 @@
             margin-top: 20px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
@@ -191,11 +207,13 @@
             margin-bottom: 10px;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .endpoint-item p {
             color: #666;
             line-height: 1.6;
+            margin-top: 8px;
         }
 
         .endpoint-path {
@@ -218,6 +236,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: none;
             animation: slideIn 0.3s ease;
+            z-index: 1000;
         }
 
         @keyframes slideIn {
@@ -239,6 +258,26 @@
             display: inline-block;
             background: #fef3c7;
             color: #92400e;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .admin-required {
+            display: inline-block;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .rate-limited {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
             padding: 4px 12px;
             border-radius: 6px;
             font-size: 0.85em;
@@ -282,6 +321,41 @@
             color: #10b981;
             font-weight: bold;
             margin-right: 8px;
+        }
+
+        .example-body {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .info-box {
+            background: #e0e7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            color: #1e3a8a;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            color: #92400e;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -328,26 +402,68 @@
                         <label for="endpointSelect">Select API Endpoint</label>
                         <select id="endpointSelect">
                             <option value="">-- Select an endpoint --</option>
-                            <optgroup label="Public Endpoints (No Auth Required)">
-                                <option value="/api|GET|Get API info">GET /api - API Information</option>
-                                <option value="/health|GET|Health check">GET /health - Health Check</option>
+                            <optgroup label="Public Endpoints (No Auth)">
+                                <option value="/api|GET|{}">GET /api - API Information</option>
+                                <option value="/health|GET|{}">GET /health - Health Check</option>
+                                <option value="/api/settings/site|GET|{}">GET /api/settings/site - Get Site Settings</option>
                             </optgroup>
                             <optgroup label="Authentication Endpoints">
-                                <option value="/api/auth/register|POST|Register new user">POST /api/auth/register - Register User</option>
-                                <option value="/api/auth/login|POST|User login">POST /api/auth/login - Login</option>
-                                <option value="/api/auth/logout|POST|User logout">POST /api/auth/logout - Logout</option>
-                                <option value="/api/auth/verify-email|POST|Verify email">POST /api/auth/verify-email - Verify Email</option>
+                                <option value='/api/auth/register|POST|{"username":"testuser","email":"test@example.com","password":"Test123!"}'>POST /api/auth/register - Register User</option>
+                                <option value='/api/auth/login|POST|{"username":"testuser","password":"Test123!"}'>POST /api/auth/login - Login</option>
+                                <option value="/api/auth/me|GET|{}|AUTH">GET /api/auth/me - Get Current User</option>
+                                <option value="/api/auth/logout|POST|{}|AUTH">POST /api/auth/logout - Logout</option>
+                                <option value='/api/auth/verify-email|POST|{"token":"verification-token"}'>POST /api/auth/verify-email - Verify Email</option>
+                                <option value='/api/auth/resend-verification|POST|{"email":"test@example.com"}'>POST /api/auth/resend-verification - Resend Verification</option>
+                                <option value='/api/auth/get-resend-attempts|POST|{"email":"test@example.com"}'>POST /api/auth/get-resend-attempts - Get Resend Attempts</option>
+                                <option value='/api/auth/reset-password|POST|{"email":"test@example.com"}'>POST /api/auth/reset-password - Reset Password</option>
+                                <option value='/api/auth/change-password|PUT|{"currentPassword":"old","newPassword":"new"}|AUTH'>PUT /api/auth/change-password - Change Password</option>
+                                <option value='/api/auth/update-dnd|PUT|{"doNotDisturb":true}|AUTH'>PUT /api/auth/update-dnd - Update DND Status</option>
+                            </optgroup>
+                            <optgroup label="Contact Endpoint">
+                                <option value='/api/contact|POST|{"name":"John Doe","email":"john@example.com","message":"Hello"}'>POST /api/contact - Submit Contact Form</option>
                             </optgroup>
                             <optgroup label="Room Endpoints (Auth Required)">
-                                <option value="/api/rooms|GET|Get all rooms">GET /api/rooms - Get All Rooms</option>
-                                <option value="/api/rooms/create|POST|Create new room">POST /api/rooms/create - Create Room</option>
+                                <option value="/api/rooms/public|GET|{}|AUTH">GET /api/rooms/public - Get All Public Rooms</option>
+                                <option value="/api/rooms/users|GET|{}|AUTH">GET /api/rooms/users - Get All Users</option>
+                                <option value="/api/rooms/user-profile/:userId|GET|{}|AUTH">GET /api/rooms/user-profile/:userId - Get User Profile</option>
+                                <option value="/api/rooms/private-chats|GET|{}|AUTH">GET /api/rooms/private-chats - Get Private Chats</option>
+                                <option value='/api/rooms/mark-room-read|POST|{"roomId":"room123"}|AUTH'>POST /api/rooms/mark-room-read - Mark Room as Read</option>
+                                <option value='/api/rooms/close-private-chat|POST|{"otherUserId":"user123"}|AUTH'>POST /api/rooms/close-private-chat - Close Private Chat</option>
                             </optgroup>
                             <optgroup label="Settings Endpoints (Auth Required)">
-                                <option value="/api/settings|GET|Get site settings">GET /api/settings - Get Settings</option>
+                                <option value="/api/settings/site|GET|{}">GET /api/settings/site - Get Site Settings</option>
+                                <option value='/api/settings/site|PUT|{"siteName":"My Site"}|AUTH'>PUT /api/settings/site - Update Site Settings</option>
+                            </optgroup>
+                            <optgroup label="Report Endpoints (Auth Required)">
+                                <option value='/api/report/submit|POST|{"reportedUserId":"user123","reason":"spam"}|AUTH'>POST /api/report/submit - Submit Report</option>
+                                <option value='/api/report/check-suspension|POST|{"userId":"user123"}'>POST /api/report/check-suspension - Check User Suspension</option>
                             </optgroup>
                             <optgroup label="Admin Endpoints (Admin Only)">
-                                <option value="/api/admin/users|GET|Get all users">GET /api/admin/users - Get All Users</option>
-                                <option value="/api/admin/reports|GET|Get reports">GET /api/admin/reports - Get Reports</option>
+                                <option value="/api/admin/statistics|GET|{}|AUTH|ADMIN">GET /api/admin/statistics - Get Statistics</option>
+                                <option value="/api/admin/users|GET|{}|AUTH|ADMIN">GET /api/admin/users - Get All Users</option>
+                                <option value="/api/admin/reports|GET|{}|AUTH|ADMIN">GET /api/admin/reports - Get Reports</option>
+                                <option value="/api/admin/archived-reports|GET|{}|AUTH|ADMIN">GET /api/admin/archived-reports - Get Archived Reports</option>
+                                <option value="/api/admin/users/archived-reports/:email|GET|{}|AUTH|ADMIN">GET /api/admin/users/archived-reports/:email - Get User Archived Reports</option>
+                                <option value='/api/admin/reports/:reportId|PUT|{"status":"resolved"}|AUTH|ADMIN'>PUT /api/admin/reports/:reportId - Update Report</option>
+                                <option value='/api/admin/users/:userId/suspend|PUT|{"suspend":true,"reason":"violation"}|AUTH|ADMIN'>PUT /api/admin/users/:userId/suspend - Suspend/Unsuspend User</option>
+                                <option value="/api/admin/users/:userId/password-recovery|POST|{}|AUTH|ADMIN">POST /api/admin/users/:userId/password-recovery - Generate Password Recovery</option>
+                                <option value="/api/admin/users/:userId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/users/:userId - Delete User</option>
+                                <option value="/api/admin/settings|GET|{}|AUTH|ADMIN">GET /api/admin/settings - Get Admin Settings</option>
+                                <option value='/api/admin/settings|PUT|{"settingKey":"value"}|AUTH|ADMIN'>PUT /api/admin/settings - Update Admin Settings</option>
+                                <option value="/api/admin/rooms|GET|{}|AUTH|ADMIN">GET /api/admin/rooms - Get All Rooms</option>
+                                <option value='/api/admin/rooms|POST|{"name":"New Room","description":"Description"}|AUTH|ADMIN'>POST /api/admin/rooms - Create Room</option>
+                                <option value='/api/admin/rooms/:roomId|PUT|{"name":"Updated Room"}|AUTH|ADMIN'>PUT /api/admin/rooms/:roomId - Update Room</option>
+                                <option value="/api/admin/rooms/:roomId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/rooms/:roomId - Delete Room</option>
+                                <option value="/api/admin/cleanup/public-messages/:userId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/public-messages/:userId - Delete User Public Messages</option>
+                                <option value="/api/admin/cleanup/private-messages/:userId|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/private-messages/:userId - Delete User Private Messages</option>
+                                <option value="/api/admin/cleanup/all-messages|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/all-messages - Delete All Messages</option>
+                                <option value="/api/admin/cleanup/all-users-except-admin|DELETE|{}|AUTH|ADMIN">DELETE /api/admin/cleanup/all-users-except-admin - Delete All Users Except Admin</option>
+                                <option value='/api/admin/cleanup/inactive-users-and-old-data|DELETE|{"daysInactive":30}|AUTH|ADMIN'>DELETE /api/admin/cleanup/inactive-users-and-old-data - Delete Inactive Users</option>
+                                <option value='/api/admin/cleanup/messages-by-date|DELETE|{"beforeDate":"2024-01-01"}|AUTH|ADMIN'>DELETE /api/admin/cleanup/messages-by-date - Delete Messages by Date</option>
+                            </optgroup>
+                            <optgroup label="Google OAuth">
+                                <option value="/api/auth/google|GET|{}">GET /api/auth/google - Initiate Google OAuth</option>
+                                <option value="/api/auth/google/callback|GET|{}">GET /api/auth/google/callback - Google OAuth Callback</option>
                             </optgroup>
                         </select>
                     </div>
@@ -357,9 +473,24 @@
                         <input type="text" id="fullUrl" readonly placeholder="Select an endpoint to see the full URL">
                     </div>
 
-                    <div>
-                        <button class="btn btn-primary" onclick="testEndpoint()">Test Endpoint</button>
-                        <button class="btn btn-secondary" onclick="copyUrl()">Copy URL</button>
+                    <div class="form-group">
+                        <label for="requestBody">Request Body (JSON) - Edit as needed</label>
+                        <textarea id="requestBody" placeholder='{"key": "value"}'></textarea>
+                        <div class="info-box">
+                            💡 For endpoints requiring authentication, add your JWT token below. For admin endpoints, ensure your token has admin privileges.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="authToken">Authorization Token (Optional - for protected endpoints)</label>
+                        <input type="text" id="authToken" placeholder="Bearer your-jwt-token-here">
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="testEndpoint()">🚀 Test Endpoint</button>
+                        <button class="btn btn-secondary" onclick="copyUrl()">📋 Copy URL</button>
+                        <button class="btn btn-secondary" onclick="copyCurl()">📝 Copy as cURL</button>
+                        <button class="btn btn-clear" onclick="clearResponse()">🗑️ Clear Response</button>
                     </div>
 
                     <div id="responseContainer" style="display: none;">
@@ -371,7 +502,9 @@
 
             <!-- Available Endpoints Section -->
             <div class="section">
-                <h2>📚 Available Endpoints</h2>
+                <h2>📚 Complete API Endpoints Reference</h2>
+                
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Public Endpoints</h3>
                 <ul class="endpoint-list">
                     <li class="endpoint-item">
                         <h3>
@@ -391,64 +524,514 @@
 
                     <li class="endpoint-item">
                         <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/settings/site</span>
+                        </h3>
+                        <p>Get public site settings and configuration (site name, description, etc.). No authentication required.</p>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Authentication Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
                             <span class="method-badge method-post">POST</span>
                             <span class="endpoint-path">/api/auth/register</span>
-                            <span class="auth-required">Rate Limited</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
                         <p>Register a new user account. Requires username, email, and password. Limited to 3 registrations per hour per IP.</p>
+                        <div class="example-body">
+                            POST Body: { "username": "john", "email": "john@example.com", "password": "SecurePass123!" }
+                        </div>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-post">POST</span>
                             <span class="endpoint-path">/api/auth/login</span>
-                            <span class="auth-required">Rate Limited</span>
+                            <span class="rate-limited">Rate Limited</span>
                         </h3>
                         <p>Authenticate user and receive JWT token. Limited to 5 attempts per 15 minutes per IP.</p>
+                        <div class="example-body">
+                            POST Body: { "username": "john", "password": "SecurePass123!" }
+                        </div>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-get">GET</span>
-                            <span class="endpoint-path">/api/rooms</span>
+                            <span class="endpoint-path">/api/auth/me</span>
                             <span class="auth-required">Auth Required</span>
                         </h3>
-                        <p>Get list of all available chat rooms. Requires valid JWT token in Authorization header.</p>
+                        <p>Get current authenticated user's profile information.</p>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-post">POST</span>
-                            <span class="endpoint-path">/api/rooms/create</span>
+                            <span class="endpoint-path">/api/auth/logout</span>
                             <span class="auth-required">Auth Required</span>
                         </h3>
-                        <p>Create a new chat room. Requires authentication and room details (name, description).</p>
-                    </li>
-
-                    <li class="endpoint-item">
-                        <h3>
-                            <span class="method-badge method-get">GET</span>
-                            <span class="endpoint-path">/api/settings</span>
-                        </h3>
-                        <p>Get public site settings and configuration. No authentication required.</p>
+                        <p>Logout current user and invalidate session.</p>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-post">POST</span>
-                            <span class="endpoint-path">/api/report</span>
+                            <span class="endpoint-path">/api/auth/verify-email</span>
+                            <span class="rate-limited">Rate Limited</span>
+                        </h3>
+                        <p>Verify user email with token received via email.</p>
+                        <div class="example-body">
+                            POST Body: { "token": "verification-token-here" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/auth/resend-verification</span>
+                            <span class="rate-limited">Rate Limited</span>
+                        </h3>
+                        <p>Resend email verification link. Limited to 3 requests per hour.</p>
+                        <div class="example-body">
+                            POST Body: { "email": "john@example.com" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/auth/get-resend-attempts</span>
+                        </h3>
+                        <p>Get remaining email verification resend attempts.</p>
+                        <div class="example-body">
+                            POST Body: { "email": "john@example.com" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/auth/reset-password</span>
+                            <span class="rate-limited">Rate Limited</span>
+                        </h3>
+                        <p>Request password reset email. Limited to 3 requests per hour.</p>
+                        <div class="example-body">
+                            POST Body: { "email": "john@example.com" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/auth/update-profile</span>
                             <span class="auth-required">Auth Required</span>
                         </h3>
-                        <p>Report a user or content. Requires authentication and report details.</p>
+                        <p>Update user profile (display name, profile picture, etc.). Supports multipart/form-data for file uploads.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/auth/change-password</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Change user password.</p>
+                        <div class="example-body">
+                            PUT Body: { "currentPassword": "oldPass", "newPassword": "newPass123!" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/auth/update-dnd</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Update Do Not Disturb status.</p>
+                        <div class="example-body">
+                            PUT Body: { "doNotDisturb": true }
+                        </div>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Google OAuth Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/auth/google</span>
+                        </h3>
+                        <p>Initiate Google OAuth authentication flow. Redirects to Google login.</p>
                     </li>
 
                     <li class="endpoint-item">
                         <h3>
                             <span class="method-badge method-get">GET</span>
-                            <span class="endpoint-path">/api/admin/*</span>
-                            <span class="auth-required">Admin Only</span>
+                            <span class="endpoint-path">/api/auth/google/callback</span>
                         </h3>
-                        <p>Admin endpoints for managing users, reports, and system statistics. Requires admin role.</p>
+                        <p>Google OAuth callback endpoint. Handles the OAuth response from Google.</p>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Contact Endpoint</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/contact</span>
+                        </h3>
+                        <p>Submit contact form. Sends email to site administrators.</p>
+                        <div class="example-body">
+                            POST Body: { "name": "John Doe", "email": "john@example.com", "message": "Hello!" }
+                        </div>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Room Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/rooms/public</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Get all public chat rooms with unread message counts.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/rooms/users</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Get list of all users for private chat selection.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/rooms/user-profile/:userId</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Get specific user's profile information (including profile picture).</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/rooms/private-chats</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Get all private chats for current user with unread counts.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/rooms/mark-room-read</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Mark a room as read (updates lastSeenAt timestamp).</p>
+                        <div class="example-body">
+                            POST Body: { "roomId": "room123" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/rooms/close-private-chat</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Close a private chat (marks all messages as read).</p>
+                        <div class="example-body">
+                            POST Body: { "otherUserId": "user123" }
+                        </div>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Report Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/report/submit</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Submit a report against a user for policy violations.</p>
+                        <div class="example-body">
+                            POST Body: { "reportedUserId": "user123", "reason": "spam", "description": "Details..." }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/report/check-suspension</span>
+                        </h3>
+                        <p>Check if a specific user is currently suspended.</p>
+                        <div class="example-body">
+                            POST Body: { "userId": "user123" }
+                        </div>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Settings Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/settings/site</span>
+                        </h3>
+                        <p>Get public site settings. No authentication required.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/settings/site</span>
+                            <span class="auth-required">Auth Required</span>
+                        </h3>
+                        <p>Update site settings (requires appropriate permissions).</p>
+                    </li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 20px;">Admin Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/statistics</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get system statistics (total users, active users, messages, etc.).</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/users</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get all users with pagination. Query params: ?page=1&limit=50&search=query</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/reports</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get all active user reports.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/archived-reports</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get archived reports with search functionality. Query params: ?search=query</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/users/archived-reports/:email</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get archived reports for a specific user by email.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/admin/reports/:reportId</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Update report status (resolve, dismiss, etc.).</p>
+                        <div class="example-body">
+                            PUT Body: { "status": "resolved", "adminNotes": "Handled" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/admin/users/:userId/suspend</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Suspend or unsuspend a user account.</p>
+                        <div class="example-body">
+                            PUT Body: { "suspend": true, "reason": "Policy violation" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/admin/users/:userId/password-recovery</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Generate password recovery link for a user.</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/users/:userId</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Permanently delete a user account and all associated data.</p>
+                        <div class="warning-box">
+                            ⚠️ Warning: This action cannot be undone!
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/settings</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get all site settings (admin view with full details).</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/admin/settings</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Update site settings (full admin access).</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/api/admin/rooms</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Get all chat rooms (admin view with full details).</p>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/admin/rooms</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Create a new chat room.</p>
+                        <div class="example-body">
+                            POST Body: { "name": "New Room", "description": "Room description" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="endpoint-path">/api/admin/rooms/:roomId</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Update room details.</p>
+                        <div class="example-body">
+                            PUT Body: { "name": "Updated Room Name", "description": "New description" }
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/rooms/:roomId</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete a chat room and all its messages.</p>
+                        <div class="warning-box">
+                            ⚠️ Warning: This will permanently delete all messages in the room!
+                        </div>
+                    </li>
+                </ul>
+
+                <h3 style="color: #ef4444; margin-top: 30px; margin-bottom: 20px;">🗑️ Admin Cleanup Endpoints (DANGER ZONE)</h3>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/cleanup/public-messages/:userId</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete all public room messages from a specific user.</p>
+                        <div class="warning-box">
+                            ⚠️ Warning: Permanently deletes all public messages from this user!
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/cleanup/private-messages/:userId</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete all private messages involving a specific user.</p>
+                        <div class="warning-box">
+                            ⚠️ Warning: Permanently deletes all private conversations with this user!
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/cleanup/all-messages</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete ALL messages from ALL users (both public and private).</p>
+                        <div class="warning-box">
+                            ⚠️ EXTREME WARNING: This will permanently delete EVERY message in the system!
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/cleanup/all-users-except-admin</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete all user accounts except the protected admin user.</p>
+                        <div class="warning-box">
+                            ⚠️ EXTREME WARNING: This will permanently delete all users except admin!
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/cleanup/inactive-users-and-old-data</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete users inactive for specified days and their associated data.</p>
+                        <div class="example-body">
+                            DELETE Body: { "daysInactive": 30 }
+                        </div>
+                        <div class="warning-box">
+                            ⚠️ Warning: Permanently deletes inactive users and their messages!
+                        </div>
+                    </li>
+
+                    <li class="endpoint-item">
+                        <h3>
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/api/admin/cleanup/messages-by-date</span>
+                            <span class="admin-required">Admin Only</span>
+                        </h3>
+                        <p>Delete all messages created before a specific date.</p>
+                        <div class="example-body">
+                            DELETE Body: { "beforeDate": "2024-01-01" }
+                        </div>
+                        <div class="warning-box">
+                            ⚠️ Warning: Permanently deletes messages before the specified date!
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -457,21 +1040,29 @@
             <div class="section">
                 <h2>ℹ️ Additional Information</h2>
                 <div class="endpoint-item">
-                    <h3>WebSocket Connection</h3>
+                    <h3>WebSocket Connection (Socket.IO)</h3>
                     <p>
-                        <strong>Endpoint:</strong> <code>wss://your-domain.com</code><br>
-                        Real-time messaging uses Socket.IO. Connect using the Socket.IO client library.
+                        <strong>Endpoint:</strong> <code id="wsUrl">wss://your-domain.com</code><br>
+                        Real-time messaging uses Socket.IO. Connect using the Socket.IO client library.<br><br>
+                        <strong>Events:</strong><br>
+                        • <code>authenticate</code> - Authenticate user connection<br>
+                        • <code>join_room</code> - Join a chat room<br>
+                        • <code>leave_room</code> - Leave a chat room<br>
+                        • <code>send_message</code> - Send a message<br>
+                        • <code>private_message</code> - Send private message<br>
+                        • <code>activity</code> - Send activity heartbeat<br>
+                        • <code>user_status_changed</code> - Receive user status updates
                     </p>
                 </div>
 
                 <div class="endpoint-item">
                     <h3>Rate Limiting</h3>
                     <p>
-                        • General API: 300 requests per 15 minutes<br>
-                        • Login: 5 attempts per 15 minutes<br>
-                        • Registration: 3 accounts per hour<br>
-                        • Email actions: 3 requests per hour<br>
-                        • IP blocked for 30 minutes after 10 failed attempts
+                        • <strong>General API:</strong> 300 requests per 15 minutes<br>
+                        • <strong>Login:</strong> 5 attempts per 15 minutes<br>
+                        • <strong>Registration:</strong> 3 accounts per hour<br>
+                        • <strong>Email actions:</strong> 3 requests per hour<br>
+                        • <strong>IP blocking:</strong> 30 minutes after 10 failed login attempts
                     </p>
                 </div>
 
@@ -479,7 +1070,23 @@
                     <h3>Authentication</h3>
                     <p>
                         Most endpoints require JWT authentication. Include the token in the Authorization header:<br>
-                        <code>Authorization: Bearer <your-jwt-token></code>
+                        <code style="background: #e0e7ff; padding: 8px; border-radius: 4px; display: block; margin-top: 10px;">
+                            Authorization: Bearer <your-jwt-token>
+                        </code><br>
+                        <strong>Getting a token:</strong><br>
+                        1. Register at <code>/api/auth/register</code><br>
+                        2. Login at <code>/api/auth/login</code><br>
+                        3. Use the returned token in subsequent requests
+                    </p>
+                </div>
+
+                <div class="endpoint-item">
+                    <h3>CORS Configuration</h3>
+                    <p>
+                        The API supports CORS for the following origins:<br>
+                        • localhost:5173, 5174, 5175 (development)<br>
+                        • localhost:3000, 4000, 8888 (alternative ports)<br>
+                        • Production URLs configured via environment variables
                     </p>
                 </div>
             </div>
@@ -489,17 +1096,28 @@
     <script>
         const select = document.getElementById('endpointSelect');
         const urlInput = document.getElementById('fullUrl');
+        const requestBody = document.getElementById('requestBody');
+        const authToken = document.getElementById('authToken');
         const responseContainer = document.getElementById('responseContainer');
         const responseBox = document.getElementById('responseBox');
         const baseUrl = window.location.origin;
 
+        // Update WebSocket URL
+        document.getElementById('wsUrl').textContent = baseUrl.replace('http', 'ws');
+
         select.addEventListener('change', function() {
             const value = this.value;
             if (value) {
-                const [path] = value.split('|');
+                const parts = value.split('|');
+                const path = parts[0];
+                const method = parts[1];
+                const body = parts[2] || '{}';
+                
                 urlInput.value = baseUrl + path;
+                requestBody.value = JSON.stringify(JSON.parse(body), null, 2);
             } else {
                 urlInput.value = '';
+                requestBody.value = '';
             }
         });
 
@@ -510,37 +1128,92 @@
                 return;
             }
 
-            const [path, method] = value.split('|');
+            const parts = value.split('|');
+            const path = parts[0];
+            const method = parts[1] || 'GET';
+            const requiresAuth = parts.includes('AUTH');
+            const requiresAdmin = parts.includes('ADMIN');
             const url = baseUrl + path;
+
+            // Check if auth is required but not provided
+            if (requiresAuth && !authToken.value.trim()) {
+                if (!confirm('This endpoint requires authentication. Do you want to test it anyway? (It will likely fail with 401 Unauthorized)')) {
+                    return;
+                }
+            }
+
+            if (requiresAdmin && !authToken.value.trim()) {
+                if (!confirm('This endpoint requires ADMIN privileges. Do you want to test it anyway? (It will likely fail with 401/403)')) {
+                    return;
+                }
+            }
 
             responseContainer.style.display = 'block';
             responseBox.textContent = 'Loading...';
 
             try {
-                const response = await fetch(url, {
-                    method: method || 'GET',
+                const options = {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     }
-                });
+                };
 
-                const data = await response.json();
+                // Add authorization header if token is provided
+                if (authToken.value.trim()) {
+                    options.headers['Authorization'] = authToken.value.trim().startsWith('Bearer ') 
+                        ? authToken.value.trim() 
+                        : 'Bearer ' + authToken.value.trim();
+                }
+
+                // Add body for POST/PUT/DELETE methods
+                if (['POST', 'PUT', 'DELETE'].includes(method) && requestBody.value.trim()) {
+                    try {
+                        // Validate JSON
+                        JSON.parse(requestBody.value);
+                        options.body = requestBody.value;
+                    } catch (e) {
+                        responseBox.textContent = 'Error: Invalid JSON in request body\n' + e.message;
+                        return;
+                    }
+                }
+
+                const startTime = Date.now();
+                const response = await fetch(url, options);
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
                 const formatted = JSON.stringify({
                     status: response.status,
                     statusText: response.statusText,
+                    duration: duration + 'ms',
                     headers: {
                         'content-type': response.headers.get('content-type'),
                         'x-xss-protection': response.headers.get('x-xss-protection'),
                         'x-frame-options': response.headers.get('x-frame-options'),
+                        'x-content-type-options': response.headers.get('x-content-type-options'),
                         'permissions-policy': response.headers.get('permissions-policy'),
-                        'feature-policy': response.headers.get('feature-policy')
+                        'feature-policy': response.headers.get('feature-policy'),
+                        'strict-transport-security': response.headers.get('strict-transport-security')
                     },
-                    data: data
+                    body: data
                 }, null, 2);
 
                 responseBox.textContent = formatted;
             } catch (error) {
-                responseBox.textContent = 'Error: ' + error.message;
+                responseBox.textContent = 'Error: ' + error.message + '\n\nThis could be due to:\n' +
+                    '- Network connectivity issues\n' +
+                    '- CORS restrictions\n' +
+                    '- Server not responding\n' +
+                    '- Invalid endpoint URL';
             }
         }
 
@@ -552,15 +1225,74 @@
             }
 
             navigator.clipboard.writeText(url).then(() => {
-                const notification = document.getElementById('copyNotification');
-                notification.classList.add('show');
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 2000);
+                showNotification('✓ URL copied to clipboard!');
             }).catch(err => {
                 alert('Failed to copy: ' + err);
             });
         }
+
+        function copyCurl() {
+            const value = select.value;
+            if (!value) {
+                alert('Please select an endpoint first');
+                return;
+            }
+
+            const parts = value.split('|');
+            const path = parts[0];
+            const method = parts[1] || 'GET';
+            const url = baseUrl + path;
+
+            let curlCommand = `curl -X ${method} "${url}"`;
+            
+            // Add headers
+            curlCommand += ' -H "Content-Type: application/json"';
+            
+            if (authToken.value.trim()) {
+                const token = authToken.value.trim().startsWith('Bearer ') 
+                    ? authToken.value.trim() 
+                    : 'Bearer ' + authToken.value.trim();
+                curlCommand += ` -H "Authorization: ${token}"`;
+            }
+
+            // Add body for POST/PUT/DELETE
+            if (['POST', 'PUT', 'DELETE'].includes(method) && requestBody.value.trim()) {
+                try {
+                    JSON.parse(requestBody.value);
+                    curlCommand += ` -d '${requestBody.value}'`;
+                } catch (e) {
+                    alert('Invalid JSON in request body');
+                    return;
+                }
+            }
+
+            navigator.clipboard.writeText(curlCommand).then(() => {
+                showNotification('✓ cURL command copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        function clearResponse() {
+            responseContainer.style.display = 'none';
+            responseBox.textContent = '';
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('copyNotification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Allow Enter key to test endpoint
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                testEndpoint();
+            }
+        });
     </script>
 </body>
 </html>
