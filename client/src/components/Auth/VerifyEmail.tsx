@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './Auth.css';
+import { updateSEOTags } from '../../utils/seo';
 
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
+
+  // Update SEO tags for email verification page
+  useEffect(() => {
+    updateSEOTags('/verify-email');
+  }, []);
   const [message, setMessage] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 

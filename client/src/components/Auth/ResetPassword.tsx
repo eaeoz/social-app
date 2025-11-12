@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './Auth.css';
+import { updateSEOTags } from '../../utils/seo';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -8,6 +9,11 @@ function ResetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  
+  // Update SEO tags for password reset page
+  useEffect(() => {
+    updateSEOTags('/reset-password');
+  }, []);
   
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

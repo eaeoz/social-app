@@ -5,6 +5,7 @@ import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import About from '../Legal/About';
 import Contact from '../Legal/Contact';
+import { updateSEOTags } from '../../utils/seo';
 
 interface LoginProps {
   onLoginSuccess: (user: any, token: string) => void;
@@ -42,6 +43,9 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   // Handle direct URL access to modal pages
   useEffect(() => {
     const path = location.pathname;
+    
+    // Update SEO tags based on current path
+    updateSEOTags(path);
     
     // Open corresponding modal based on URL path
     if (path === '/about') {
