@@ -16,13 +16,17 @@ export async function connectToDatabase() {
     }
 
     // Configuration for MongoDB Atlas with TLS options for Render compatibility
+    // Using more permissive TLS settings to avoid SSL handshake issues on Render
     const options = {
+      ssl: true,
       tls: true,
-      tlsAllowInvalidCertificates: false,
-      tlsAllowInvalidHostnames: false,
+      tlsAllowInvalidCertificates: true, // More permissive for Render environment
+      tlsAllowInvalidHostnames: true,
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
+      retryWrites: true,
+      w: 'majority'
     };
 
     client = new MongoClient(uri, options);
