@@ -440,7 +440,7 @@ function Cleanup() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {getPieChartData().map((entry, index) => (
+                    {getPieChartData().map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>

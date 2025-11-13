@@ -48,6 +48,21 @@ function App() {
     };
   }, []);
 
+  // Periodically check token expiration (every minute)
+  useEffect(() => {
+    if (!isAuthenticated || !admin) return;
+
+    const checkTokenInterval = setInterval(() => {
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token || isTokenExpired(token)) {
+        handleAutoLogout();
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(checkTokenInterval);
+  }, [isAuthenticated, admin]);
+
   const checkAuth = async () => {
     const token = localStorage.getItem('adminToken');
     const adminData = localStorage.getItem('adminData');
@@ -102,6 +117,29 @@ function App() {
       username: adminData.username,
       timestamp: new Date().toISOString()
     }, adminData.id);
+  };
+
+  const handleAutoLogout = () => {
+    console.warn('⚠️ Session expired - logging out automatically');
+    
+    // Log automatic logout
+    AuditLogger.log('AUTO_LOGOUT_SESSION_EXPIRED', {
+      userId: admin?.id,
+      username: admin?.username,
+      timestamp: new Date().toISOString()
+    }, admin?.id);
+    
+    // Clear all auth data
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
+    setAdmin(null);
+    setIsAuthenticated(false);
+    
+    // Cleanup session
+    SecureSessionManager.cleanup();
+    
+    // Show alert to user
+    alert('Your session has expired. Please log in again.');
   };
 
   const handleLogout = () => {
