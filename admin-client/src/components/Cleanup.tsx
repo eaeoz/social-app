@@ -697,7 +697,7 @@ function Cleanup() {
             </div>
             <div className="setting-item">
               <span className="setting-label">💾 Auto-Clean Threshold:</span>
-              <span className="setting-value">{((siteSettings.cleanMinSize || 500) * 1024).toFixed(0)} KB</span>
+              <span className="setting-value">{((siteSettings.cleanMinSize || 1024) / 1024).toFixed(0)} MB ({siteSettings.cleanMinSize || 1024} KB)</span>
               <span className="setting-description">Automatic cleanup triggers when storage exceeds this</span>
             </div>
           </div>
