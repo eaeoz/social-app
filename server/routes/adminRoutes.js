@@ -24,6 +24,124 @@ const requireAdmin = async (req, res, next) => {
   }
 };
 
+// Get repeated words analysis
+router.get('/repeated-words-analysis', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    console.log('🔍 Starting repeated words analysis...');
+    
+    // Get all messages
+    const messages = await db.collection('messages')
+      .find({})
+      .project({ senderId: 1, content: 1, isPrivate: 1 })
+      .toArray();
+    
+    console.log(`📊 Found ${messages.length} total messages`);
+    
+    // Analyze words by user
+    const userWordAnalysis = {};
+    
+    for (const message of messages) {
+      const userId = message.senderId.toString();
+      
+      if (!userWordAnalysis[userId]) {
+        userWordAnalysis[userId] = {
+          publicWords: {},
+          privateWords: {},
+          publicMessageCount: 0,
+          privateMessageCount: 0
+        };
+      }
+      
+      // Extract words (10+ characters) from message
+      const words = message.content
+        .toLowerCase()
+        .match(/\b\w{10,}\b/g) || []; // Words with 10 or more characters
+      
+      // Count word occurrences
+      const messageType = message.isPrivate ? 'privateWords' : 'publicWords';
+      const messageCountKey = message.isPrivate ? 'privateMessageCount' : 'publicMessageCount';
+      
+      userWordAnalysis[userId][messageCountKey]++;
+      
+      for (const word of words) {
+        if (!userWordAnalysis[userId][messageType][word]) {
+          userWordAnalysis[userId][messageType][word] = 0;
+        }
+        userWordAnalysis[userId][messageType][word]++;
+      }
+    }
+    
+    // Get top 10 users with most repeated words
+    const userStats = [];
+    
+    for (const [userId, analysis] of Object.entries(userWordAnalysis)) {
+      // Find repeated words (count > 1) for both public and private
+      const publicRepeatedWords = Object.entries(analysis.publicWords)
+        .filter(([_, count]) => count > 1);
+      
+      const privateRepeatedWords = Object.entries(analysis.privateWords)
+        .filter(([_, count]) => count > 1);
+      
+      const totalRepeatedWords = publicRepeatedWords.length + privateRepeatedWords.length;
+      
+      if (totalRepeatedWords > 0) {
+        userStats.push({
+          userId,
+          totalRepeatedWords,
+          publicRepeatedWords: publicRepeatedWords.length,
+          privateRepeatedWords: privateRepeatedWords.length,
+          publicMessageCount: analysis.publicMessageCount,
+          privateMessageCount: analysis.privateMessageCount,
+          topPublicWords: publicRepeatedWords
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([word, count]) => ({ word, count })),
+          topPrivateWords: privateRepeatedWords
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([word, count]) => ({ word, count }))
+        });
+      }
+    }
+    
+    // Sort by total repeated words and get top 10
+    const top10Users = userStats
+      .sort((a, b) => b.totalRepeatedWords - a.totalRepeatedWords)
+      .slice(0, 10);
+    
+    // Get user details for top 10
+    const userIds = top10Users.map(u => new ObjectId(u.userId));
+    const users = await db.collection('users')
+      .find({ _id: { $in: userIds } })
+      .project({ username: 1, email: 1, nickName: 1 })
+      .toArray();
+    
+    // Map user details to stats
+    const result = top10Users.map(stat => {
+      const user = users.find(u => u._id.toString() === stat.userId);
+      return {
+        ...stat,
+        username: user?.username || 'Unknown',
+        email: user?.email || 'Unknown',
+        nickName: user?.nickName || user?.username || 'Unknown'
+      };
+    });
+    
+    console.log(`✅ Analysis complete: Found ${userStats.length} users with repeated words, returning top 10`);
+    
+    res.json({
+      topUsers: result,
+      totalAnalyzedUsers: userStats.length,
+      totalMessages: messages.length
+    });
+  } catch (error) {
+    console.error('Repeated words analysis error:', error);
+    res.status(500).json({ error: 'Failed to analyze repeated words' });
+  }
+});
+
 // Get statistics
 router.get('/statistics', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -1220,7 +1338,9 @@ router.delete('/cleanup/inactive-users-and-old-data', authenticateToken, require
         { participants: userId },
         { 
           $pull: { participants: userId },
-          $set: { updatedAt: new Date() }
+          $set: { updatedAt: new Date()
+
+ }
         }
       );
       stats.roomsUpdated += roomsResult.modifiedCount;

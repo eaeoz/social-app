@@ -7,6 +7,7 @@ import Statistics from './Statistics';
 import Rooms from './Rooms';
 import ArchivedReports from './ArchivedReports';
 import Cleanup from './Cleanup';
+import RepeatedWordsAnalysis from './RepeatedWordsAnalysis';
 import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
@@ -40,6 +41,14 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
           >
             <span className="nav-icon">📊</span>
             <span className="nav-label">Statistics</span>
+          </Link>
+          <Link
+            to="/repeated-words"
+            className={`nav-item ${location.pathname === '/repeated-words' ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">🔤</span>
+            <span className="nav-label">Repeated Words</span>
           </Link>
           <Link
             to="/users"
@@ -131,6 +140,7 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
         <div className="dashboard-content">
           <Routes>
             <Route path="/" element={<Statistics />} />
+            <Route path="/repeated-words" element={<RepeatedWordsAnalysis />} />
             <Route path="/users" element={<Users />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/reports" element={<Reports />} />
