@@ -35,6 +35,12 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:4000',
   'http://localhost:8888',
+  'https://localhost:5173', // HTTPS local development
+  'https://localhost:5174', // HTTPS Admin dashboard
+  'https://localhost:5175', // HTTPS Admin dashboard
+  'https://localhost:3000', // HTTPS Admin dashboard
+  'https://localhost:4000', // HTTPS API
+  'https://localhost:8888', // HTTPS Admin dashboard (netflify dev)
   'https://netcify.netlify.app',
   'https://netcifyadmin.netlify.app', // Admin dashboard production
   process.env.CLIENT_URL,
