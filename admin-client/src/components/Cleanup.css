@@ -134,6 +134,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #000000;
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .storage-details {

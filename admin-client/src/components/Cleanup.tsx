@@ -476,12 +476,11 @@ function Cleanup() {
     
     const data = [];
     
-    if (storageStats.dataSize > 0) {
-      data.push({ name: 'Data Used', value: storageStats.dataSize, color: '#3b82f6' });
-    }
+    // Data Used = Documents Data + Indexes Data
+    const dataUsed = storageStats.dataSize + storageStats.indexSize;
     
-    if (storageStats.indexSize > 0) {
-      data.push({ name: 'Free', value: storageStats.indexSize, color: '#10b981' });
+    if (dataUsed > 0) {
+      data.push({ name: 'Data Used', value: dataUsed, color: '#10b981' });
     }
     
     if (storageStats.freeStorageSize > 0) {
@@ -495,15 +494,13 @@ function Cleanup() {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length && storageStats) {
-      const dataUsed = storageStats.dataSize;
-      const free = storageStats.indexSize;
+      // Data Used = Documents Data + Indexes Data
+      const dataUsed = storageStats.dataSize + storageStats.indexSize;
       const dataUsedPercent = ((dataUsed / storageStats.storageSize) * 100).toFixed(1);
-      const freePercent = ((free / storageStats.storageSize) * 100).toFixed(1);
       
       return (
         <div className="custom-tooltip">
           <p className="percentage">Data Used: {dataUsedPercent}%</p>
-          <p className="percentage">Free: {freePercent}%</p>
         </div>
       );
     }
