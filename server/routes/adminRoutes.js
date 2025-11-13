@@ -621,7 +621,7 @@ router.put('/reports/:reportId', authenticateToken, requireAdmin, async (req, re
 router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { suspend } = req.body; // true to suspend, false to unsuspend
+    const { suspended } = req.body; // true to suspend, false to unsuspend
     
     const db = getDatabase();
     
@@ -633,7 +633,7 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
     
     // If unsuspending and user has reports, transfer them to collection
     let reportsCleared = false;
-    if (!suspend && user.reports && user.reports.length > 0) {
+    if (!suspended && user.reports && user.reports.length > 0) {
       console.log(`Transferring ${user.reports.length} reports to collection for user: ${user.email}`);
       const transferResult = await transferUserReportsToCollection(
         userId, 
@@ -653,11 +653,11 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
     
     // Update user suspension status and clear reports if transferred
     const updateData = {
-      userSuspended: suspend,
-      suspendedAt: suspend ? new Date() : null,
-      suspendedBy: suspend ? req.user.userId : null,
-      unsuspendedAt: !suspend ? new Date() : null,
-      unsuspendedBy: !suspend ? req.user.userId : null
+      userSuspended: suspended,
+      suspendedAt: suspended ? new Date() : null,
+      suspendedBy: suspended ? req.user.userId : null,
+      unsuspendedAt: !suspended ? new Date() : null,
+      unsuspendedBy: !suspended ? req.user.userId : null
     };
     
     // Clear reports array if they were successfully archived
@@ -684,7 +684,7 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
     console.log(`Verified user state: reports count = ${updatedUser?.reports?.length || 0}, suspended = ${updatedUser?.userSuspended}`);
     
     // If suspending user, force logout via socket event
-    if (suspend) {
+    if (suspended) {
       const io = req.app.get('io');
       if (io) {
         io.emit('user_suspended', { 
@@ -696,8 +696,8 @@ router.put('/users/:userId/suspend', authenticateToken, requireAdmin, async (req
     }
     
     res.json({ 
-      message: suspend ? 'User suspended' : 'User unsuspended',
-      reportsTransferred: !suspend && user.reports ? user.reports.length : 0,
+      message: suspended ? 'User suspended' : 'User unsuspended',
+      reportsTransferred: !suspended && user.reports ? user.reports.length : 0,
       reportsCleared: reportsCleared,
       currentReportCount: updatedUser?.reports?.length || 0
     });

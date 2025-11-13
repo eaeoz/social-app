@@ -38,6 +38,7 @@ function Statistics() {
   const [wordAnalysis, setWordAnalysis] = useState<AnalysisData | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWordStats | null>(null);
+  const [suspendingUser, setSuspendingUser] = useState(false);
 
   useEffect(() => {
     fetchStatistics();
@@ -87,6 +88,46 @@ function Statistics() {
       console.error('Error fetching word analysis:', error);
     } finally {
       setAnalysisLoading(false);
+    }
+  };
+
+  const handleSuspendUser = async () => {
+    if (!selectedUser || suspendingUser) return;
+
+    if (!confirm(`Are you sure you want to suspend ${selectedUser.nickName}?`)) {
+      return;
+    }
+
+    try {
+      setSuspendingUser(true);
+      const token = localStorage.getItem('adminToken');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/users/${selectedUser.userId}/suspend`,
+        {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ suspended: true })
+        }
+      );
+
+      if (response.ok) {
+        alert(`User ${selectedUser.nickName} has been suspended successfully.`);
+        setSelectedUser(null);
+        // Optionally refresh the analysis
+        fetchWordAnalysis();
+      } else {
+        const error = await response.json();
+        alert(`Failed to suspend user: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      alert('Failed to suspend user. Please try again.');
+    } finally {
+      setSuspendingUser(false);
     }
   };
 
@@ -260,6 +301,16 @@ function Statistics() {
                 <span>Private Messages:</span>
                 <strong>{selectedUser.privateMessageCount}</strong>
               </div>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="suspend-user-btn"
+                onClick={handleSuspendUser}
+                disabled={suspendingUser}
+              >
+                {suspendingUser ? '⏳ Suspending...' : '🚫 Suspend User'}
+              </button>
             </div>
           </div>
         </div>
