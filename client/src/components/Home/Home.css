@@ -2626,6 +2626,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  outline: none;
+}
+
+.dnd-toggle:focus {
+  outline: none;
+}
+
+.dnd-toggle:active {
+  outline: none;
 }
 
 .dnd-toggle:hover {
