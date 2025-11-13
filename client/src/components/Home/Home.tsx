@@ -14,6 +14,7 @@ import { canSendMessage, recordMessageSent, getSecondsUntilReset } from '../../u
 import { nsfwDetector } from '../../utils/nsfwDetector';
 import { handleNewMessageNotification, resetNotifications } from '../../utils/notificationUtils';
 import { ringtoneManager } from '../../utils/ringtoneUtils';
+import { profanityFilter } from '../../utils/profanityFilter';
 import './Home.css';
 
 interface HomeProps {
@@ -1246,6 +1247,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
       return;
     }
 
+    // Filter profanity from the message
+    const cleanedContent = profanityFilter.clean(content);
+    
+    // Optional: Log if profanity was detected
+    if (cleanedContent !== content) {
+      console.log('🚫 Profanity detected and filtered');
+    }
+
     // Record the message sent
     recordMessageSent();
 
@@ -1254,7 +1263,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         receiverId: selectedPrivateChat.otherUser.userId,
         senderId: user.userId,
         senderName: user.nickName || user.username,
-        content: content,
+        content: cleanedContent,
         messageType: 'text'
       });
       
@@ -1262,7 +1271,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         messageId: `temp_${Date.now()}`,
         senderId: user.userId,
         senderName: user.nickName || user.username,
-        content: content,
+        content: cleanedContent,
         timestamp: new Date(),
         messageType: 'text'
       };
@@ -1272,14 +1281,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
         roomId: selectedRoom.roomId,
         roomName: selectedRoom.name,
         chatType,
-        content: content
+        content: cleanedContent
       });
       
       socket.emit('send_room_message', {
         roomId: selectedRoom.roomId,
         senderId: user.userId,
         senderName: user.nickName || user.username,
-        content: content,
+        content: cleanedContent,
         messageType: 'text'
       });
     }
