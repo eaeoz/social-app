@@ -5,6 +5,12 @@ import { authenticateToken } from '../middleware/auth.js';
 import { transferUserReportsToCollection, getUserReportsFromCollection } from '../utils/transferUserReportsToCollection.js';
 import { manualCleanup } from '../utils/backupAndCleanup.js';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -1483,6 +1489,164 @@ router.post('/cleanup/manual-backup-cleanup', authenticateToken, requireAdmin, a
   } catch (error) {
     console.error('Manual cleanup error:', error);
     res.status(500).json({ error: 'Failed to perform cleanup' });
+  }
+});
+
+// Get backup folder statistics
+router.get('/cleanup/backup-stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const backupDir = path.join(__dirname, '..', 'backups');
+    
+    // Check if backup directory exists using async fs
+    try {
+      await fs.promises.access(backupDir);
+    } catch (error) {
+      console.log('❌ Backup directory does not exist:', backupDir);
+      return res.json({ 
+        totalSize: 0,
+        totalSizeKB: '0.00',
+        fileCount: 0,
+        organizedFolderCount: 0
+      });
+    }
+    
+    let totalSize = 0;
+    let fileCount = 0;
+    let organizedFolderCount = 0;
+    
+    // Function to recursively calculate directory size using async fs
+    const getDirectorySize = async (dirPath) => {
+      try {
+        const items = await fs.promises.readdir(dirPath, { withFileTypes: true });
+        
+        for (const item of items) {
+          const itemPath = path.join(dirPath, item.name);
+          
+          try {
+            if (item.isDirectory()) {
+              // Count organized folders
+              if (item.name.startsWith('organized_')) {
+                organizedFolderCount++;
+              }
+              await getDirectorySize(itemPath);
+            } else {
+              const stats = await fs.promises.stat(itemPath);
+              totalSize += stats.size;
+              fileCount++;
+              console.log(`📄 ${item.name}: ${stats.size} bytes`);
+            }
+          } catch (itemError) {
+            console.error(`⚠️ Error processing ${itemPath}:`, itemError.message);
+          }
+        }
+      } catch (dirError) {
+        console.error(`⚠️ Error reading directory ${dirPath}:`, dirError.message);
+      }
+    };
+    
+    await getDirectorySize(backupDir);
+    
+    const sizeInKB = (totalSize / 1024).toFixed(2);
+    console.log(`📊 Backup stats: ${fileCount} files, ${totalSize} bytes (${sizeInKB} KB), ${organizedFolderCount} organized folders`);
+    
+    res.json({
+      totalSize,
+      totalSizeKB: sizeInKB,
+      fileCount,
+      organizedFolderCount
+    });
+  } catch (error) {
+    console.error('Get backup stats error:', error);
+    res.status(500).json({ error: 'Failed to get backup statistics' });
+  }
+});
+
+// Delete organized backup folders
+router.delete('/cleanup/organized-backups', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { cleanOrganizedBackups } = await import('../utils/cleanOrganizedBackups.js');
+    
+    console.log('🧹 Admin requested cleanup of organized backup folders');
+    
+    const result = await cleanOrganizedBackups();
+    
+    res.json({
+      message: 'Organized backup folders deleted successfully',
+      ...result
+    });
+  } catch (error) {
+    console.error('Delete organized backups error:', error);
+    res.status(500).json({ error: 'Failed to delete organized backups' });
+  }
+});
+
+// Delete ALL backup files
+router.delete('/cleanup/all-backups', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const backupDir = path.join(__dirname, '..', 'backups');
+    
+    console.log('🚨 Admin requested deletion of ALL backups in:', backupDir);
+    
+    // Check if backup directory exists
+    try {
+      await fs.promises.access(backupDir);
+    } catch (error) {
+      console.log('❌ Backup directory does not exist:', backupDir);
+      return res.json({ 
+        message: 'Backup directory does not exist',
+        filesDeleted: 0,
+        foldersDeleted: 0
+      });
+    }
+    
+    let filesDeleted = 0;
+    let foldersDeleted = 0;
+    
+    // Function to recursively delete directory contents
+    const deleteDirectoryContents = async (dirPath) => {
+      try {
+        const items = await fs.promises.readdir(dirPath, { withFileTypes: true });
+        
+        for (const item of items) {
+          const itemPath = path.join(dirPath, item.name);
+          
+          try {
+            if (item.isDirectory()) {
+              // Recursively delete folder contents first
+              await deleteDirectoryContents(itemPath);
+              // Then delete the folder itself
+              await fs.promises.rmdir(itemPath);
+              foldersDeleted++;
+              console.log(`📂 Deleted folder: ${item.name}`);
+            } else {
+              // Delete file
+              await fs.promises.unlink(itemPath);
+              filesDeleted++;
+              console.log(`📄 Deleted file: ${item.name}`);
+            }
+          } catch (itemError) {
+            console.error(`⚠️ Error deleting ${itemPath}:`, itemError.message);
+          }
+        }
+      } catch (dirError) {
+        console.error(`⚠️ Error reading directory ${dirPath}:`, dirError.message);
+        throw dirError;
+      }
+    };
+    
+    // Delete all contents of backup directory
+    await deleteDirectoryContents(backupDir);
+    
+    console.log(`✅ Deleted all backups: ${filesDeleted} files, ${foldersDeleted} folders`);
+    
+    res.json({
+      message: 'All backups deleted successfully',
+      filesDeleted,
+      foldersDeleted
+    });
+  } catch (error) {
+    console.error('Delete all backups error:', error);
+    res.status(500).json({ error: 'Failed to delete all backups' });
   }
 });
 

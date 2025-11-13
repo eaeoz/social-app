@@ -47,6 +47,13 @@ interface CleanupResult {
   storageAfter: number;
 }
 
+interface BackupStats {
+  totalSize: number;
+  totalSizeKB: string;
+  fileCount: number;
+  organizedFolderCount: number;
+}
+
 function Cleanup() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -59,10 +66,12 @@ function Cleanup() {
   const [storageLoading, setStorageLoading] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({});
   const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
+  const [backupStats, setBackupStats] = useState<BackupStats | null>(null);
 
   useEffect(() => {
     fetchStorageStats();
     fetchSiteSettings();
+    fetchBackupStats();
   }, []);
 
   useEffect(() => {
@@ -116,6 +125,26 @@ function Cleanup() {
     }
   };
 
+  const fetchBackupStats = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/cleanup/backup-stats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBackupStats(data);
+      } else {
+        console.error('Failed to fetch backup stats:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching backup stats:', error);
+    }
+  };
+
   const handleManualBackupCleanup = async () => {
     const cleanCycleMinutes = siteSettings.cleanCycle || 129600;
     const cleanCycleDays = (cleanCycleMinutes / 60 / 24).toFixed(1);
@@ -153,8 +182,9 @@ function Cleanup() {
         
         setMessage(successMsg);
         
-        // Refresh storage stats
+        // Refresh storage stats and backup stats
         await fetchStorageStats();
+        await fetchBackupStats();
       } else {
         const error = await response.json();
         setMessage(`❌ Failed to perform cleanup: ${error.error || 'Unknown error'}`);
@@ -165,6 +195,84 @@ function Cleanup() {
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(''), 15000);
+    }
+  };
+
+  const handleDeleteOrganizedBackups = async () => {
+    if (!confirm('🗑️ Delete Organized Backup Folders\n\nThis will delete all organized backup folders (folders starting with "organized_") while keeping the original backup JSON files.\n\nContinue?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/organized-backups`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Successfully deleted ${data.deleted || 0} organized backup folder(s)`);
+        
+        // Refresh backup stats
+        await fetchBackupStats();
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to delete organized backups: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting organized backups:', error);
+      setMessage('❌ Error deleting organized backups');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
+  const handleDeleteAllBackups = async () => {
+    if (!confirm('🚨 DELETE ALL BACKUPS\n\n⚠️ WARNING: This will permanently delete ALL backup files in the server/backups/ directory!\n\nThis includes:\n• All backup JSON files\n• All organized backup folders\n• Everything in the backups directory\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?')) {
+      return;
+    }
+
+    if (!confirm('🚨 FINAL WARNING\n\nClick OK to permanently delete ALL backups.\nThis is your last chance to cancel!')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/all-backups`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Successfully deleted all backups: ${data.filesDeleted || 0} files, ${data.foldersDeleted || 0} folders`);
+        
+        // Refresh backup stats
+        await fetchBackupStats();
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to delete all backups: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting all backups:', error);
+      setMessage('❌ Error deleting all backups');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 5000);
     }
   };
 
@@ -589,7 +697,7 @@ function Cleanup() {
             </div>
             <div className="setting-item">
               <span className="setting-label">💾 Auto-Clean Threshold:</span>
-              <span className="setting-value">{siteSettings.cleanMinSize || 500} MB</span>
+              <span className="setting-value">{((siteSettings.cleanMinSize || 500) * 1024).toFixed(0)} KB</span>
               <span className="setting-description">Automatic cleanup triggers when storage exceeds this</span>
             </div>
           </div>
@@ -598,13 +706,47 @@ function Cleanup() {
               Click the button below to manually backup and delete messages older than {siteSettings.cleanCycle || 129600} minutes ({((siteSettings.cleanCycle || 129600) / 60 / 24).toFixed(1)} days).
               Backup files will be saved to <code>server/backups/</code> directory.
             </p>
-            <button
-              className="cleanup-btn backup-cleanup"
-              onClick={handleManualBackupCleanup}
-              disabled={loading}
-            >
-              {loading ? '⏳ Processing...' : '🧹 Manual Backup & Cleanup'}
-            </button>
+            <div className="backup-stats">
+              <div className="stat-item">
+                <span className="stat-label">📁 Backup Folder Size:</span>
+                <span className="stat-value">{backupStats?.totalSizeKB || '0.00'} KB</span>
+              </div>
+              {backupStats && backupStats.organizedFolderCount > 0 && (
+                <div className="stat-item organized-warning">
+                  <span className="stat-label">📂 Organized Folders:</span>
+                  <span className="stat-value">{backupStats.organizedFolderCount}</span>
+                </div>
+              )}
+            </div>
+            <div className="cleanup-buttons-row">
+              <button
+                className="cleanup-btn backup-cleanup"
+                onClick={handleManualBackupCleanup}
+                disabled={loading}
+              >
+                {loading ? '⏳ Processing...' : '🧹 Manual Backup & Cleanup'}
+              </button>
+              {backupStats && backupStats.organizedFolderCount > 0 && (
+                <button
+                  className="cleanup-btn delete-organized"
+                  onClick={handleDeleteOrganizedBackups}
+                  disabled={loading}
+                  title="Delete organized backup folders (keeps original JSON files)"
+                >
+                  {loading ? '⏳ Processing...' : '🗑️ Delete Organized Backups'}
+                </button>
+              )}
+              {backupStats && parseFloat(backupStats.totalSizeKB) > 0 && (
+                <button
+                  className="cleanup-btn delete-all-backups"
+                  onClick={handleDeleteAllBackups}
+                  disabled={loading}
+                  title="Delete ALL backup files (cannot be undone!)"
+                >
+                  {loading ? '⏳ Processing...' : '🗑️ Delete ALL Backups'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

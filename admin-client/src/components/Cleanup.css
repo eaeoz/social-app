@@ -109,6 +109,88 @@
   cursor: not-allowed;
 }
 
+.backup-stats {
+  display: flex;
+  gap: 20px;
+  margin: 15px 0;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.backup-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.backup-stats .stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.backup-stats .stat-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.backup-stats .stat-item.organized-warning {
+  background: rgba(239, 68, 68, 0.2);
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.cleanup-buttons-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.cleanup-buttons-row .cleanup-btn {
+  flex: 1;
+  min-width: 200px;
+}
+
+.cleanup-btn.delete-organized {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cleanup-btn.delete-organized:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.cleanup-btn.delete-organized:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cleanup-btn.delete-all-backups {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 2px solid #b91c1c;
+}
+
+.cleanup-btn.delete-all-backups:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+  background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+}
+
+.cleanup-btn.delete-all-backups:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .storage-stats-section.loading {
   display: flex;
   justify-content: center;
@@ -682,6 +764,20 @@
 
   .stat-value {
     font-size: 1rem;
+  }
+
+  .backup-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cleanup-buttons-row {
+    flex-direction: column;
+  }
+
+  .cleanup-buttons-row .cleanup-btn {
+    width: 100%;
+    min-width: 100%;
   }
 }
 
