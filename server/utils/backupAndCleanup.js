@@ -167,18 +167,20 @@ export async function manualCleanup() {
 export async function checkAndRunAutoCleanup() {
   try {
     const settings = await getSiteSettings();
-    const cleanMinSizeMB = settings.cleanMinSize || 500;
+    const cleanMinSizeKB = settings.cleanMinSize || 512000; // Default: 512000 KB = 500 MB
+    const cleanMinSizeMB = cleanMinSizeKB / 1024; // Convert KB to MB for comparison
     
     // Get current storage size
     const storage = await getStorageSize();
     
-    console.log(`📊 Current storage: ${storage.totalMB.toFixed(2)} MB, Threshold: ${cleanMinSizeMB} MB`);
+    console.log(`📊 Current storage: ${storage.totalMB.toFixed(2)} MB, Threshold: ${cleanMinSizeMB.toFixed(2)} MB (${cleanMinSizeKB} KB)`);
     
     // Check if storage exceeds threshold
     if (storage.totalMB >= cleanMinSizeMB) {
       console.log('⚠️ Storage threshold exceeded, running automatic cleanup...');
       const result = await manualCleanup();
       return {
+        cleanupPerformed: true,
         triggered: true,
         reason: 'storage_threshold_exceeded',
         ...result
@@ -186,6 +188,7 @@ export async function checkAndRunAutoCleanup() {
     } else {
       console.log('✅ Storage is below threshold, no cleanup needed');
       return {
+        cleanupPerformed: false,
         triggered: false,
         currentSize: storage.totalMB,
         threshold: cleanMinSizeMB

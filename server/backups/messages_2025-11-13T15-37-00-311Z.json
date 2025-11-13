@@ -1,0 +1,101 @@
+[
+  {
+    "_id": "6915e967c558fa9c7fc8d672",
+    "senderId": "6911f671be2c55e447204507",
+    "receiverId": "691438a2fc32b0b05345c5ac",
+    "content": "testet",
+    "messageType": "text",
+    "isPrivate": true,
+    "isRead": true,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:21:27.413Z"
+  },
+  {
+    "_id": "6915e969c558fa9c7fc8d673",
+    "senderId": "691438a2fc32b0b05345c5ac",
+    "roomId": "690c0dd25a992c306dd004b4",
+    "content": "asdfds",
+    "messageType": "text",
+    "isPrivate": false,
+    "isRead": false,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:21:29.733Z"
+  },
+  {
+    "_id": "6915e96ec558fa9c7fc8d674",
+    "senderId": "691438a2fc32b0b05345c5ac",
+    "receiverId": "6911f671be2c55e447204507",
+    "content": "asdaf",
+    "messageType": "text",
+    "isPrivate": true,
+    "isRead": true,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:21:34.591Z"
+  },
+  {
+    "_id": "6915e978c558fa9c7fc8d675",
+    "senderId": "6911f671be2c55e447204507",
+    "roomId": "690c0dd25a992c306dd004b4",
+    "content": "asdfasd",
+    "messageType": "text",
+    "isPrivate": false,
+    "isRead": false,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:21:44.375Z"
+  },
+  {
+    "_id": "6915e97ec558fa9c7fc8d676",
+    "senderId": "6911f671be2c55e447204507",
+    "roomId": "690c0dd25a992c306dd004b5",
+    "content": "asdf",
+    "messageType": "text",
+    "isPrivate": false,
+    "isRead": false,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:21:50.080Z"
+  },
+  {
+    "_id": "6915e983c558fa9c7fc8d677",
+    "senderId": "691438a2fc32b0b05345c5ac",
+    "roomId": "690c0dd25a992c306dd004b5",
+    "content": "asdfsd",
+    "messageType": "text",
+    "isPrivate": false,
+    "isRead": false,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:21:55.647Z"
+  },
+  {
+    "_id": "6915e988c558fa9c7fc8d678",
+    "senderId": "691438a2fc32b0b05345c5ac",
+    "roomId": "6912e22df4045ac285a4b174",
+    "content": "asdfsfd",
+    "messageType": "text",
+    "isPrivate": false,
+    "isRead": false,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:22:00.415Z"
+  },
+  {
+    "_id": "6915e98fc558fa9c7fc8d679",
+    "senderId": "6911f671be2c55e447204507",
+    "roomId": "690c0dd25a992c306dd004b6",
+    "content": "asdfsdaf",
+    "messageType": "text",
+    "isPrivate": false,
+    "isRead": false,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:22:07.329Z"
+  },
+  {
+    "_id": "6915e9a2c558fa9c7fc8d67a",
+    "senderId": "69159ca823b4bab2ec4b9a4c",
+    "receiverId": "6911f671be2c55e447204507",
+    "content": "asdfds",
+    "messageType": "text",
+    "isPrivate": true,
+    "isRead": true,
+    "isEdited": false,
+    "timestamp": "2025-11-13T14:22:26.561Z"
+  }
+]

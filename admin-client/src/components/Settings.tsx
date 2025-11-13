@@ -32,7 +32,7 @@ function Settings() {
     siteEmail: '',
     sessionTimeout: 10080,
     cleanCycle: 129600,
-    cleanMinSize: 500,
+    cleanMinSize: 512000,
     cleanCheck: 'every_12_hours'
   });
   const [loading, setLoading] = useState(true);
@@ -349,19 +349,22 @@ function Settings() {
 
           <div className="setting-item">
             <div className="setting-info">
-              <label>Auto-Clean Threshold (MB)</label>
+              <label>Auto-Clean Threshold (KB)</label>
               <span className="setting-description">
-                Automatic cleanup triggers when database storage exceeds this size (in megabytes)
+                Automatic cleanup triggers when database storage exceeds this size (in kilobytes). Example: 1024 KB = 1 MB
+              </span>
+              <span className="setting-description" style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', display: 'block' }}>
+                Current: {((settings.cleanMinSize || 512000) / 1024).toFixed(2)} MB
               </span>
             </div>
             <input
               type="number"
               className="setting-input"
-              value={settings.cleanMinSize || 500}
-              onChange={(e) => setSettings({...settings, cleanMinSize: parseInt(e.target.value) || 500})}
-              min="100"
-              max="10000"
-              placeholder="500"
+              value={settings.cleanMinSize || 512000}
+              onChange={(e) => setSettings({...settings, cleanMinSize: parseInt(e.target.value) || 512000})}
+              min="1024"
+              max="10240000"
+              placeholder="512000 (500 MB)"
             />
           </div>
 

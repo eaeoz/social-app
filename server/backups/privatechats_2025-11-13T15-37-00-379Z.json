@@ -1,0 +1,38 @@
+[
+  {
+    "_id": "6915964c23b4bab2ec4b9a4b",
+    "participants": [
+      "69142da78c47d56c5ea79c26",
+      "6911f671be2c55e447204507"
+    ],
+    "lastMessageId": "6915964c23b4bab2ec4b9a4a",
+    "lastMessageAt": "2025-11-13T08:26:52.225Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-13T08:26:52.225Z"
+  },
+  {
+    "_id": "6915c6f6a9be476ec04b088e",
+    "participants": [
+      "6911f671be2c55e447204507",
+      "691438a2fc32b0b05345c5ac"
+    ],
+    "lastMessageId": "6915e96ec558fa9c7fc8d674",
+    "lastMessageAt": "2025-11-13T14:21:34.729Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-13T11:54:30.356Z"
+  },
+  {
+    "_id": "6915e9a2c558fa9c7fc8d67b",
+    "participants": [
+      "69159ca823b4bab2ec4b9a4c",
+      "6911f671be2c55e447204507"
+    ],
+    "lastMessageId": "6915e9a2c558fa9c7fc8d67a",
+    "lastMessageAt": "2025-11-13T14:22:26.709Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-13T14:22:26.709Z"
+  }
+]
