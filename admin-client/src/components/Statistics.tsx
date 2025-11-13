@@ -249,6 +249,12 @@ function Statistics() {
   return (
     <div className="statistics-container">
       <h1 className="visually-hidden">Statistics - Netcify Admin Dashboard</h1>
+      
+      <div className="welcome-section">
+        <h2>Welcome to Admin Dashboard</h2>
+        <p>Manage users, handle reports, and configure site settings from this dashboard.</p>
+      </div>
+
       <h2>Dashboard Overview</h2>
       
       <div className="stats-grid">
@@ -283,11 +289,6 @@ function Statistics() {
             <div className="stat-label">Pending Reports</div>
           </div>
         </div>
-      </div>
-
-      <div className="welcome-section">
-        <h3>Welcome to Admin Dashboard</h3>
-        <p>Manage users, handle reports, and configure site settings from this dashboard.</p>
       </div>
 
       {/* Repeated Words Analysis Section */}
