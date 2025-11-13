@@ -28,25 +28,6 @@ interface SiteSettings {
   cleanCycle?: number;
 }
 
-interface CleanupResult {
-  success: boolean;
-  cleanCycleDays: number;
-  messagesBackup: {
-    count: number;
-    file: string | null;
-  };
-  privatechatsBackup: {
-    count: number;
-    file: string | null;
-  };
-  deleted: {
-    messages: number;
-    privatechats: number;
-    total: number;
-  };
-  storageAfter: number;
-}
-
 interface BackupStats {
   totalSize: number;
   totalSizeKB: string;
