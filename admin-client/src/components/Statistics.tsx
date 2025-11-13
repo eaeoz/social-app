@@ -1,6 +1,31 @@
 import { useState, useEffect } from 'react';
 import './Statistics.css';
 
+interface WordData {
+  word: string;
+  count: number;
+}
+
+interface UserWordStats {
+  userId: string;
+  username: string;
+  nickName: string;
+  email: string;
+  totalRepeatedWords: number;
+  publicRepeatedWords: number;
+  privateRepeatedWords: number;
+  publicMessageCount: number;
+  privateMessageCount: number;
+  topPublicWords: WordData[];
+  topPrivateWords: WordData[];
+}
+
+interface AnalysisData {
+  topUsers: UserWordStats[];
+  totalAnalyzedUsers: number;
+  totalMessages: number;
+}
+
 function Statistics() {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -10,8 +35,13 @@ function Statistics() {
     loading: true
   });
 
+  const [wordAnalysis, setWordAnalysis] = useState<AnalysisData | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWordStats | null>(null);
+
   useEffect(() => {
     fetchStatistics();
+    fetchWordAnalysis();
   }, []);
 
   const fetchStatistics = async () => {
@@ -34,6 +64,29 @@ function Statistics() {
     } catch (error) {
       console.error('Error fetching statistics:', error);
       setStats(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const fetchWordAnalysis = async () => {
+    try {
+      setAnalysisLoading(true);
+      const token = localStorage.getItem('adminToken');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/repeated-words-analysis`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWordAnalysis(data);
+      }
+    } catch (error) {
+      console.error('Error fetching word analysis:', error);
+    } finally {
+      setAnalysisLoading(false);
     }
   };
 
@@ -89,6 +142,128 @@ function Statistics() {
         <h3>Welcome to Admin Dashboard</h3>
         <p>Manage users, handle reports, and configure site settings from this dashboard.</p>
       </div>
+
+      {/* Repeated Words Analysis Section */}
+      <div className="repeated-words-section">
+        <h3>🔤 Repeated Words Analysis</h3>
+        <p className="section-description">
+          Top 10 users with most repeated words (10+ characters) in their messages
+        </p>
+
+        {analysisLoading ? (
+          <div className="analysis-loading">
+            <div className="spinner"></div>
+            <p>Analyzing messages...</p>
+          </div>
+        ) : wordAnalysis && wordAnalysis.topUsers.length > 0 ? (
+          <>
+            <div className="analysis-summary-mini">
+              <span>📊 {wordAnalysis.totalMessages} messages analyzed</span>
+              <span>👥 {wordAnalysis.totalAnalyzedUsers} users with repeated words</span>
+            </div>
+
+            <div className="word-bar-chart">
+              {wordAnalysis.topUsers.map((user, index) => {
+                const maxWords = wordAnalysis.topUsers[0].totalRepeatedWords;
+                const percentage = (user.totalRepeatedWords / maxWords) * 100;
+
+                return (
+                  <div
+                    key={user.userId}
+                    className="word-bar-item"
+                    onClick={() => setSelectedUser(user)}
+                  >
+                    <div className="word-bar-header">
+                      <span className="word-rank">#{index + 1}</span>
+                      <span className="word-username">{user.nickName}</span>
+                      <span className="word-total">{user.totalRepeatedWords} words</span>
+                    </div>
+                    <div className="word-bar-wrapper">
+                      <div
+                        className="word-bar-fill"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <div className="word-bar-details">
+                      <span className="detail-public">📢 {user.publicRepeatedWords} public</span>
+                      <span className="detail-private">🔒 {user.privateRepeatedWords} private</span>
+                      <span className="detail-msgs">
+                        {user.publicMessageCount + user.privateMessageCount} total msgs
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="no-analysis-data">
+            <p>No repeated words data available yet</p>
+          </div>
+        )}
+      </div>
+
+      {/* User Detail Modal */}
+      {selectedUser && (
+        <div className="word-modal-overlay" onClick={() => setSelectedUser(null)}>
+          <div className="word-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="word-modal-close" onClick={() => setSelectedUser(null)}>
+              ×
+            </button>
+            <h4>📋 {selectedUser.nickName}</h4>
+            <p className="modal-email">{selectedUser.email}</p>
+
+            <div className="modal-word-lists">
+              <div className="modal-word-section">
+                <h5>📢 Top Public Words</h5>
+                {selectedUser.topPublicWords.length > 0 ? (
+                  <ul>
+                    {selectedUser.topPublicWords.map((word, i) => (
+                      <li key={i}>
+                        <span>{word.word}</span>
+                        <strong>×{word.count}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-words-msg">No repeated public words</p>
+                )}
+              </div>
+
+              <div className="modal-word-section">
+                <h5>🔒 Top Private Words</h5>
+                {selectedUser.topPrivateWords.length > 0 ? (
+                  <ul>
+                    {selectedUser.topPrivateWords.map((word, i) => (
+                      <li key={i}>
+                        <span>{word.word}</span>
+                        <strong>×{word.count}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-words-msg">No repeated private words</p>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-stats">
+              <div className="modal-stat-row">
+                <span>Total Repeated Words:</span>
+                <strong>{selectedUser.totalRepeatedWords}</strong>
+              </div>
+              <div className="modal-stat-row">
+                <span>Public Messages:</span>
+                <strong>{selectedUser.publicMessageCount}</strong>
+              </div>
+              <div className="modal-stat-row">
+                <span>Private Messages:</span>
+                <strong>{selectedUser.privateMessageCount}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
