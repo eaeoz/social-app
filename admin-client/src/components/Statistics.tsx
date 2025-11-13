@@ -18,6 +18,7 @@ interface UserWordStats {
   privateMessageCount: number;
   topPublicWords: WordData[];
   topPrivateWords: WordData[];
+  userSuspended?: boolean;
 }
 
 interface AnalysisData {
@@ -39,6 +40,7 @@ function Statistics() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWordStats | null>(null);
   const [suspendingUser, setSuspendingUser] = useState(false);
+  const [cleaningMessages, setCleaningMessages] = useState(false);
 
   useEffect(() => {
     fetchStatistics();
@@ -91,6 +93,40 @@ function Statistics() {
     }
   };
 
+  const fetchUserDetails = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/users?search=&page=1&limit=1000`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const user = data.users.find((u: any) => u._id === userId);
+        return user;
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+    return null;
+  };
+
+  const handleUserClick = async (user: UserWordStats) => {
+    // Fetch full user details including suspension status
+    const userDetails = await fetchUserDetails(user.userId);
+    if (userDetails) {
+      setSelectedUser({
+        ...user,
+        userSuspended: userDetails.userSuspended || false
+      });
+    } else {
+      setSelectedUser(user);
+    }
+  };
+
   const handleSuspendUser = async () => {
     if (!selectedUser || suspendingUser) return;
 
@@ -117,7 +153,6 @@ function Statistics() {
       if (response.ok) {
         alert(`User ${selectedUser.nickName} has been suspended successfully.`);
         setSelectedUser(null);
-        // Optionally refresh the analysis
         fetchWordAnalysis();
       } else {
         const error = await response.json();
@@ -130,6 +165,77 @@ function Statistics() {
       setSuspendingUser(false);
     }
   };
+
+  const handleCleanPublicMessages = async () => {
+    if (!selectedUser || cleaningMessages) return;
+
+    if (!confirm(`Are you sure you want to delete all public messages from ${selectedUser.nickName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setCleaningMessages(true);
+      const token = localStorage.getItem('adminToken');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/public-messages/${selectedUser.userId}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Successfully deleted ${data.deletedCount} public messages from ${selectedUser.nickName}.`);
+        fetchWordAnalysis();
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete messages: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting public messages:', error);
+      alert('Failed to delete messages. Please try again.');
+    } finally {
+      setCleaningMessages(false);
+    }
+  };
+
+  const handleCleanPrivateMessages = async () => {
+    if (!selectedUser || cleaningMessages) return;
+
+    if (!confirm(`Are you sure you want to delete all private messages from ${selectedUser.nickName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setCleaningMessages(true);
+      const token = localStorage.getItem('adminToken');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/private-messages/${selectedUser.userId}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Successfully deleted ${data.deletedCount} private messages from ${selectedUser.nickName}.`);
+        fetchWordAnalysis();
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete messages: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting private messages:', error);
+      alert('Failed to delete messages. Please try again.');
+    } finally {
+      setCleaningMessages(false);
+    }
+  };
+
 
   if (stats.loading) {
     return (
@@ -212,7 +318,7 @@ function Statistics() {
                   <div
                     key={user.userId}
                     className="word-bar-item"
-                    onClick={() => setSelectedUser(user)}
+                    onClick={() => handleUserClick(user)}
                   >
                     <div className="word-bar-header">
                       <span className="word-rank">#{index + 1}</span>
@@ -304,12 +410,28 @@ function Statistics() {
             </div>
 
             <div className="modal-actions">
+              {!selectedUser.userSuspended && (
+                <button 
+                  className="suspend-user-btn"
+                  onClick={handleSuspendUser}
+                  disabled={suspendingUser}
+                >
+                  {suspendingUser ? '⏳ Suspending...' : '🚫 Suspend User'}
+                </button>
+              )}
               <button 
-                className="suspend-user-btn"
-                onClick={handleSuspendUser}
-                disabled={suspendingUser}
+                className="clean-messages-btn public"
+                onClick={handleCleanPublicMessages}
+                disabled={cleaningMessages}
               >
-                {suspendingUser ? '⏳ Suspending...' : '🚫 Suspend User'}
+                {cleaningMessages ? '⏳ Cleaning...' : '🧹 Clean All Public'}
+              </button>
+              <button 
+                className="clean-messages-btn private"
+                onClick={handleCleanPrivateMessages}
+                disabled={cleaningMessages}
+              >
+                {cleaningMessages ? '⏳ Cleaning...' : '🧹 Clean All Private'}
               </button>
             </div>
           </div>

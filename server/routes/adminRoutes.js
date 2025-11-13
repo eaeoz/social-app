@@ -1033,7 +1033,7 @@ router.delete('/cleanup/public-messages/:userId', authenticateToken, requireAdmi
   }
 });
 
-// Delete all private messages for a specific user
+// Clear private message content for a specific user (empties content instead of deleting)
 router.delete('/cleanup/private-messages/:userId', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -1045,23 +1045,31 @@ router.delete('/cleanup/private-messages/:userId', authenticateToken, requireAdm
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Delete all private messages sent by or received by this user
-    const result = await db.collection('messages').deleteMany({
-      $or: [
-        { senderId: new ObjectId(userId), isPrivate: true },
-        { receiverId: new ObjectId(userId), isPrivate: true }
-      ]
-    });
+    // Update (empty) all private messages sent by this user - keep conversation structure
+    const result = await db.collection('messages').updateMany(
+      {
+        senderId: new ObjectId(userId),
+        isPrivate: true
+      },
+      {
+        $set: {
+          content: '[Message content removed by admin]',
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: 'admin'
+        }
+      }
+    );
     
-    console.log(`🧹 Deleted ${result.deletedCount} private messages for user: ${user.username}`);
+    console.log(`🧹 Cleared content of ${result.modifiedCount} private messages for user: ${user.username}`);
     
     res.json({ 
-      message: 'Private messages deleted successfully',
-      deletedCount: result.deletedCount
+      message: 'Private message contents cleared successfully',
+      deletedCount: result.modifiedCount
     });
   } catch (error) {
-    console.error('Delete private messages error:', error);
-    res.status(500).json({ error: 'Failed to delete private messages' });
+    console.error('Clear private messages error:', error);
+    res.status(500).json({ error: 'Failed to clear private messages' });
   }
 });
 
