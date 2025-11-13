@@ -34,6 +34,7 @@ export async function initializeSiteSettings() {
         sessionTimeout: 10080, // Session timeout in MINUTES (default: 10080 = 7 days)
         cleanMinSize: 500, // Storage size in MB that triggers automatic cleanup (default: 500 MB)
         cleanCycle: 129600, // Number of minutes - only messages older than this will be cleaned (default: 129600 minutes = 90 days)
+        cleanCheck: 'every_12_hours', // Cleanup check schedule: every_minute, every_5_minutes, every_hour, every_12_hours, every_day, every_week, every_2_weeks, every_month
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -103,7 +104,8 @@ export async function getSiteSettings() {
       maintenanceReason: settings.maintenanceReason || '',
       maintenanceEstimatedTime: settings.maintenanceEstimatedTime || '',
       cleanMinSize: settings.cleanMinSize !== undefined ? settings.cleanMinSize : 500, // Default 500 MB
-      cleanCycle: settings.cleanCycle !== undefined ? settings.cleanCycle : 129600 // Default 129600 minutes (90 days)
+      cleanCycle: settings.cleanCycle !== undefined ? settings.cleanCycle : 129600, // Default 129600 minutes (90 days)
+      cleanCheck: settings.cleanCheck || 'every_12_hours' // Default: every 12 hours
     };
     
     console.log('🔍 Processed settings result:', JSON.stringify(result, null, 2));

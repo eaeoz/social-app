@@ -405,8 +405,9 @@ import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
-import { initializeSiteSettings } from './utils/initializeSiteSettings.js';
+import { initializeSiteSettings, getSiteSettings } from './utils/initializeSiteSettings.js';
 import { initializeReportingSystem } from './utils/initializeReportingSystem.js';
+import cron from 'node-cron';
 
 // Create a custom router for auth with rate limiting
 const authRouter = express.Router();
@@ -670,6 +671,64 @@ async function startServer() {
     
     // Seed default rooms
     await seedDefaultRooms();
+    
+    // Get cleanup schedule from database
+    const settings = await getSiteSettings();
+    const cleanCheckSchedule = settings.cleanCheck || 'every_12_hours';
+    
+    // Map schedule options to cron patterns
+    const scheduleMap = {
+      'every_minute': '* * * * *',
+      'every_5_minutes': '*/5 * * * *',
+      'every_hour': '0 * * * *',
+      'every_12_hours': '0 3,15 * * *', // 3 AM and 3 PM
+      'every_day': '0 3 * * *', // 3 AM daily
+      'every_week': '0 3 * * 0', // 3 AM every Sunday
+      'every_2_weeks': '0 3 1,15 * *', // 3 AM on 1st and 15th of month
+      'every_month': '0 3 1 * *' // 3 AM on 1st of month
+    };
+    
+    const scheduleDescriptions = {
+      'every_minute': 'Every minute',
+      'every_5_minutes': 'Every 5 minutes',
+      'every_hour': 'Every hour',
+      'every_12_hours': 'Twice daily at 3:00 AM and 3:00 PM',
+      'every_day': 'Daily at 3:00 AM',
+      'every_week': 'Weekly on Sunday at 3:00 AM',
+      'every_2_weeks': 'Twice monthly on 1st and 15th at 3:00 AM',
+      'every_month': 'Monthly on 1st at 3:00 AM'
+    };
+    
+    const cronPattern = scheduleMap[cleanCheckSchedule] || scheduleMap['every_12_hours'];
+    const scheduleDescription = scheduleDescriptions[cleanCheckSchedule] || scheduleDescriptions['every_12_hours'];
+    
+    // Schedule automatic backup & cleanup with dynamic schedule
+    const cleanupTask = cron.schedule(cronPattern, async () => {
+      console.log('🤖 Running scheduled automatic backup & cleanup...');
+      try {
+        const { checkAndRunAutoCleanup } = await import('./utils/backupAndCleanup.js');
+        const result = await checkAndRunAutoCleanup();
+        
+        if (result.cleanupPerformed) {
+          console.log('✅ Scheduled cleanup completed successfully!');
+          console.log(`📦 Backed up: ${result.messagesBackup?.count || 0} messages, ${result.privatechatsBackup?.count || 0} private chats`);
+          console.log(`🗑️ Deleted: ${result.deleted?.total || 0} total items`);
+          console.log(`💾 Storage after cleanup: ${result.storageAfter?.toFixed(2) || 'N/A'} MB`);
+        } else {
+          console.log('ℹ️ Cleanup not needed - storage below threshold or no old data found');
+        }
+      } catch (error) {
+        console.error('❌ Scheduled cleanup failed:', error);
+      }
+    }, {
+      timezone: "Europe/Istanbul"
+    });
+    
+    console.log(`⏰ Automatic backup & cleanup scheduled: ${scheduleDescription} (Europe/Istanbul)`);
+    console.log(`📋 Schedule pattern: ${cronPattern}`);
+    
+    // Store cleanup task globally so it can be restarted when settings change
+    global.cleanupCronTask = cleanupTask;
     
     // Start HTTP server
     httpServer.listen(PORT, () => {

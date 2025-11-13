@@ -15,6 +15,7 @@ interface SiteSettings {
   sessionTimeout: number;
   cleanCycle: number;
   cleanMinSize: number;
+  cleanCheck: string;
 }
 
 function Settings() {
@@ -31,7 +32,8 @@ function Settings() {
     siteEmail: '',
     sessionTimeout: 10080,
     cleanCycle: 129600,
-    cleanMinSize: 500
+    cleanMinSize: 500,
+    cleanCheck: 'every_12_hours'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -361,6 +363,29 @@ function Settings() {
               max="10000"
               placeholder="500"
             />
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>⏰ Cleanup Check Schedule</label>
+              <span className="setting-description">
+                How often the system checks if cleanup is needed (based on threshold and cycle settings)
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.cleanCheck || 'every_12_hours'}
+              onChange={(e) => setSettings({...settings, cleanCheck: e.target.value})}
+            >
+              <option value="every_minute">Every Minute (testing only)</option>
+              <option value="every_5_minutes">Every 5 Minutes (testing only)</option>
+              <option value="every_hour">Every Hour</option>
+              <option value="every_12_hours">Every 12 Hours (3 AM & 3 PM)</option>
+              <option value="every_day">Daily (3 AM)</option>
+              <option value="every_week">Weekly (Sunday 3 AM)</option>
+              <option value="every_2_weeks">Twice Monthly (1st & 15th at 3 AM)</option>
+              <option value="every_month">Monthly (1st at 3 AM)</option>
+            </select>
           </div>
         </div>
       </div>

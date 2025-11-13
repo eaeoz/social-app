@@ -828,6 +828,7 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const db = getDatabase();
     const settings = req.body;
+    const oldSettings = await db.collection('siteSettings').findOne({ settingType: 'global' });
     
     console.log('📝 Updating site settings:', settings);
     
@@ -838,6 +839,80 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
     );
     
     console.log(`✅ Settings update result: matched=${result.matchedCount}, modified=${result.modifiedCount}, upserted=${result.upsertedCount}`);
+    
+    // If cleanCheck schedule was changed, restart the cron job
+    if (settings.cleanCheck && settings.cleanCheck !== oldSettings?.cleanCheck) {
+      console.log(`🔄 Cleanup schedule changed from '${oldSettings?.cleanCheck}' to '${settings.cleanCheck}', restarting cron job...`);
+      
+      try {
+        // Import cron and necessary functions
+        const cron = await import('node-cron');
+        
+        // Stop the old cron task
+        if (global.cleanupCronTask) {
+          global.cleanupCronTask.stop();
+          console.log('⏹️ Stopped old cleanup cron task');
+        }
+        
+        // Map schedule options to cron patterns
+        const scheduleMap = {
+          'every_minute': '* * * * *',
+          'every_5_minutes': '*/5 * * * *',
+          'every_hour': '0 * * * *',
+          'every_12_hours': '0 3,15 * * *',
+          'every_day': '0 3 * * *',
+          'every_week': '0 3 * * 0',
+          'every_2_weeks': '0 3 1,15 * *',
+          'every_month': '0 3 1 * *'
+        };
+        
+        const scheduleDescriptions = {
+          'every_minute': 'Every minute',
+          'every_5_minutes': 'Every 5 minutes',
+          'every_hour': 'Every hour',
+          'every_12_hours': 'Twice daily at 3:00 AM and 3:00 PM',
+          'every_day': 'Daily at 3:00 AM',
+          'every_week': 'Weekly on Sunday at 3:00 AM',
+          'every_2_weeks': 'Twice monthly on 1st and 15th at 3:00 AM',
+          'every_month': 'Monthly on 1st at 3:00 AM'
+        };
+        
+        const cronPattern = scheduleMap[settings.cleanCheck] || scheduleMap['every_12_hours'];
+        const scheduleDescription = scheduleDescriptions[settings.cleanCheck] || scheduleDescriptions['every_12_hours'];
+        
+        // Create new cron task
+        const newCleanupTask = cron.schedule(cronPattern, async () => {
+          console.log('🤖 Running scheduled automatic backup & cleanup...');
+          try {
+            const { checkAndRunAutoCleanup } = await import('../utils/backupAndCleanup.js');
+            const result = await checkAndRunAutoCleanup();
+            
+            if (result.cleanupPerformed) {
+              console.log('✅ Scheduled cleanup completed successfully!');
+              console.log(`📦 Backed up: ${result.messagesBackup?.count || 0} messages, ${result.privatechatsBackup?.count || 0} private chats`);
+              console.log(`🗑️ Deleted: ${result.deleted?.total || 0} total items`);
+              console.log(`💾 Storage after cleanup: ${result.storageAfter?.toFixed(2) || 'N/A'} MB`);
+            } else {
+              console.log('ℹ️ Cleanup not needed - storage below threshold or no old data found');
+            }
+          } catch (error) {
+            console.error('❌ Scheduled cleanup failed:', error);
+          }
+        }, {
+          timezone: "Europe/Istanbul"
+        });
+        
+        // Store the new task globally
+        global.cleanupCronTask = newCleanupTask;
+        
+        console.log(`✅ New cleanup schedule activated: ${scheduleDescription} (Europe/Istanbul)`);
+        console.log(`📋 New schedule pattern: ${cronPattern}`);
+        
+      } catch (error) {
+        console.error('❌ Failed to restart cron job:', error);
+        // Don't fail the settings update if cron restart fails
+      }
+    }
     
     res.json({ message: 'Settings updated successfully' });
   } catch (error) {
