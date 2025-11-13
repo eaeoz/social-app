@@ -65,7 +65,6 @@ function Cleanup() {
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
   const [storageLoading, setStorageLoading] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({});
-  const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
   const [backupStats, setBackupStats] = useState<BackupStats | null>(null);
 
   useEffect(() => {
@@ -154,7 +153,6 @@ function Cleanup() {
     }
 
     setLoading(true);
-    setCleanupResult(null);
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(
@@ -170,7 +168,6 @@ function Cleanup() {
 
       if (response.ok) {
         const data = await response.json();
-        setCleanupResult(data);
         
         // Build success message
         let successMsg = `✅ Cleanup completed successfully!\n\n`;
