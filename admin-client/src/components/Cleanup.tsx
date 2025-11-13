@@ -23,6 +23,30 @@ interface StorageStats {
   objects: number;
 }
 
+interface SiteSettings {
+  cleanMinSize?: number;
+  cleanCycle?: number;
+}
+
+interface CleanupResult {
+  success: boolean;
+  cleanCycleDays: number;
+  messagesBackup: {
+    count: number;
+    file: string | null;
+  };
+  privatechatsBackup: {
+    count: number;
+    file: string | null;
+  };
+  deleted: {
+    messages: number;
+    privatechats: number;
+    total: number;
+  };
+  storageAfter: number;
+}
+
 function Cleanup() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -33,9 +57,12 @@ function Cleanup() {
   const [inactiveDays, setInactiveDays] = useState('');
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
   const [storageLoading, setStorageLoading] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({});
+  const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
 
   useEffect(() => {
     fetchStorageStats();
+    fetchSiteSettings();
   }, []);
 
   useEffect(() => {
@@ -69,6 +96,78 @@ function Cleanup() {
     }
   };
 
+  const fetchSiteSettings = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/settings`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSiteSettings(data.settings || {});
+      } else {
+        console.error('Failed to fetch site settings:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching site settings:', error);
+    }
+  };
+
+  const handleManualBackupCleanup = async () => {
+    const cleanCycleMinutes = siteSettings.cleanCycle || 129600;
+    const cleanCycleDays = (cleanCycleMinutes / 60 / 24).toFixed(1);
+    
+    if (!confirm(`🧹 Manual Backup & Cleanup\n\nThis will:\n• Backup messages older than ${cleanCycleMinutes} minutes (${cleanCycleDays} days) to JSON files\n• Delete the backed-up messages\n• Update storage statistics\n\nBackup files will be saved in server/backups/ directory.\n\nContinue?`)) {
+      return;
+    }
+
+    setLoading(true);
+    setCleanupResult(null);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/manual-backup-cleanup`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCleanupResult(data);
+        
+        // Build success message
+        let successMsg = `✅ Cleanup completed successfully!\n\n`;
+        successMsg += `📦 Backed up:\n`;
+        successMsg += `  • ${data.messagesBackup?.count || 0} messages${data.messagesBackup?.file ? ` → ${data.messagesBackup.file}` : ''}\n`;
+        successMsg += `  • ${data.privatechatsBackup?.count || 0} private chats${data.privatechatsBackup?.file ? ` → ${data.privatechatsBackup.file}` : ''}\n\n`;
+        successMsg += `🗑️ Deleted: ${data.deleted?.total || 0} total items\n`;
+        successMsg += `💾 Storage after cleanup: ${data.storageAfter?.toFixed(2) || 'N/A'} MB`;
+        
+        setMessage(successMsg);
+        
+        // Refresh storage stats
+        await fetchStorageStats();
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to perform cleanup: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error performing manual cleanup:', error);
+      setMessage('❌ Error performing manual cleanup');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 15000);
+    }
+  };
+
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -83,7 +182,6 @@ function Cleanup() {
         console.log('Fetched users data:', data);
         const usersList = data.users || [];
         
-        // Debug: Check the first user's isEmailVerified field
         if (usersList.length > 0) {
           console.log('First user sample:', {
             email: usersList[0].email,
@@ -251,7 +349,6 @@ function Cleanup() {
         const data = await response.json();
         setMessage(`✅ Successfully deleted ${data.stats?.usersDeleted || 0} users and all their data. Protected user: ${data.protectedUser}`);
         
-        // Clear the search results since users were deleted
         setFilteredUsers([]);
         setSelectedUser(null);
         setSearchTerm('');
@@ -264,7 +361,7 @@ function Cleanup() {
       setMessage('❌ Error deleting all users');
     } finally {
       setLoading(false);
-      setTimeout(() => setMessage(''), 10000); // Show message longer for this critical operation
+      setTimeout(() => setMessage(''), 10000);
     }
   };
 
@@ -305,7 +402,6 @@ function Cleanup() {
         setMessage(`✅ Successfully deleted ${data.stats?.usersDeleted || 0} inactive users, ${data.stats?.messagesDeleted || 0} messages, and ${data.stats?.archivedReportsDeleted || 0} archived reports`);
         setInactiveDays('');
         
-        // Clear search results since users may have been deleted
         setFilteredUsers([]);
         setSelectedUser(null);
         setSearchTerm('');
@@ -371,12 +467,10 @@ function Cleanup() {
     }
   };
 
-  // Format bytes to MB
   const formatBytes = (bytes: number): string => {
     return (bytes / (1024 * 1024)).toFixed(2);
   };
 
-  // Prepare data for pie chart - only show non-zero values
   const getPieChartData = () => {
     if (!storageStats) return [];
     
@@ -418,7 +512,6 @@ function Cleanup() {
 
   return (
     <div className="cleanup-container">
-      {/* Storage Stats Section */}
       {storageLoading ? (
         <div className="storage-stats-section loading">
           <p>⏳ Loading storage statistics...</p>
@@ -487,6 +580,37 @@ function Cleanup() {
           </div>
         </div>
       ) : null}
+
+      <div className="storage-stats-section automated-cleanup-section">
+        <h3>🤖 Automated Backup & Cleanup</h3>
+        <div className="automated-cleanup-content">
+          <div className="cleanup-settings-info">
+            <div className="setting-item">
+              <span className="setting-label">📦 Clean Cycle:</span>
+              <span className="setting-value">{siteSettings.cleanCycle || 129600} minutes ({((siteSettings.cleanCycle || 129600) / 60 / 24).toFixed(1)} days)</span>
+              <span className="setting-description">Messages older than this will be cleaned</span>
+            </div>
+            <div className="setting-item">
+              <span className="setting-label">💾 Auto-Clean Threshold:</span>
+              <span className="setting-value">{siteSettings.cleanMinSize || 500} MB</span>
+              <span className="setting-description">Automatic cleanup triggers when storage exceeds this</span>
+            </div>
+          </div>
+          <div className="manual-cleanup-action">
+            <p className="info-text">
+              Click the button below to manually backup and delete messages older than {siteSettings.cleanCycle || 129600} minutes ({((siteSettings.cleanCycle || 129600) / 60 / 24).toFixed(1)} days).
+              Backup files will be saved to <code>server/backups/</code> directory.
+            </p>
+            <button
+              className="cleanup-btn backup-cleanup"
+              onClick={handleManualBackupCleanup}
+              disabled={loading}
+            >
+              {loading ? '⏳ Processing...' : '🧹 Manual Backup & Cleanup'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="cleanup-header">
         <h2>🧹 Cleanup Messages</h2>

@@ -20,12 +20,93 @@
 
 /* Storage Stats Section */
 .storage-stats-section {
-  background: var(--card-bg);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px var(--card-shadow);
-  margin-bottom: 2rem;
-  border: 2px solid var(--accent-primary);
+  padding: 25px;
+  margin-bottom: 30px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.automated-cleanup-section {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+}
+
+.automated-cleanup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cleanup-settings-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.setting-item {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 15px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-label {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.setting-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.setting-description {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.manual-cleanup-action {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.manual-cleanup-action .info-text {
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.manual-cleanup-action code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.cleanup-btn.backup-cleanup {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cleanup-btn.backup-cleanup:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+}
+
+.cleanup-btn.backup-cleanup:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .storage-stats-section.loading {

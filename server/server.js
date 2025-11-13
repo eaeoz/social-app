@@ -322,10 +322,10 @@ const emailActionLimiter = rateLimit({
   }
 });
 
-// Rate limiter for public info endpoints (60 requests per 15 minutes per IP)
+// Rate limiter for public info endpoints (higher limit for development)
 const publicInfoLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 60, // 60 requests per window
+  max: process.env.NODE_ENV === 'production' ? 60 : 300, // 300 in dev, 60 in production
   message: 'Too many requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -377,7 +377,7 @@ console.log('  ✅ General rate limiting: 300 requests per 15 minutes');
 console.log('  ✅ Login rate limiting: 5 attempts per 15 minutes');
 console.log('  ✅ Registration rate limiting: 3 accounts per hour');
 console.log('  ✅ Email action rate limiting: 3 requests per hour');
-console.log('  ✅ Public info rate limiting: 60 requests per 15 minutes');
+console.log(`  ✅ Public info rate limiting: ${process.env.NODE_ENV === 'production' ? '60' : '300'} requests per 15 minutes`);
 console.log('  ✅ OAuth rate limiting: 10 attempts per 15 minutes');
 console.log('  ✅ IP blocking: 30 minutes after 10 failed attempts');
 console.log('  ✅ Account lockout: After 5 failed attempts within 30 minutes');
@@ -421,7 +421,15 @@ authRouter.post('/verify-email', emailActionLimiter, authRoutes);
 app.use('/api/auth/get-resend-attempts', publicInfoLimiter);
 app.use('/api/auth/google', oauthLimiter);
 app.use('/api/auth/google/callback', oauthLimiter);
-app.use('/api/settings/site', publicInfoLimiter);
+
+// Only apply public info limiter to the public settings endpoint, not admin endpoints
+app.use((req, res, next) => {
+  // Apply publicInfoLimiter only to /api/settings/site, not /api/admin/*
+  if (req.path === '/api/settings/site') {
+    return publicInfoLimiter(req, res, next);
+  }
+  next();
+});
 
 // Use routes
 app.use('/api/auth', authRoutes);

@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDatabase } from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { transferUserReportsToCollection, getUserReportsFromCollection } from '../utils/transferUserReportsToCollection.js';
+import { manualCleanup } from '../utils/backupAndCleanup.js';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -1390,6 +1391,23 @@ router.delete('/cleanup/inactive-users-and-old-data', authenticateToken, require
   } catch (error) {
     console.error('Delete inactive users error:', error);
     res.status(500).json({ error: 'Failed to delete inactive users' });
+  }
+});
+
+// Manual cleanup with backup - backup and delete old messages based on cleanCycle setting
+router.post('/cleanup/manual-backup-cleanup', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('🧹 Manual backup and cleanup requested by admin');
+    
+    const result = await manualCleanup();
+    
+    res.json({
+      message: 'Cleanup completed successfully',
+      ...result
+    });
+  } catch (error) {
+    console.error('Manual cleanup error:', error);
+    res.status(500).json({ error: 'Failed to perform cleanup' });
   }
 });
 

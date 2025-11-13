@@ -13,6 +13,8 @@ interface SiteSettings {
   maxReportCount: number;
   siteEmail: string;
   sessionTimeout: number;
+  cleanCycle: number;
+  cleanMinSize: number;
 }
 
 function Settings() {
@@ -27,7 +29,9 @@ function Settings() {
     defaultUsersDisplayCount: 3,
     maxReportCount: 2,
     siteEmail: '',
-    sessionTimeout: 10080
+    sessionTimeout: 10080,
+    cleanCycle: 129600,
+    cleanMinSize: 500
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -311,6 +315,52 @@ function Settings() {
               />
               <span className="toggle-slider"></span>
             </label>
+          </div>
+        </div>
+
+        <div className="setting-card">
+          <div className="setting-header">
+            <h3>🤖 Automated Cleanup Settings</h3>
+            <p>Configure automatic backup and cleanup</p>
+          </div>
+          
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Clean Cycle (Minutes)</label>
+              <span className="setting-description">
+                Messages older than this will be backed up and deleted. Examples: 43200 = 30 days, 129600 = 90 days
+              </span>
+              <span className="setting-description" style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', display: 'block' }}>
+                Current: {Math.round((settings.cleanCycle || 129600) / 60 / 24 * 10) / 10} days
+              </span>
+            </div>
+            <input
+              type="number"
+              className="setting-input"
+              value={settings.cleanCycle || 129600}
+              onChange={(e) => setSettings({...settings, cleanCycle: parseInt(e.target.value) || 129600})}
+              min="1440"
+              max="525600"
+              placeholder="129600 (90 days)"
+            />
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Auto-Clean Threshold (MB)</label>
+              <span className="setting-description">
+                Automatic cleanup triggers when database storage exceeds this size (in megabytes)
+              </span>
+            </div>
+            <input
+              type="number"
+              className="setting-input"
+              value={settings.cleanMinSize || 500}
+              onChange={(e) => setSettings({...settings, cleanMinSize: parseInt(e.target.value) || 500})}
+              min="100"
+              max="10000"
+              placeholder="500"
+            />
           </div>
         </div>
       </div>
