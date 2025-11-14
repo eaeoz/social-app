@@ -756,14 +756,15 @@ async function startServer() {
       timezone: "Europe/Istanbul"
     });
     
-    console.log(`📝 Blog data sync scheduled: ${articleScheduleDescription} (Europe/Istanbul)`);
+    console.log(`📝 Blog cache sync scheduled: ${articleScheduleDescription} (Europe/Istanbul)`);
     console.log(`📋 Article sync pattern: ${articleCronPattern}`);
+    console.log(`ℹ️  Note: Appwrite is the source of truth, JSON is cached for fast reads`);
     
     // Store blog sync task globally so it can be restarted when settings change
     global.blogSyncCronTask = blogSyncTask;
     
-    // Initial blog sync on startup
-    console.log('📝 Running initial blog data sync...');
+    // Initial blog sync on startup (Appwrite → JSON cache)
+    console.log('📝 Running initial blog cache sync (Appwrite → JSON)...');
     try {
       const result = await syncBlogData();
       if (result.success) {
@@ -771,6 +772,66 @@ async function startServer() {
       }
     } catch (error) {
       console.log('⚠️  Initial blog sync skipped (will retry on next schedule)');
+    }
+    
+    // Initialize custom schedules from database
+    console.log('🤖 Initializing custom schedules...');
+    try {
+      const { getDatabase } = await import('./config/database.js');
+      const db = getDatabase();
+      
+      // Get all active custom schedules
+      const customSchedules = await db.collection('customSchedules')
+        .find({ isActive: true })
+        .toArray();
+      
+      if (customSchedules.length > 0) {
+        console.log(`📋 Found ${customSchedules.length} active custom schedule(s)`);
+        
+        // Initialize global storage for custom schedule cron tasks
+        global.customScheduleCrons = {};
+        
+        // Start each active schedule
+        for (const schedule of customSchedules) {
+          const scheduleId = schedule._id.toString();
+          const cronPattern = scheduleMap[schedule.schedule] || scheduleMap['every_hour'];
+          
+          const task = cron.schedule(cronPattern, async () => {
+            console.log(`🤖 [Custom Schedule] Running: ${schedule.name}`);
+            try {
+              // Import and execute the custom script
+              const scriptModule = await import(`./customSchedules/${schedule.scriptPath}`);
+              
+              if (scriptModule.execute && typeof scriptModule.execute === 'function') {
+                const result = await scriptModule.execute();
+                console.log(`✅ [Custom Schedule] ${schedule.name} completed:`, result);
+                
+                // Update last run time and count
+                await db.collection('customSchedules').updateOne(
+                  { _id: schedule._id },
+                  { 
+                    $set: { lastRun: new Date() },
+                    $inc: { runCount: 1 }
+                  }
+                );
+              } else {
+                console.error(`❌ [Custom Schedule] ${schedule.name}: Script does not export an 'execute' function`);
+              }
+            } catch (error) {
+              console.error(`❌ [Custom Schedule] ${schedule.name} failed:`, error);
+            }
+          }, {
+            timezone: "Europe/Istanbul"
+          });
+          
+          global.customScheduleCrons[scheduleId] = task;
+          console.log(`✅ Started custom schedule: ${schedule.name} (${scheduleDescriptions[schedule.schedule] || schedule.schedule})`);
+        }
+      } else {
+        console.log('ℹ️ No active custom schedules found');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize custom schedules:', error);
     }
     
     // Start HTTP server

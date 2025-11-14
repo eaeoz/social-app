@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "appwrite": "^21.4.0",
     "axios": "^1.6.2",
     "emoji-picker-react": "^4.15.0",
     "express-mongo-sanitize": "^2.2.0",

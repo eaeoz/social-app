@@ -1720,6 +1720,224 @@ router.delete('/cleanup/all-backups', authenticateToken, requireAdmin, async (re
   }
 });
 
+// Custom Schedules Management
+
+// Get all custom schedules
+router.get('/custom-schedules', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const schedules = await db.collection('customSchedules')
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+    
+    res.json({ schedules });
+  } catch (error) {
+    console.error('Get custom schedules error:', error);
+    res.status(500).json({ error: 'Failed to fetch custom schedules' });
+  }
+});
+
+// Create new custom schedule
+router.post('/custom-schedules', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { name, scriptPath, schedule } = req.body;
+    
+    if (!name || !scriptPath || !schedule) {
+      return res.status(400).json({ error: 'Name, script path, and schedule are required' });
+    }
+    
+    const db = getDatabase();
+    
+    // Check if name already exists
+    const existing = await db.collection('customSchedules').findOne({ name });
+    if (existing) {
+      return res.status(400).json({ error: 'A schedule with this name already exists' });
+    }
+    
+    const newSchedule = {
+      name: name.trim(),
+      scriptPath: scriptPath.trim(),
+      schedule: schedule,
+      isActive: true,
+      createdAt: new Date(),
+      createdBy: req.user.userId,
+      lastRun: null,
+      runCount: 0
+    };
+    
+    const result = await db.collection('customSchedules').insertOne(newSchedule);
+    
+    // Start the cron task
+    await startCustomScheduleCron(result.insertedId.toString(), newSchedule);
+    
+    res.json({ 
+      message: 'Custom schedule created successfully',
+      schedule: { _id: result.insertedId, ...newSchedule }
+    });
+  } catch (error) {
+    console.error('Create custom schedule error:', error);
+    res.status(500).json({ error: 'Failed to create custom schedule' });
+  }
+});
+
+// Update custom schedule
+router.put('/custom-schedules/:scheduleId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+    const { name, scriptPath, schedule, isActive } = req.body;
+    
+    if (!name || !scriptPath || !schedule) {
+      return res.status(400).json({ error: 'Name, script path, and schedule are required' });
+    }
+    
+    const db = getDatabase();
+    
+    // Check if schedule exists
+    const existingSchedule = await db.collection('customSchedules').findOne({ 
+      _id: new ObjectId(scheduleId) 
+    });
+    
+    if (!existingSchedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+    
+    // Check if new name conflicts with another schedule
+    if (name.trim() !== existingSchedule.name) {
+      const nameConflict = await db.collection('customSchedules').findOne({ 
+        name: name.trim(),
+        _id: { $ne: new ObjectId(scheduleId) }
+      });
+      if (nameConflict) {
+        return res.status(400).json({ error: 'A schedule with this name already exists' });
+      }
+    }
+    
+    const updateData = {
+      name: name.trim(),
+      scriptPath: scriptPath.trim(),
+      schedule: schedule,
+      isActive: isActive !== undefined ? isActive : existingSchedule.isActive,
+      updatedAt: new Date(),
+      updatedBy: req.user.userId
+    };
+    
+    await db.collection('customSchedules').updateOne(
+      { _id: new ObjectId(scheduleId) },
+      { $set: updateData }
+    );
+    
+    // Restart the cron task with new settings
+    await stopCustomScheduleCron(scheduleId);
+    if (updateData.isActive) {
+      await startCustomScheduleCron(scheduleId, { ...existingSchedule, ...updateData });
+    }
+    
+    res.json({ message: 'Custom schedule updated successfully' });
+  } catch (error) {
+    console.error('Update custom schedule error:', error);
+    res.status(500).json({ error: 'Failed to update custom schedule' });
+  }
+});
+
+// Delete custom schedule
+router.delete('/custom-schedules/:scheduleId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+    const db = getDatabase();
+    
+    const schedule = await db.collection('customSchedules').findOne({ 
+      _id: new ObjectId(scheduleId) 
+    });
+    
+    if (!schedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+    
+    // Stop the cron task
+    await stopCustomScheduleCron(scheduleId);
+    
+    // Delete the schedule
+    await db.collection('customSchedules').deleteOne({ _id: new ObjectId(scheduleId) });
+    
+    res.json({ message: 'Custom schedule deleted successfully' });
+  } catch (error) {
+    console.error('Delete custom schedule error:', error);
+    res.status(500).json({ error: 'Failed to delete custom schedule' });
+  }
+});
+
+// Helper functions for custom schedule cron management
+async function startCustomScheduleCron(scheduleId, scheduleData) {
+  try {
+    const cron = await import('node-cron');
+    
+    const scheduleMap = {
+      'every_minute': '* * * * *',
+      'every_5_minutes': '*/5 * * * *',
+      'every_hour': '0 * * * *',
+      'every_12_hours': '0 3,15 * * *',
+      'every_day': '0 3 * * *',
+      'every_week': '0 3 * * 0',
+      'every_2_weeks': '0 3 1,15 * *',
+      'every_month': '0 3 1 * *'
+    };
+    
+    const cronPattern = scheduleMap[scheduleData.schedule] || scheduleMap['every_hour'];
+    
+    const task = cron.schedule(cronPattern, async () => {
+      console.log(`🤖 [Custom Schedule] Running: ${scheduleData.name}`);
+      try {
+        // Import and execute the custom script
+        const scriptModule = await import(`../customSchedules/${scheduleData.scriptPath}`);
+        
+        if (scriptModule.execute && typeof scriptModule.execute === 'function') {
+          const result = await scriptModule.execute();
+          console.log(`✅ [Custom Schedule] ${scheduleData.name} completed:`, result);
+          
+          // Update last run time and count
+          const db = getDatabase();
+          await db.collection('customSchedules').updateOne(
+            { _id: new ObjectId(scheduleId) },
+            { 
+              $set: { lastRun: new Date() },
+              $inc: { runCount: 1 }
+            }
+          );
+        } else {
+          console.error(`❌ [Custom Schedule] ${scheduleData.name}: Script does not export an 'execute' function`);
+        }
+      } catch (error) {
+        console.error(`❌ [Custom Schedule] ${scheduleData.name} failed:`, error);
+      }
+    }, {
+      timezone: "Europe/Istanbul"
+    });
+    
+    // Store the task globally
+    if (!global.customScheduleCrons) {
+      global.customScheduleCrons = {};
+    }
+    global.customScheduleCrons[scheduleId] = task;
+    
+    console.log(`✅ Started custom schedule cron: ${scheduleData.name} (${cronPattern})`);
+  } catch (error) {
+    console.error(`❌ Failed to start custom schedule cron:`, error);
+  }
+}
+
+async function stopCustomScheduleCron(scheduleId) {
+  try {
+    if (global.customScheduleCrons && global.customScheduleCrons[scheduleId]) {
+      global.customScheduleCrons[scheduleId].stop();
+      delete global.customScheduleCrons[scheduleId];
+      console.log(`⏹️ Stopped custom schedule cron: ${scheduleId}`);
+    }
+  } catch (error) {
+    console.error(`❌ Failed to stop custom schedule cron:`, error);
+  }
+}
+
 // Delete messages created before a specific date
 router.delete('/cleanup/messages-by-date', authenticateToken, requireAdmin, async (req, res) => {
   try {

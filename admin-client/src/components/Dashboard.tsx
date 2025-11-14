@@ -8,6 +8,7 @@ import Rooms from './Rooms';
 import ArchivedReports from './ArchivedReports';
 import Cleanup from './Cleanup';
 import Articles from './Articles';
+import CustomSchedules from './CustomSchedules';
 import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
@@ -82,6 +83,14 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <span className="nav-icon">🧹</span>
             <span className="nav-label">Cleanup</span>
           </Link>
+          <Link
+            to="/custom-schedules"
+            className={`nav-item ${location.pathname === '/custom-schedules' ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">🤖</span>
+            <span className="nav-label">Custom Schedules</span>
+          </Link>
           
           <div className="nav-separator"></div>
           
@@ -147,6 +156,7 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <Route path="/archived-reports" element={<ArchivedReports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/cleanup" element={<Cleanup />} />
+            <Route path="/custom-schedules" element={<CustomSchedules />} />
           </Routes>
         </div>
       </main>

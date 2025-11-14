@@ -1,6 +1,7 @@
 import express from 'express';
 import { Client, Databases, Query, ID } from 'node-appwrite';
 import { verifyAdmin } from '../middleware/auth.js';
+import { syncBlogData, getBlogArticlesFromCache } from '../utils/syncBlogData.js';
 
 const router = express.Router();
 
@@ -16,31 +17,78 @@ const client = new Client()
 
 const databases = new Databases(client);
 
-// GET /api/blog - Get all blog articles
-router.get('/', async (req, res) => {
+// GET /api/blog/admin/direct - Get all blog articles directly from Appwrite (ADMIN ONLY)
+// IMPORTANT: This route MUST come before /:id route to avoid matching "admin" as an ID
+router.get('/admin/direct', verifyAdmin, async (req, res) => {
   try {
+    console.log('📖 Admin fetching articles directly from Appwrite (bypassing cache)...');
+    
+    // Read directly from Appwrite (no cache)
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID,
       [
-        Query.orderDesc('date'),
+        Query.orderDesc('$createdAt'),
         Query.limit(100)
       ]
     );
 
-    // Transform documents to match frontend format
     const articles = response.documents.map(doc => ({
       id: doc.articleId,
       title: doc.title,
       author: doc.author,
       date: doc.date,
-      tags: JSON.parse(doc.tags),
+      tags: typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags,
       logo: doc.logo,
       excerpt: doc.excerpt,
       content: doc.content
     }));
 
+    console.log(`✅ Fetched ${articles.length} articles directly from Appwrite`);
     res.json({ success: true, articles });
+  } catch (error) {
+    console.error('Error fetching articles from Appwrite:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch articles from Appwrite',
+      message: error.message 
+    });
+  }
+});
+
+// GET /api/blog - Get all blog articles (from cache for performance - PUBLIC)
+router.get('/', async (req, res) => {
+  try {
+    // Read from JSON cache for fast performance
+    const result = await getBlogArticlesFromCache();
+    
+    if (result.success) {
+      res.json({ success: true, articles: result.articles });
+    } else {
+      // Fallback to Appwrite if cache read fails
+      console.log('⚠️  Cache read failed, falling back to Appwrite');
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.orderDesc('date'),
+          Query.limit(100)
+        ]
+      );
+
+      const articles = response.documents.map(doc => ({
+        id: doc.articleId,
+        title: doc.title,
+        author: doc.author,
+        date: doc.date,
+        tags: typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags,
+        logo: doc.logo,
+        excerpt: doc.excerpt,
+        content: doc.content
+      }));
+
+      res.json({ success: true, articles });
+    }
   } catch (error) {
     console.error('Error fetching blog articles:', error);
     res.status(500).json({ 
@@ -51,11 +99,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/blog/:id - Get a specific blog article
+// GET /api/blog/:id - Get a specific blog article (from cache for performance)
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Try reading from cache first
+    const cacheResult = await getBlogArticlesFromCache();
+    
+    if (cacheResult.success) {
+      const article = cacheResult.articles.find(a => a.id === id);
+      if (article) {
+        return res.json({ success: true, article });
+      }
+    }
+
+    // Fallback to Appwrite if not in cache
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID,
@@ -78,7 +137,7 @@ router.get('/:id', async (req, res) => {
       title: doc.title,
       author: doc.author,
       date: doc.date,
-      tags: JSON.parse(doc.tags),
+      tags: typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags,
       logo: doc.logo,
       excerpt: doc.excerpt,
       content: doc.content
@@ -96,6 +155,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/blog - Create a new blog article (Admin only)
+// 1. Write to Appwrite (source of truth)
+// 2. Sync to JSON cache
 router.post('/', verifyAdmin, async (req, res) => {
   try {
     const { id, title, author, date, tags, logo, excerpt, content } = req.body;
@@ -108,7 +169,7 @@ router.post('/', verifyAdmin, async (req, res) => {
       });
     }
 
-    // Create the document
+    // 1. Write to Appwrite FIRST (source of truth)
     const documentData = {
       articleId: id,
       title,
@@ -127,7 +188,13 @@ router.post('/', verifyAdmin, async (req, res) => {
       documentData
     );
 
-    res.json({ 
+    console.log('✅ Article created in Appwrite:', title);
+    
+    // Trigger immediate sync so article appears right away
+    syncBlogData().catch(err => console.error('⚠️  Background sync failed:', err));
+    console.log('🔄 Triggered immediate cache sync');
+
+    res.json({
       success: true, 
       message: 'Article created successfully',
       article: { id, title, author, date, tags, logo, excerpt, content }
@@ -143,12 +210,14 @@ router.post('/', verifyAdmin, async (req, res) => {
 });
 
 // PUT /api/blog/:id - Update a blog article (Admin only)
+// 1. Update in Appwrite (source of truth)
+// 2. Sync to JSON cache
 router.put('/:id', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, author, date, tags, logo, excerpt, content } = req.body;
 
-    // Find the document by articleId
+    // 1. Find and update in Appwrite FIRST (source of truth)
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID,
@@ -167,7 +236,6 @@ router.put('/:id', verifyAdmin, async (req, res) => {
 
     const documentId = response.documents[0].$id;
 
-    // Update the document
     const documentData = {
       articleId: id,
       title,
@@ -186,7 +254,13 @@ router.put('/:id', verifyAdmin, async (req, res) => {
       documentData
     );
 
-    res.json({ 
+    console.log('✅ Article updated in Appwrite:', title);
+    
+    // Trigger immediate sync so changes appear right away
+    syncBlogData().catch(err => console.error('⚠️  Background sync failed:', err));
+    console.log('🔄 Triggered immediate cache sync');
+
+    res.json({
       success: true, 
       message: 'Article updated successfully',
       article: { id, title, author, date, tags, logo, excerpt, content }
@@ -202,11 +276,13 @@ router.put('/:id', verifyAdmin, async (req, res) => {
 });
 
 // DELETE /api/blog/:id - Delete a blog article (Admin only)
+// 1. Delete from Appwrite (source of truth)
+// 2. Sync to JSON cache
 router.delete('/:id', verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find the document by articleId
+    // 1. Find and delete from Appwrite FIRST (source of truth)
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID,
@@ -224,15 +300,21 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
     }
 
     const documentId = response.documents[0].$id;
+    const articleTitle = response.documents[0].title;
 
-    // Delete the document
     await databases.deleteDocument(
       DATABASE_ID,
       COLLECTION_ID,
       documentId
     );
 
-    res.json({ 
+    console.log('✅ Article deleted from Appwrite:', articleTitle);
+    
+    // Trigger immediate sync so deletion appears right away
+    syncBlogData().catch(err => console.error('⚠️  Background sync failed:', err));
+    console.log('🔄 Triggered immediate cache sync');
+
+    res.json({
       success: true, 
       message: 'Article deleted successfully' 
     });

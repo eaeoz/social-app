@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Query, ID } from 'appwrite';
+import { databases, DATABASE_ID, COLLECTION_ID } from '../config/appwrite';
 import './Articles.css';
 
 interface Article {
@@ -44,26 +46,35 @@ function Articles() {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      const token = localStorage.getItem('adminToken');
       
-      const response = await fetch(`${apiUrl}/blog`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Read directly from Appwrite (no server, no cache!)
+      console.log('📖 Fetching articles directly from Appwrite...');
+      
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.orderDesc('$createdAt'),
+          Query.limit(100)
+        ]
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch articles');
-      }
+      const articles = response.documents.map((doc: any) => ({
+        id: doc.articleId,
+        title: doc.title,
+        author: doc.author,
+        date: doc.date,
+        tags: typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags,
+        logo: doc.logo,
+        excerpt: doc.excerpt,
+        content: doc.content
+      }));
 
-      const data = await response.json();
-      if (data.success && data.articles) {
-        setArticles(data.articles);
-      }
+      console.log(`✅ Fetched ${articles.length} articles from Appwrite`);
+      setArticles(articles);
     } catch (err) {
-      console.error('Error fetching articles:', err);
-      setError('Failed to load articles');
+      console.error('Error fetching articles from Appwrite:', err);
+      setError('Failed to load articles from Appwrite');
     } finally {
       setLoading(false);
     }
@@ -193,8 +204,12 @@ function Articles() {
       }
 
       setShowModal(false);
-      await fetchArticles();
       showSuccessMessage(`Article ${isEditing ? 'updated' : 'created'} successfully!`);
+      
+      // Wait a moment for backend sync to complete, then refresh
+      setTimeout(async () => {
+        await fetchArticles();
+      }, 1000);
     } catch (err) {
       console.error('Error saving article:', err);
       showErrorMessage(`Failed to ${editingArticle ? 'update' : 'create'} article`);

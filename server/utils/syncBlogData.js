@@ -1,4 +1,4 @@
-import { Client, Databases, ID, Query } from 'node-appwrite';
+import { Client, Databases, Query } from 'node-appwrite';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,6 +13,10 @@ dotenv.config();
 const COLLECTION_ID = 'blog_articles';
 const DATABASE_ID = '6901d5f00010cd2a48f1'; // Use existing database
 
+/**
+ * Sync blog data FROM Appwrite TO local JSON file
+ * Appwrite is the source of truth - JSON is just a cache for fast reads
+ */
 export async function syncBlogData() {
   try {
     const client = new Client()
@@ -22,110 +26,124 @@ export async function syncBlogData() {
 
     const databases = new Databases(client);
 
-    console.log('🔄 Starting blog data sync...');
+    console.log('🔄 Starting blog data sync (Appwrite → JSON cache)...');
 
-    // Read the JSON file
-    const jsonPath = path.join(__dirname, '../data/blogArticles.json');
-    const jsonData = await fs.readFile(jsonPath, 'utf8');
-    const articles = JSON.parse(jsonData);
-
-    console.log(`📚 Found ${articles.length} articles in JSON file`);
-
-    // Get existing articles from Appwrite
-    let existingArticles = [];
+    // Fetch all articles from Appwrite (source of truth)
+    let allArticles = [];
     try {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
-        [Query.limit(100)]
+        [Query.limit(100), Query.orderDesc('$createdAt')]
       );
-      existingArticles = response.documents;
-      console.log(`📊 Found ${existingArticles.length} articles in Appwrite`);
-    } catch (error) {
-      console.log('⚠️  Could not fetch existing articles:', error.message);
-    }
-
-    // Create a map of existing articles by articleId
-    const existingMap = new Map();
-    existingArticles.forEach(article => {
-      existingMap.set(article.articleId, article.$id);
-    });
-
-    let created = 0;
-    let updated = 0;
-    let skipped = 0;
-
-    // Sync each article
-    for (const article of articles) {
-      try {
-        const documentId = existingMap.get(article.id);
-
-        // Prepare the document data
-        const documentData = {
-          articleId: article.id,
-          title: article.title,
-          author: article.author,
-          date: article.date,
-          tags: JSON.stringify(article.tags),
-          logo: article.logo,
-          excerpt: article.excerpt,
-          content: article.content
-        };
-
-        if (documentId) {
-          // Update existing document
-          try {
-            await databases.updateDocument(
-              DATABASE_ID,
-              COLLECTION_ID,
-              documentId,
-              documentData
-            );
-            console.log(`✅ Updated: "${article.title}"`);
-            updated++;
-          } catch (error) {
-            console.error(`❌ Failed to update "${article.title}":`, error.message);
-            skipped++;
+      allArticles = response.documents;
+      console.log(`📊 Found ${allArticles.length} articles in Appwrite`);
+      
+      // Don't overwrite cache with empty data unless it's intentional
+      if (allArticles.length === 0) {
+        console.log('⚠️  Warning: Appwrite returned 0 articles. Checking if this is expected...');
+        // Check if cache exists and has articles
+        const jsonPath = path.join(__dirname, '../data/blogArticles.json');
+        try {
+          const existingData = await fs.readFile(jsonPath, 'utf8');
+          const existingArticles = JSON.parse(existingData);
+          if (existingArticles.length > 0) {
+            console.log(`⚠️  Cache has ${existingArticles.length} articles but Appwrite has 0. Skipping sync to prevent data loss.`);
+            return { success: false, error: 'Appwrite returned empty but cache has data', articlesCount: existingArticles.length };
           }
-        } else {
-          // Create new document
-          try {
-            await databases.createDocument(
-              DATABASE_ID,
-              COLLECTION_ID,
-              ID.unique(),
-              documentData
-            );
-            console.log(`✅ Created: "${article.title}"`);
-            created++;
-          } catch (error) {
-            console.error(`❌ Failed to create "${article.title}":`, error.message);
-            skipped++;
-          }
+        } catch {
+          // Cache doesn't exist or is invalid, proceed with empty sync
         }
-
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (error) {
-        console.error(`❌ Error processing article "${article.title}":`, error.message);
-        skipped++;
       }
+    } catch (error) {
+      console.error('❌ Could not fetch articles from Appwrite:', error.message);
+      console.error('❌ Full error:', error);
+      return { success: false, error: error.message, articlesCount: 0 };
     }
+
+    // Transform Appwrite documents to JSON format
+    const articlesForJson = allArticles.map(doc => ({
+      id: doc.articleId,
+      title: doc.title,
+      author: doc.author,
+      date: doc.date,
+      tags: typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags,
+      logo: doc.logo,
+      excerpt: doc.excerpt,
+      content: doc.content,
+      // Keep Appwrite metadata for reference
+      $id: doc.$id,
+      $createdAt: doc.$createdAt,
+      $updatedAt: doc.$updatedAt
+    }));
+
+    // Write to JSON file (cache)
+    const jsonPath = path.join(__dirname, '../data/blogArticles.json');
+    
+    // Ensure data directory exists
+    const dataDir = path.dirname(jsonPath);
+    try {
+      await fs.access(dataDir);
+    } catch {
+      await fs.mkdir(dataDir, { recursive: true });
+      console.log('📁 Created data directory');
+    }
+
+    await fs.writeFile(jsonPath, JSON.stringify(articlesForJson, null, 2), 'utf8');
+    console.log(`✅ Updated JSON cache with ${articlesForJson.length} articles`);
 
     console.log('\n📊 Sync Summary:');
-    console.log(`   ✅ Created: ${created}`);
-    console.log(`   🔄 Updated: ${updated}`);
-    console.log(`   ⏭️  Skipped: ${skipped}`);
+    console.log(`   📝 Articles synced: ${articlesForJson.length}`);
+    console.log(`   💾 Cache updated: ${jsonPath}`);
     console.log('🎉 Blog data sync completed!\n');
 
-    return { created, updated, skipped, success: true };
+    return { 
+      success: true, 
+      articlesCount: articlesForJson.length,
+      cacheFile: jsonPath
+    };
 
   } catch (error) {
     console.error('❌ Error syncing blog data:', error.message);
     if (error.response) {
       console.error('Response:', error.response);
     }
-    return { created: 0, updated: 0, skipped: 0, success: false, error: error.message };
+    return { 
+      success: false, 
+      error: error.message, 
+      articlesCount: 0 
+    };
+  }
+}
+
+/**
+ * Get blog articles from JSON cache (fast read)
+ * If cache doesn't exist, fetch from Appwrite and create cache
+ */
+export async function getBlogArticlesFromCache() {
+  try {
+    const jsonPath = path.join(__dirname, '../data/blogArticles.json');
+    
+    try {
+      const jsonData = await fs.readFile(jsonPath, 'utf8');
+      const articles = JSON.parse(jsonData);
+      console.log(`📚 Loaded ${articles.length} articles from cache`);
+      return { success: true, articles };
+    } catch (error) {
+      // Cache doesn't exist, sync from Appwrite
+      console.log('⚠️  Cache not found, syncing from Appwrite...');
+      const syncResult = await syncBlogData();
+      
+      if (syncResult.success) {
+        const jsonData = await fs.readFile(jsonPath, 'utf8');
+        const articles = JSON.parse(jsonData);
+        return { success: true, articles };
+      } else {
+        return { success: false, articles: [], error: 'Failed to sync from Appwrite' };
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error reading blog articles from cache:', error.message);
+    return { success: false, articles: [], error: error.message };
   }
 }

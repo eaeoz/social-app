@@ -1,62 +1,41 @@
 [
   {
-    "id": "1",
-    "title": "Welcome to Our Revolutionary Chat Platform",
-    "author": "Sarah Chen",
-    "date": "2024-03-15",
-    "tags": ["announcement", "features", "platform"],
-    "logo": "🚀",
-    "excerpt": "Discover the next generation of social communication with our cutting-edge chat platform. Built with modern technology and designed for seamless connections.",
-    "content": "# Welcome to the Future of Communication\n\nWe're thrilled to introduce our revolutionary chat platform that's changing the way people connect online.\n\n## What Makes Us Different\n\nOur platform combines **real-time messaging**, **advanced security**, and **intuitive design** to create an unparalleled user experience.\n\n### Key Features\n\n- **Instant Messaging**: Lightning-fast real-time communication\n- **Private Rooms**: Secure, encrypted conversations\n- **User Profiles**: Customizable profiles with avatars\n- **Modern UI**: Beautiful, responsive interface\n\n## Getting Started\n\nJoining our community is simple:\n\n1. Create your free account\n2. Set up your profile\n3. Start connecting with others\n\n> \"This platform has revolutionized how our team communicates!\" - Happy User\n\n### Technical Excellence\n\nBuilt with cutting-edge technologies:\n\n```javascript\nconst chat = {\n  backend: 'Node.js + Socket.io',\n  frontend: 'React + TypeScript',\n  database: 'MongoDB',\n  security: 'End-to-end encryption'\n};\n```\n\n## Join Us Today\n\nBe part of the future of online communication. Sign up now and experience the difference!\n\n---\n\n*Stay tuned for more updates and features!*"
+    "id": "1763128725280",
+    "title": "test3",
+    "author": "test3",
+    "date": "2025-11-14",
+    "tags": [],
+    "logo": "📝",
+    "excerpt": "test3",
+    "content": "tes333",
+    "$id": "691735a70010937c0e5b",
+    "$createdAt": "2025-11-14T13:59:03.968+00:00",
+    "$updatedAt": "2025-11-14T13:59:03.968+00:00"
   },
   {
-    "id": "2",
-    "title": "Advanced Security Features: Your Privacy Matters",
-    "author": "Michael Roberts",
-    "date": "2024-03-10",
-    "tags": ["security", "privacy", "encryption"],
-    "logo": "🔒",
-    "excerpt": "Learn about our comprehensive security measures that keep your conversations private and secure. We take your privacy seriously with industry-leading protection.",
-    "content": "# Your Security is Our Priority\n\nIn today's digital age, **privacy** and **security** are paramount. Here's how we protect you.\n\n## Multi-Layer Security\n\nWe implement multiple layers of protection:\n\n### 1. End-to-End Encryption\n\nAll messages are encrypted using industry-standard protocols. Even we can't read your private conversations.\n\n### 2. Secure Authentication\n\n- **Two-Factor Authentication** available\n- **OAuth 2.0** integration with Google\n- **JWT tokens** for session management\n- **bcrypt** password hashing\n\n### 3. Rate Limiting\n\nProtection against abuse:\n\n```javascript\nconst rateLimit = {\n  maxRequests: 100,\n  windowMs: 900000, // 15 minutes\n  message: 'Too many requests'\n};\n```\n\n## Privacy Features\n\n- **No data selling**: We never sell your information\n- **GDPR compliant**: Full compliance with privacy regulations\n- **Data encryption**: At rest and in transit\n- **Regular audits**: Security assessments performed quarterly\n\n### User Controls\n\nYou have complete control:\n\n1. Delete your account anytime\n2. Export your data\n3. Control who sees your profile\n4. Block unwanted users\n\n> \"Finally, a platform that respects my privacy!\" - Anonymous User\n\n## Reporting Issues\n\nIf you discover a security vulnerability, please report it immediately to our security team.\n\n### Contact Security Team\n\n- Email: security@platform.com\n- Bug Bounty Program available\n\n---\n\n*Your trust is our most valuable asset.*"
+    "id": "1763128672531",
+    "title": "test2",
+    "author": "test2",
+    "date": "2025-11-14",
+    "tags": [],
+    "logo": "📝",
+    "excerpt": "test2",
+    "content": "test2222",
+    "$id": "6917356b0037c3c2f0a2",
+    "$createdAt": "2025-11-14T13:58:04.588+00:00",
+    "$updatedAt": "2025-11-14T13:58:04.588+00:00"
   },
   {
-    "id": "3",
-    "title": "Building Real-Time Applications with Socket.IO",
-    "author": "David Kim",
-    "date": "2024-03-05",
-    "tags": ["technical", "development", "socket.io"],
-    "logo": "⚡",
-    "excerpt": "Dive deep into the technical architecture powering our real-time messaging system. Learn how we achieve millisecond-level message delivery.",
-    "content": "# The Power of Real-Time Communication\n\nReal-time features are at the heart of modern web applications. Let's explore how we built our system.\n\n## Socket.IO Architecture\n\n### Why Socket.IO?\n\n**Socket.IO** enables real-time, bidirectional communication between clients and servers.\n\n```javascript\n// Server-side implementation\nconst io = require('socket.io')(server);\n\nio.on('connection', (socket) => {\n  console.log('User connected:', socket.id);\n  \n  socket.on('message', (data) => {\n    io.to(data.room).emit('message', data);\n  });\n  \n  socket.on('disconnect', () => {\n    console.log('User disconnected:', socket.id);\n  });\n});\n```\n\n## Key Features\n\n### 1. Room Management\n\nUsers can join multiple chat rooms:\n\n- **Public rooms**: Open to all users\n- **Private rooms**: Invite-only spaces\n- **Direct messages**: One-on-one conversations\n\n### 2. Connection Handling\n\nRobust connection management:\n\n- Automatic reconnection\n- Heartbeat monitoring\n- Connection pool management\n- Load balancing support\n\n### 3. Message Queue\n\nReliable message delivery:\n\n```javascript\nclass MessageQueue {\n  constructor() {\n    this.queue = [];\n    this.processing = false;\n  }\n  \n  async add(message) {\n    this.queue.push(message);\n    if (!this.processing) {\n      await this.process();\n    }\n  }\n  \n  async process() {\n    this.processing = true;\n    while (this.queue.length > 0) {\n      const message = this.queue.shift();\n      await this.deliver(message);\n    }\n    this.processing = false;\n  }\n}\n```\n\n## Performance Optimization\n\n### Scaling Strategy\n\n1. **Horizontal scaling**: Multiple server instances\n2. **Redis adapter**: For distributed socket communication\n3. **Message compression**: Reduces bandwidth usage\n4. **Connection pooling**: Efficient resource utilization\n\n### Monitoring\n\nWe track key metrics:\n\n- Connection count\n- Message throughput\n- Latency measurements\n- Error rates\n\n## Best Practices\n\n> Always implement proper error handling and reconnection logic in production environments.\n\n### Security Considerations\n\n- Validate all incoming data\n- Implement rate limiting\n- Use authentication middleware\n- Monitor for suspicious activity\n\n---\n\n*Building real-time applications requires careful planning and robust architecture.*"
-  },
-  {
-    "id": "4",
-    "title": "User Experience Design: Making Chat Intuitive",
-    "author": "Emma Wilson",
-    "date": "2024-02-28",
-    "tags": ["design", "UX", "interface"],
-    "logo": "🎨",
-    "excerpt": "Explore the design principles behind our intuitive chat interface. From color schemes to interaction patterns, discover what makes great UX.",
-    "content": "# Designing for Delight\n\nGreat user experience doesn't happen by accident. It's the result of careful planning and user-centered design.\n\n## Design Principles\n\n### 1. Simplicity First\n\n**Less is more** in interface design:\n\n- Clear visual hierarchy\n- Minimal cognitive load\n- Intuitive navigation\n- Consistent patterns\n\n### 2. Responsive Design\n\nOur platform works seamlessly across all devices:\n\n```css\n/* Mobile-first approach */\n.chat-container {\n  width: 100%;\n  padding: 16px;\n}\n\n@media (min-width: 768px) {\n  .chat-container {\n    max-width: 1200px;\n    margin: 0 auto;\n    padding: 24px;\n  }\n}\n```\n\n## Color Psychology\n\n### Light Theme\n\n- **Primary**: Purple gradient (#667eea → #764ba2)\n- **Background**: Clean whites and soft grays\n- **Accents**: Vibrant blues and purples\n\n### Dark Theme\n\n- **Primary**: Same vibrant gradients\n- **Background**: Deep navy and charcoal\n- **Accents**: Neon-inspired highlights\n\n## Interaction Design\n\n### Micro-interactions\n\nSubtle animations enhance the experience:\n\n1. **Button hover effects**: Scale and color transitions\n2. **Loading states**: Smooth skeleton screens\n3. **Message animations**: Slide-in effects\n4. **Notification badges**: Pulse animations\n\n### Accessibility\n\nDesigning for everyone:\n\n- **WCAG 2.1 AA compliant**\n- Keyboard navigation support\n- Screen reader friendly\n- High contrast modes\n- Customizable font sizes\n\n## Typography\n\n> Good typography is invisible; bad typography is impossible to ignore.\n\n### Font Choices\n\n- **Headers**: Bold, modern sans-serif\n- **Body**: Readable, clean fonts\n- **Code**: Monospace for clarity\n\n## User Research\n\nOur design decisions are data-driven:\n\n1. User interviews\n2. A/B testing\n3. Analytics tracking\n4. Feedback surveys\n5. Usability testing\n\n### Key Insights\n\nUsers want:\n\n- Fast load times\n- Easy navigation\n- Clear notifications\n- Customization options\n\n## Future Improvements\n\nWe're constantly evolving:\n\n- **Themes marketplace**: User-created themes\n- **Layout customization**: Drag-and-drop interface\n- **Advanced animations**: More delightful interactions\n- **Voice interface**: Accessibility enhancement\n\n---\n\n*Design is not just what it looks like. Design is how it works.* - Steve Jobs"
-  },
-  {
-    "id": "5",
-    "title": "Community Guidelines: Building a Positive Space",
-    "author": "Lisa Anderson",
-    "date": "2024-02-20",
-    "tags": ["community", "guidelines", "moderation"],
-    "logo": "🤝",
-    "excerpt": "Our commitment to fostering a welcoming, inclusive community. Learn about our guidelines and how we maintain a positive environment for all users.",
-    "content": "# Creating a Safe Community Together\n\nOur platform thrives because of our amazing community. Here's how we maintain a positive environment.\n\n## Core Values\n\n### Respect\n\n**Everyone deserves respect**, regardless of:\n\n- Background\n- Beliefs\n- Identity\n- Experience level\n\n### Inclusivity\n\nWe celebrate diversity:\n\n- All voices are welcome\n- Multiple perspectives enrich discussions\n- Different languages supported\n- Accessibility is a priority\n\n### Safety\n\nYour safety is paramount:\n\n1. Zero tolerance for harassment\n2. Quick response to reports\n3. Transparent moderation\n4. Clear consequences\n\n## Community Rules\n\n### Do's ✅\n\n- Be kind and courteous\n- Help others when you can\n- Share constructive feedback\n- Respect privacy\n- Use appropriate language\n\n### Don'ts ❌\n\n- Harassment or bullying\n- Hate speech\n- Spam or advertising\n- Sharing personal information\n- Impersonation\n\n## Reporting System\n\n### How to Report\n\nIf you see something concerning:\n\n1. Click the report button\n2. Select the violation type\n3. Provide context (optional)\n4. Submit the report\n\n```javascript\n// Our reporting system\nconst reportTypes = [\n  'harassment',\n  'spam',\n  'inappropriate_content',\n  'impersonation',\n  'other'\n];\n```\n\n### What Happens Next\n\n- **Immediate review**: Reports checked within 24 hours\n- **Investigation**: Thorough examination of the issue\n- **Action taken**: Appropriate consequences applied\n- **Follow-up**: Reporter notified of outcome\n\n## Moderation Team\n\nOur dedicated moderators:\n\n- Work around the clock\n- Follow consistent guidelines\n- Receive regular training\n- Listen to community feedback\n\n### Appeal Process\n\nIf you disagree with a moderation decision:\n\n1. Submit an appeal\n2. Provide additional context\n3. Review by senior moderator\n4. Final decision communicated\n\n## Positive Contributions\n\n### Recognition Program\n\nWe celebrate helpful members:\n\n- **Helper badges**: For assisting others\n- **Contributor awards**: For valuable content\n- **Community leader**: Top contributors\n\n### Building Connections\n\nWays to engage positively:\n\n- Join interest-based rooms\n- Participate in events\n- Share knowledge\n- Welcome newcomers\n\n## Content Guidelines\n\n### Appropriate Topics\n\n- General conversation\n- Hobby discussions\n- Professional networking\n- Learning and education\n\n### Inappropriate Content\n\n> Content that violates our guidelines will be removed promptly.\n\n- Adult content\n- Violence or gore\n- Illegal activities\n- Scams or fraud\n\n## Consequences\n\n### Warning System\n\n1. **First offense**: Warning issued\n2. **Second offense**: Temporary suspension\n3. **Third offense**: Account review\n4. **Severe violations**: Immediate ban\n\n## Your Role\n\nEvery member helps maintain our community:\n\n- Lead by example\n- Report violations\n- Support others\n- Give feedback\n\n---\n\n*Together, we create a space where everyone can connect, share, and grow.*"
-  },
-  {
-    "id": "6",
-    "title": "Performance Optimization: Speed Matters",
-    "author": "Alex Thompson",
-    "date": "2024-02-15",
-    "tags": ["performance", "optimization", "technical"],
-    "logo": "⚙️",
-    "excerpt": "Discover the techniques we use to keep our platform blazing fast. From code splitting to caching strategies, learn how we optimize for speed.",
-    "content": "# The Need for Speed\n\nPerformance isn't just a feature—it's a fundamental requirement. Here's how we achieve lightning-fast response times.\n\n## Performance Metrics\n\n### Key Indicators\n\nWe track critical metrics:\n\n- **First Contentful Paint (FCP)**: < 1.5s\n- **Time to Interactive (TTI)**: < 3.0s\n- **Largest Contentful Paint (LCP)**: < 2.5s\n- **Cumulative Layout Shift (CLS)**: < 0.1\n\n## Frontend Optimization\n\n### Code Splitting\n\nReducing initial bundle size:\n\n```javascript\n// Dynamic imports for route-based splitting\nconst Chat = lazy(() => import('./components/Chat'));\nconst Profile = lazy(() => import('./components/Profile'));\n\nfunction App() {\n  return (\n    <Suspense fallback={<LoadingSpinner />}>\n      <Routes>\n        <Route path=\"/chat\" element={<Chat />} />\n        <Route path=\"/profile\" element={<Profile />} />\n      </Routes>\n    </Suspense>\n  );\n}\n```\n\n### Image Optimization\n\n**Smart image handling**:\n\n1. WebP format with fallbacks\n2. Lazy loading for off-screen images\n3. Responsive image sizes\n4. CDN delivery\n\n```html\n<picture>\n  <source srcset=\"avatar.webp\" type=\"image/webp\">\n  <source srcset=\"avatar.jpg\" type=\"image/jpeg\">\n  <img src=\"avatar.jpg\" alt=\"User avatar\" loading=\"lazy\">\n</picture>\n```\n\n## Backend Optimization\n\n### Caching Strategy\n\nMulti-layer caching:\n\n```javascript\nconst cache = {\n  memory: new NodeCache({ stdTTL: 3600 }),\n  redis: redisClient,\n  \n  async get(key) {\n    // Check memory first\n    let value = this.memory.get(key);\n    if (value) return value;\n    \n    // Check Redis\n    value = await this.redis.get(key);\n    if (value) {\n      this.memory.set(key, value);\n      return value;\n    }\n    \n    return null;\n  }\n};\n```\n\n### Database Optimization\n\n**Efficient queries**:\n\n- Indexed fields for fast lookups\n- Query result caching\n- Connection pooling\n- Aggregation pipelines\n\n```javascript\n// Efficient MongoDB query\nconst messages = await Message.find(\n  { roomId: room, timestamp: { $gte: lastWeek } }\n)\n  .select('content author timestamp')\n  .limit(50)\n  .lean()\n  .cache(3600);\n```\n\n## Network Optimization\n\n### Compression\n\nReducing payload size:\n\n- **Gzip compression**: For text content\n- **Brotli compression**: For static assets\n- **Message batching**: Combining multiple updates\n\n### CDN Integration\n\nGlobal content delivery:\n\n- Static assets on CDN\n- Geographic distribution\n- Edge caching\n- Automatic failover\n\n## Real-Time Optimization\n\n### WebSocket Efficiency\n\n**Optimized socket communication**:\n\n```javascript\n// Throttle message updates\nconst throttledUpdate = throttle((data) => {\n  socket.emit('typing', data);\n}, 1000);\n\n// Batch notifications\nconst batchNotifications = debounce((notifications) => {\n  socket.emit('notifications:batch', notifications);\n}, 500);\n```\n\n### Connection Pooling\n\nManaging resources:\n\n- Maximum connections: 1000\n- Idle timeout: 30 seconds\n- Automatic cleanup\n- Health checks\n\n## Monitoring\n\n### Performance Tracking\n\nReal-time monitoring:\n\n1. **Application metrics**: Response times, error rates\n2. **Infrastructure metrics**: CPU, memory, network\n3. **User metrics**: Page load times, interaction delays\n\n```javascript\n// Custom performance monitoring\nclass PerformanceMonitor {\n  static measure(label, fn) {\n    const start = performance.now();\n    const result = fn();\n    const duration = performance.now() - start;\n    \n    this.log(label, duration);\n    return result;\n  }\n}\n```\n\n## Load Testing\n\nEnsuring scalability:\n\n- **Stress testing**: Maximum load capacity\n- **Spike testing**: Sudden traffic increases\n- **Soak testing**: Extended periods\n\n### Results\n\nOur platform handles:\n\n- 10,000+ concurrent users\n- 100,000+ messages per minute\n- < 100ms average response time\n\n## Best Practices\n\n> Premature optimization is the root of all evil, but knowing where to optimize is key.\n\n### Optimization Checklist\n\n- ✅ Minimize bundle size\n- ✅ Implement caching\n- ✅ Optimize images\n- ✅ Use compression\n- ✅ Monitor performance\n- ✅ Regular profiling\n\n## Future Improvements\n\nContinuous optimization:\n\n- Service workers for offline support\n- HTTP/3 adoption\n- Advanced caching strategies\n- Machine learning for predictive loading\n\n---\n\n*Speed is not just a feature, it's the foundation of great user experience.*"
+    "id": "1763128380878",
+    "title": "tset",
+    "author": "test",
+    "date": "2025-11-14",
+    "tags": [],
+    "logo": "📝",
+    "excerpt": "testtest",
+    "content": "tesatsafdsfa",
+    "$id": "6917344c000fb2d48664",
+    "$createdAt": "2025-11-14T13:53:16.959+00:00",
+    "$updatedAt": "2025-11-14T13:53:16.959+00:00"
   }
 ]
