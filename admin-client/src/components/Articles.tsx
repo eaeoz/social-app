@@ -22,6 +22,7 @@ function Articles() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showMarkdownHelp, setShowMarkdownHelp] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [formData, setFormData] = useState<Article>({
@@ -235,10 +236,30 @@ function Articles() {
     }
   };
 
+  // Search and filter logic
+  const isSearching = searchQuery.length >= 3;
+  const filteredArticles = isSearching
+    ? articles.filter((article) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          article.title.toLowerCase().includes(query) ||
+          article.author.toLowerCase().includes(query) ||
+          article.excerpt.toLowerCase().includes(query) ||
+          article.tags.some(tag => tag.toLowerCase().includes(query))
+        );
+      })
+    : articles;
+
   // Pagination
-  const totalPages = Math.ceil(articles.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedArticles = articles.slice(startIndex, startIndex + itemsPerPage);
+  const displayItemsPerPage = isSearching ? 5 : itemsPerPage;
+  const totalPages = Math.ceil(filteredArticles.length / displayItemsPerPage);
+  const startIndex = (currentPage - 1) * displayItemsPerPage;
+  const paginatedArticles = filteredArticles.slice(startIndex, startIndex + displayItemsPerPage);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   if (loading) {
     return (
@@ -280,20 +301,40 @@ function Articles() {
         </div>
       )}
 
-      <div className="articles-table-container">
-        {selectedArticles.size > 0 && (
-          <div className="table-actions-bar">
-            <span className="selected-count">
-              {selectedArticles.size} article{selectedArticles.size > 1 ? 's' : ''} selected
-            </span>
+      <div className="search-section">
+        <div className="search-input-wrapper">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search articles... (min 3 characters)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
             <button
-              className="btn btn-danger btn-sm"
-              onClick={handleDeleteSelected}
+              className="clear-search"
+              onClick={() => setSearchQuery('')}
+              title="Clear search"
             >
-              🗑️ Delete Selected
+              ✕
             </button>
+          )}
+        </div>
+        {isSearching && (
+          <div className="search-results-info">
+            {filteredArticles.length === 0 ? (
+              <span className="no-results">No articles found matching "{searchQuery}"</span>
+            ) : (
+              <span className="results-count">
+                Found {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''} matching "{searchQuery}" (showing max 5 per page)
+              </span>
+            )}
           </div>
         )}
+      </div>
+
+      <div className="articles-table-container">
         <table className="articles-table">
           <thead>
             <tr>
@@ -376,27 +417,30 @@ function Articles() {
         )}
       </div>
 
-      {articles.length > 0 && (
+      {filteredArticles.length > 0 && (
         <div className="pagination-container">
           <div className="pagination-info">
-            Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, articles.length)} of {articles.length}
+            Showing {startIndex + 1} to {Math.min(startIndex + displayItemsPerPage, filteredArticles.length)} of {filteredArticles.length}
+            {isSearching && ` (filtered from ${articles.length} total)`}
           </div>
           
           <div className="pagination-controls">
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="items-per-page"
-            >
-              <option value={5}>5 per page</option>
-              <option value={10}>10 per page</option>
-              <option value={25}>25 per page</option>
-              <option value={50}>50 per page</option>
-              <option value={100}>100 per page</option>
-            </select>
+            {!isSearching && (
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="items-per-page"
+              >
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
+            )}
 
             <div className="pagination-buttons">
               <button
