@@ -1665,7 +1665,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         to: selectedPrivateChat.otherUser.userId,
         callType: type,
         from: user.userId,
-        fromName: user.fullName || user.username,
+        fromName: user.nickName || user.username,
         fromPicture: user.profilePicture
       });
     }
@@ -2587,7 +2587,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
       )}
 
       {incomingCall && (
-        <div className="modal-overlay">
+        <div className="modal-overlay incoming-call-overlay">
           <div className="modal-content incoming-call-modal" onClick={(e) => e.stopPropagation()}>
             <div className="incoming-call-content">
               <div className="incoming-call-avatar">
@@ -2597,24 +2597,27 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   <span>{incomingCall.fromName.charAt(0).toUpperCase()}</span>
                 )}
               </div>
-              <h2>{incomingCall.fromName}</h2>
-              <p className="incoming-call-type">
-                {incomingCall.callType === 'video' ? '📹 Video' : '📞 Voice'} Call
-              </p>
+              <h2 className="incoming-call-name">{incomingCall.fromName}</h2>
+              <div className="incoming-call-type">
+                <span className="call-type-icon">{incomingCall.callType === 'video' ? '🎥' : '📞'}</span>
+                <span className="call-type-text">{incomingCall.callType === 'video' ? 'Video' : 'Voice'} Call</span>
+              </div>
               <div className="incoming-call-actions">
                 <button
                   className="call-action-button decline-button"
                   onClick={declineIncomingCall}
                   aria-label="Decline call"
+                  title="Decline"
                 >
-                  ❌
+                  <span className="button-icon">✕</span>
                 </button>
                 <button
                   className="call-action-button accept-button"
                   onClick={acceptIncomingCall}
                   aria-label="Accept call"
+                  title="Answer"
                 >
-                  ✅
+                  <span className="button-icon">✓</span>
                 </button>
               </div>
             </div>
