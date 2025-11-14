@@ -302,6 +302,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
+    // Auto-focus message input on mount (login or page reload)
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 500);
+
     return () => {
       clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
