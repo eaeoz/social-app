@@ -1,41 +1,18 @@
 [
   {
-    "id": "1763128725280",
-    "title": "test3",
-    "author": "test3",
+    "id": "1763146932041",
+    "title": "Command Manager (opensource gui management for ssh clients) — Designed & Developed by Sedat E.",
+    "author": "Sedat",
     "date": "2025-11-14",
-    "tags": [],
-    "logo": "📝",
-    "excerpt": "test3",
-    "content": "tes333",
-    "$id": "691735a70010937c0e5b",
-    "$createdAt": "2025-11-14T13:59:03.968+00:00",
-    "$updatedAt": "2025-11-14T13:59:03.968+00:00"
-  },
-  {
-    "id": "1763128672531",
-    "title": "test2",
-    "author": "test2",
-    "date": "2025-11-14",
-    "tags": [],
-    "logo": "📝",
-    "excerpt": "test2",
-    "content": "test2222",
-    "$id": "6917356b0037c3c2f0a2",
-    "$createdAt": "2025-11-14T13:58:04.588+00:00",
-    "$updatedAt": "2025-11-14T13:58:04.588+00:00"
-  },
-  {
-    "id": "1763128380878",
-    "title": "tset",
-    "author": "test",
-    "date": "2025-11-14",
-    "tags": [],
-    "logo": "📝",
-    "excerpt": "testtest",
-    "content": "tesatsafdsfa",
-    "$id": "6917344c000fb2d48664",
-    "$createdAt": "2025-11-14T13:53:16.959+00:00",
-    "$updatedAt": "2025-11-14T13:53:16.959+00:00"
+    "tags": [
+      "Sedat",
+      "Windows"
+    ],
+    "logo": "🧑‍💼",
+    "excerpt": "👏 CommandManager is a smart and lightweight desktop tool for managing and executing commands via SSH connections.",
+    "content": "---\n\n### 👇 Download Windows Desktop Executable Setup\n\n[➡️ Latest Release](https://github.com/eaeoz/command-manager-windows/releases/download/1.0.0/CommandManager_1.0.0.exe \"Download Command Manager Latest Release\")\n\n---\n\nThis Windows or Docker application lets you easily **create, edit, delete, and organize SSH profiles** — then link your commands to those profiles for quick remote execution.  \nWith **drag & drop** sorting, **profile-based execution**, and a smooth interface, it’s perfect for developers and sysadmins alike.\n\n## ✨ Features\n\n- 🔑 **SSH Profile Management** – create, edit, and delete multiple SSH profiles with host, port, username, and password.  \n- ⚙️ **Command Linking** – attach any command to a specific SSH profile and execute it remotely with one click.  \n- 🖱️ **Drag & Drop Commands** – reorder or organize commands visually.  \n- 🧩 **Profile Switching** – change the profile linked to each command at any time.  \n- 🧠 **Local Data Storage** – commands and profiles stored in local JSON files.  \n- 🪶 **Simple, Fast, and Secure** – all SSH operations handled locally; no external services or cloud required.\n\n---\n\n## 🚀 Usage Overview\n\n1. **Create an SSH Profile** – enter host, username, password, and port information.  \n2. **Add a Command** – link it to one of your profiles and save it for execution.  \n3. **Edit or Delete** – update profiles or commands anytime from the UI.  \n4. **Drag & Drop** – reorder your commands easily to keep your list organized.  \n5. **Run Commands** – execute any command instantly through the selected SSH profile.\n\n---\n\n### 🛠️ Tech Stack\n\n- **Electron.js** – desktop UI  \n- **Express.js** – backend routing  \n- **Node.js** – SSH connection handling (via `ssh2` library)  \n- **Sortable.js** – drag & drop functionality  \n- **JSON Storage** – lightweight local data management  \n\n---\n\n> 💡 *CommandManager centralizes your SSH profiles and commands into one elegant, fast, and secure desktop tool.*\n\n---\n\n⚙️ Backup your configuration files for installation to the another system:\n\n`C:\\Users\\%UserProfile%\\AppData\\Local\\CommandManager\\resources\\app\\config`\n\n---\n\n### Docker Instruction\n\n[Instruction](https://hub.docker.com/r/eaeoz/command-manager-docker \"Command Manager Docker Instructions\")\n\n[Github Repo for Docker](https://github.com/eaeoz/command-manager-docker \"Command Manager Docker Repository on GitHub\")\n",
+    "$id": "69177d090016e03c5691",
+    "$createdAt": "2025-11-14T19:03:38.607+00:00",
+    "$updatedAt": "2025-11-14T19:03:38.607+00:00"
   }
 ]
