@@ -16,6 +16,7 @@ interface SiteSettings {
   cleanCycle: number;
   cleanMinSize: number;
   cleanCheck: string;
+  articleCheck: string;
 }
 
 function Settings() {
@@ -33,7 +34,8 @@ function Settings() {
     sessionTimeout: 10080,
     cleanCycle: 129600,
     cleanMinSize: 512000,
-    cleanCheck: 'every_12_hours'
+    cleanCheck: 'every_12_hours',
+    articleCheck: 'every_minute'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -379,6 +381,29 @@ function Settings() {
               className="setting-input"
               value={settings.cleanCheck || 'every_12_hours'}
               onChange={(e) => setSettings({...settings, cleanCheck: e.target.value})}
+            >
+              <option value="every_minute">Every Minute (testing only)</option>
+              <option value="every_5_minutes">Every 5 Minutes (testing only)</option>
+              <option value="every_hour">Every Hour</option>
+              <option value="every_12_hours">Every 12 Hours (3 AM & 3 PM)</option>
+              <option value="every_day">Daily (3 AM)</option>
+              <option value="every_week">Weekly (Sunday 3 AM)</option>
+              <option value="every_2_weeks">Twice Monthly (1st & 15th at 3 AM)</option>
+              <option value="every_month">Monthly (1st at 3 AM)</option>
+            </select>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>📝 Article Check Schedule</label>
+              <span className="setting-description">
+                How often the system checks for article-related updates or maintenance tasks
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.articleCheck || 'every_minute'}
+              onChange={(e) => setSettings({...settings, articleCheck: e.target.value})}
             >
               <option value="every_minute">Every Minute (testing only)</option>
               <option value="every_5_minutes">Every 5 Minutes (testing only)</option>

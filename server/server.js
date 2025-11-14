@@ -733,8 +733,13 @@ async function startServer() {
     // Store cleanup task globally so it can be restarted when settings change
     global.cleanupCronTask = cleanupTask;
     
-    // Schedule blog data sync every hour
-    const blogSyncTask = cron.schedule('0 * * * *', async () => {
+    // Get article check schedule from database
+    const articleCheckSchedule = settings.articleCheck || 'every_minute';
+    const articleCronPattern = scheduleMap[articleCheckSchedule] || scheduleMap['every_minute'];
+    const articleScheduleDescription = scheduleDescriptions[articleCheckSchedule] || scheduleDescriptions['every_minute'];
+    
+    // Schedule blog data sync with dynamic schedule
+    const blogSyncTask = cron.schedule(articleCronPattern, async () => {
       console.log('📝 Running scheduled blog data sync...');
       try {
         const result = await syncBlogData();
@@ -751,7 +756,11 @@ async function startServer() {
       timezone: "Europe/Istanbul"
     });
     
-    console.log('📝 Blog data sync scheduled: Every hour (Europe/Istanbul)');
+    console.log(`📝 Blog data sync scheduled: ${articleScheduleDescription} (Europe/Istanbul)`);
+    console.log(`📋 Article sync pattern: ${articleCronPattern}`);
+    
+    // Store blog sync task globally so it can be restarted when settings change
+    global.blogSyncCronTask = blogSyncTask;
     
     // Initial blog sync on startup
     console.log('📝 Running initial blog data sync...');
