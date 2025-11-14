@@ -665,8 +665,8 @@ function Blog({ onClose }: BlogProps) {
                   <span className="blog-article-author">By {selectedArticle.author}</span>
                 </div>
               </div>
-              <div className="blog-article-body">
-                <ReactMarkdown className="markdown-content">
+              <div className="blog-article-body markdown-content">
+                <ReactMarkdown>
                   {selectedArticle.content}
                 </ReactMarkdown>
               </div>
