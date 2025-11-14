@@ -179,6 +179,15 @@
   cursor: pointer;
   padding: 0;
   z-index: 10;
+  outline: none;
+}
+
+.auth-theme-toggle-card:focus {
+  outline: none;
+}
+
+.auth-theme-toggle-card:focus-visible {
+  outline: none;
 }
 
 .toggle-switch {
