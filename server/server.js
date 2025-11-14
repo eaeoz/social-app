@@ -403,10 +403,12 @@ import settingsRoutes from './routes/settingsRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings, getSiteSettings } from './utils/initializeSiteSettings.js';
 import { initializeReportingSystem } from './utils/initializeReportingSystem.js';
+import { syncBlogData } from './utils/syncBlogData.js';
 import cron from 'node-cron';
 
 // Create a custom router for auth with rate limiting
@@ -439,6 +441,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/blog', blogRoutes);
 
 // Serve static API documentation from public folder
 const publicPath = path.join(__dirname, 'public');
@@ -729,6 +732,37 @@ async function startServer() {
     
     // Store cleanup task globally so it can be restarted when settings change
     global.cleanupCronTask = cleanupTask;
+    
+    // Schedule blog data sync every hour
+    const blogSyncTask = cron.schedule('0 * * * *', async () => {
+      console.log('📝 Running scheduled blog data sync...');
+      try {
+        const result = await syncBlogData();
+        if (result.success) {
+          console.log('✅ Blog sync completed successfully!');
+          console.log(`📊 Created: ${result.created}, Updated: ${result.updated}, Skipped: ${result.skipped}`);
+        } else {
+          console.error('❌ Blog sync failed:', result.error);
+        }
+      } catch (error) {
+        console.error('❌ Blog sync error:', error);
+      }
+    }, {
+      timezone: "Europe/Istanbul"
+    });
+    
+    console.log('📝 Blog data sync scheduled: Every hour (Europe/Istanbul)');
+    
+    // Initial blog sync on startup
+    console.log('📝 Running initial blog data sync...');
+    try {
+      const result = await syncBlogData();
+      if (result.success) {
+        console.log('✅ Initial blog sync completed!');
+      }
+    } catch (error) {
+      console.log('⚠️  Initial blog sync skipped (will retry on next schedule)');
+    }
     
     // Start HTTP server
     httpServer.listen(PORT, () => {
