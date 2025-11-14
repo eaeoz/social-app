@@ -121,7 +121,7 @@
 
 .report-button.submit-button {
   background: var(--accent-color);
-  color: white;
+  color: red;
 }
 
 .report-button.submit-button:hover:not(:disabled) {
