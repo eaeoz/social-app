@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Query, ID } from 'appwrite';
+import { Query } from 'appwrite';
 import { databases, DATABASE_ID, COLLECTION_ID } from '../config/appwrite';
 import './Articles.css';
 

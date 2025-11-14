@@ -19,17 +19,6 @@ interface SiteSettings {
   articleCheck: string;
 }
 
-interface CustomSchedule {
-  _id: string;
-  name: string;
-  scriptPath: string;
-  schedule: string;
-  isActive: boolean;
-  lastRun: string | null;
-  runCount: number;
-  createdAt: string;
-}
-
 function Settings() {
   const [settings, setSettings] = useState<SiteSettings>({
     allowUserPictures: true,
