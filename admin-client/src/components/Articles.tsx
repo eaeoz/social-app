@@ -281,6 +281,19 @@ function Articles() {
       )}
 
       <div className="articles-table-container">
+        {selectedArticles.size > 0 && (
+          <div className="table-actions-bar">
+            <span className="selected-count">
+              {selectedArticles.size} article{selectedArticles.size > 1 ? 's' : ''} selected
+            </span>
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={handleDeleteSelected}
+            >
+              🗑️ Delete Selected
+            </button>
+          </div>
+        )}
         <table className="articles-table">
           <thead>
             <tr>
