@@ -915,7 +915,77 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
         console.log(`📋 New schedule pattern: ${cronPattern}`);
         
       } catch (error) {
-        console.error('❌ Failed to restart cron job:', error);
+        console.error('❌ Failed to restart cleanup cron job:', error);
+        // Don't fail the settings update if cron restart fails
+      }
+    }
+    
+    // If articleCheck schedule was changed, restart the article sync cron job
+    if (settings.articleCheck && settings.articleCheck !== oldSettings?.articleCheck) {
+      console.log(`🔄 Article sync schedule changed from '${oldSettings?.articleCheck}' to '${settings.articleCheck}', restarting cron job...`);
+      
+      try {
+        const cron = await import('node-cron');
+        const { syncBlogData } = await import('../utils/syncBlogData.js');
+        
+        // Stop the old cron task
+        if (global.blogSyncCronTask) {
+          global.blogSyncCronTask.stop();
+          console.log('⏹️ Stopped old article sync cron task');
+        }
+        
+        // Map schedule options to cron patterns (reuse from above)
+        const scheduleMap = {
+          'every_minute': '* * * * *',
+          'every_5_minutes': '*/5 * * * *',
+          'every_hour': '0 * * * *',
+          'every_12_hours': '0 3,15 * * *',
+          'every_day': '0 3 * * *',
+          'every_week': '0 3 * * 0',
+          'every_2_weeks': '0 3 1,15 * *',
+          'every_month': '0 3 1 * *'
+        };
+        
+        const scheduleDescriptions = {
+          'every_minute': 'Every minute',
+          'every_5_minutes': 'Every 5 minutes',
+          'every_hour': 'Every hour',
+          'every_12_hours': 'Twice daily at 3:00 AM and 3:00 PM',
+          'every_day': 'Daily at 3:00 AM',
+          'every_week': 'Weekly on Sunday at 3:00 AM',
+          'every_2_weeks': 'Twice monthly on 1st and 15th at 3:00 AM',
+          'every_month': 'Monthly on 1st at 3:00 AM'
+        };
+        
+        const articleCronPattern = scheduleMap[settings.articleCheck] || scheduleMap['every_minute'];
+        const articleScheduleDescription = scheduleDescriptions[settings.articleCheck] || scheduleDescriptions['every_minute'];
+        
+        // Create new article sync cron task
+        const newBlogSyncTask = cron.schedule(articleCronPattern, async () => {
+          console.log('📝 Running scheduled blog data sync...');
+          try {
+            const result = await syncBlogData();
+            if (result.success) {
+              console.log('✅ Blog sync completed successfully!');
+              console.log(`📊 Created: ${result.created}, Updated: ${result.updated}, Skipped: ${result.skipped}`);
+            } else {
+              console.error('❌ Blog sync failed:', result.error);
+            }
+          } catch (error) {
+            console.error('❌ Blog sync error:', error);
+          }
+        }, {
+          timezone: "Europe/Istanbul"
+        });
+        
+        // Store the new task globally
+        global.blogSyncCronTask = newBlogSyncTask;
+        
+        console.log(`✅ New article sync schedule activated: ${articleScheduleDescription} (Europe/Istanbul)`);
+        console.log(`📋 New article sync pattern: ${articleCronPattern}`);
+        
+      } catch (error) {
+        console.error('❌ Failed to restart article sync cron job:', error);
         // Don't fail the settings update if cron restart fails
       }
     }
