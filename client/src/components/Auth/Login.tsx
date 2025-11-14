@@ -63,6 +63,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       setShowTerms(true);
       navigate('/', { replace: true });
     } else if (path === '/blog') {
+      // Open blog modal for /blog URL only (articles now have dedicated routes)
       setShowBlog(true);
       navigate('/', { replace: true });
     }

@@ -402,14 +402,14 @@
   z-index: 10;
   line-height: 1;
   padding: 0;
-  padding-bottom: 3px;
+  padding-bottom: 4px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform-origin: center center;
 }
 
 .blog-article-close:hover {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  transform: scale(1.15) rotate(90deg);
   box-shadow: 0 6px 25px rgba(239, 68, 68, 0.4);
 }
 

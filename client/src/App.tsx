@@ -8,6 +8,7 @@ import ResetPassword from './components/Auth/ResetPassword';
 import GoogleCallback from './components/Auth/GoogleCallback';
 import Home from './components/Home/Home';
 import Maintenance from './components/Maintenance/Maintenance';
+import BlogArticle from './components/Legal/BlogArticle';
 import './App.css';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
@@ -271,6 +272,9 @@ function App() {
       
       {/* Google OAuth callback route */}
       <Route path="/auth/callback" element={<GoogleCallback onLoginSuccess={handleLoginSuccess} />} />
+      
+      {/* Blog article routes - accessible without authentication */}
+      <Route path="/posts/:slug" element={<BlogArticle />} />
       
       {/* Main app routes */}
       <Route path="/*" element={
