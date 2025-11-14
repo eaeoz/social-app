@@ -51,14 +51,6 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
             <span className="nav-label">Users</span>
           </Link>
           <Link
-            to="/articles"
-            className={`nav-item ${location.pathname === '/articles' ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <span className="nav-icon">📝</span>
-            <span className="nav-label">Articles</span>
-          </Link>
-          <Link
             to="/rooms"
             className={`nav-item ${location.pathname === '/rooms' ? 'active' : ''}`}
             onClick={() => setSidebarOpen(false)}
@@ -100,6 +92,14 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
           >
             <span className="nav-icon">🚨</span>
             <span className="nav-label">Reports</span>
+          </Link>
+          <Link
+            to="/articles"
+            className={`nav-item ${location.pathname === '/articles' ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">📝</span>
+            <span className="nav-label">Articles</span>
           </Link>
         </nav>
 
