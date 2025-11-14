@@ -7,6 +7,7 @@ import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import Contact from '../Legal/Contact';
 import About from '../Legal/About';
+import Blog from '../Legal/Blog';
 import ImageCropper from '../Auth/ImageCropper';
 import NSFWWarningModal from '../Auth/NSFWWarningModal';
 import ReportModal from './ReportModal';
@@ -124,6 +125,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [showTermsConditions, setShowTermsConditions] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showBlog, setShowBlog] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
@@ -2114,6 +2116,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <button 
               className="sidebar-footer-link" 
               onClick={() => {
+                setShowBlog(true);
+                setSidebarOpen(false);
+              }}
+              aria-label="View Blog"
+            >
+              📝 Blog
+            </button>
+            <button 
+              className="sidebar-footer-link" 
+              onClick={() => {
                 setShowPrivacyPolicy(true);
                 setSidebarOpen(false);
               }}
@@ -2914,6 +2926,10 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
       {showContact && (
         <Contact onClose={() => setShowContact(false)} />
+      )}
+
+      {showBlog && (
+        <Blog onClose={() => setShowBlog(false)} />
       )}
 
       {showPrivacyPolicy && (

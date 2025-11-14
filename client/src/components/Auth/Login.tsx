@@ -5,6 +5,7 @@ import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import About from '../Legal/About';
 import Contact from '../Legal/Contact';
+import Blog from '../Legal/Blog';
 import { updateSEOTags } from '../../utils/seo';
 
 interface LoginProps {
@@ -37,6 +38,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [showTerms, setShowTerms] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showBlog, setShowBlog] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -59,6 +61,9 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       navigate('/', { replace: true });
     } else if (path === '/terms') {
       setShowTerms(true);
+      navigate('/', { replace: true });
+    } else if (path === '/blog') {
+      setShowBlog(true);
       navigate('/', { replace: true });
     }
   }, [location.pathname, navigate]);
@@ -438,6 +443,10 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             Terms
           </button>
           <span className="footer-separator">•</span>
+          <button onClick={() => setShowBlog(true)} className="footer-link-button">
+            Blog
+          </button>
+          <span className="footer-separator">•</span>
           <button onClick={() => setShowAbout(true)} className="footer-link-button">
             About
           </button>
@@ -450,6 +459,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
 
       {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
       {showTerms && <TermsConditions onClose={() => setShowTerms(false)} />}
+      {showBlog && <Blog onClose={() => setShowBlog(false)} />}
       {showAbout && <About onClose={() => setShowAbout(false)} />}
       {showContact && <Contact onClose={() => setShowContact(false)} />}
     </div>
