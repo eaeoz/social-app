@@ -494,8 +494,8 @@ Location accuracy depends on:
 function Blog({ onClose }: BlogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(null);
-  const [isExpanding, setIsExpanding] = useState(false);
-  const [isCollapsing, setIsCollapsing] = useState(false);
+  const [listAnimation, setListAnimation] = useState<'slide-out-left' | 'slide-in-left' | ''>('');
+  const [articleAnimation, setArticleAnimation] = useState<'slide-in-right' | 'slide-out-right' | ''>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -525,19 +525,33 @@ function Blog({ onClose }: BlogProps) {
   }, [selectedArticle]);
 
   const handleOpenArticle = (article: BlogArticle) => {
-    setIsExpanding(true);
+    // Slide list out to left
+    setListAnimation('slide-out-left');
+    
     setTimeout(() => {
       setSelectedArticle(article);
-      setIsExpanding(false);
-    }, 300);
+      // Slide article in from right
+      setArticleAnimation('slide-in-right');
+      
+      setTimeout(() => {
+        setArticleAnimation('');
+      }, 400);
+    }, 400);
   };
 
   const handleCloseArticle = () => {
-    setIsCollapsing(true);
+    // Slide article out to right
+    setArticleAnimation('slide-out-right');
+    
     setTimeout(() => {
       setSelectedArticle(null);
-      setIsCollapsing(false);
-    }, 300);
+      // Slide list in from left
+      setListAnimation('slide-in-left');
+      
+      setTimeout(() => {
+        setListAnimation('');
+      }, 400);
+    }, 400);
   };
 
   const filteredArticles = blogArticles.filter(article => {
@@ -555,11 +569,11 @@ function Blog({ onClose }: BlogProps) {
   return (
     <div className="legal-modal-overlay blog-modal-overlay" onClick={selectedArticle ? undefined : onClose}>
       <div 
-        className={`legal-modal-content blog-modal-content ${selectedArticle ? 'article-expanded' : ''} ${isExpanding ? 'expanding' : ''} ${isCollapsing ? 'collapsing' : ''}`}
+        className={`legal-modal-content blog-modal-content ${selectedArticle ? 'article-expanded' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {!selectedArticle ? (
-          <>
+          <div className={`blog-list-view ${listAnimation}`}>
             <div className="legal-modal-header blog-header">
               <div className="legal-header-content">
                 <span className="legal-icon">📝</span>
@@ -637,9 +651,9 @@ function Blog({ onClose }: BlogProps) {
                 ))}
               </div>
             </div>
-          </>
+          </div>
         ) : (
-          <>
+          <div className={`blog-article-view ${articleAnimation}`}>
             <button
               className="blog-article-close"
               onClick={handleCloseArticle}
@@ -671,7 +685,7 @@ function Blog({ onClose }: BlogProps) {
                 </ReactMarkdown>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
