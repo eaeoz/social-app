@@ -261,6 +261,39 @@ function Articles() {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showModal) {
+        setShowModal(false);
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener('keydown', handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [showModal]);
+
+  // Handle Alt+N to open new article modal
+  useEffect(() => {
+    const handleAltN = (event: KeyboardEvent) => {
+      if (event.altKey && event.key.toLowerCase() === 'n' && !showModal) {
+        event.preventDefault();
+        handleNewArticle();
+      }
+    };
+
+    document.addEventListener('keydown', handleAltN);
+
+    return () => {
+      document.removeEventListener('keydown', handleAltN);
+    };
+  }, [showModal]);
+
   if (loading) {
     return (
       <div className="articles-container">
@@ -288,9 +321,12 @@ function Articles() {
               🗑️ Delete Selected ({selectedArticles.size})
             </button>
           )}
-          <button className="btn btn-primary" onClick={handleNewArticle}>
-            ➕ New Article
-          </button>
+          <div className="new-article-wrapper">
+            <button className="btn btn-primary" onClick={handleNewArticle} title="New Article (Alt+N)">
+              ➕ New Article
+            </button>
+            <span className="keyboard-hint">Alt+N</span>
+          </div>
         </div>
       </div>
 
@@ -485,7 +521,10 @@ function Articles() {
           <div className="modal-content article-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingArticle ? '✏️ Edit Article' : '➕ New Article'}</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <div className="modal-close-section">
+                <span className="esc-hint">Press ESC to close</span>
+                <button className="modal-close" onClick={() => setShowModal(false)} title="Close (ESC)">×</button>
+              </div>
             </div>
 
             <form onSubmit={handleSaveArticle} className="article-form">
