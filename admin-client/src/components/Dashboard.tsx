@@ -7,6 +7,7 @@ import Statistics from './Statistics';
 import Rooms from './Rooms';
 import ArchivedReports from './ArchivedReports';
 import Cleanup from './Cleanup';
+import Articles from './Articles';
 import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
@@ -48,6 +49,14 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
           >
             <span className="nav-icon">👥</span>
             <span className="nav-label">Users</span>
+          </Link>
+          <Link
+            to="/articles"
+            className={`nav-item ${location.pathname === '/articles' ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">📝</span>
+            <span className="nav-label">Articles</span>
           </Link>
           <Link
             to="/rooms"
@@ -132,6 +141,7 @@ function Dashboard({ admin, onLogout }: DashboardProps) {
           <Routes>
             <Route path="/" element={<Statistics />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/articles" element={<Articles />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/archived-reports" element={<ArchivedReports />} />
