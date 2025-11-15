@@ -330,16 +330,8 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
               <button 
                 className="auth-button" 
                 onClick={onSwitchToLogin}
-                style={{ marginBottom: '10px' }}
               >
                 Go to Login
-              </button>
-              <button 
-                className="link-button"
-                onClick={handleResendVerification}
-                disabled={loading}
-              >
-                {loading ? 'Sending...' : 'Resend Email'}
               </button>
             </div>
             {error && <div className="error-message" style={{ marginTop: '15px' }}>{error}</div>}
