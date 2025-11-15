@@ -394,6 +394,45 @@
   background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
 }
 
+/* Screen Sharing State */
+.call-button-screen-sharing {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 
+    0 4px 15px rgba(59, 130, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  animation: screenSharingPulse 2s ease-in-out infinite;
+}
+
+.call-button-screen-sharing::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+@keyframes screenSharingPulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 15px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 6px 25px rgba(59, 130, 246, 0.6),
+      0 0 40px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+}
+
+.call-button-screen-sharing:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 
+    0 10px 30px rgba(59, 130, 246, 0.6),
+    0 0 50px rgba(59, 130, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .call-header {
@@ -567,6 +606,15 @@
 .call-button:focus-visible {
   outline: 3px solid rgba(255, 255, 255, 0.6);
   outline-offset: 3px;
+}
+
+/* Remove focus outline for screen share button to prevent white border */
+.call-button:focus {
+  outline: none;
+}
+
+.call-button:focus-visible {
+  outline: none;
 }
 
 /* Loading/Connecting Animation */
