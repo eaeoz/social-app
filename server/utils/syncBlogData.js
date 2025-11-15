@@ -127,14 +127,75 @@ export async function syncBlogData() {
       console.log('📁 Created data directory');
     }
 
+    // Check if content has changed before writing
+    let hasChanges = true;
+    let oldArticles = [];
+    try {
+      const existingData = await fs.readFile(jsonPath, 'utf8');
+      oldArticles = JSON.parse(existingData);
+      
+      // Compare article counts and content
+      if (oldArticles.length === articlesForJson.length) {
+        // Deep compare the articles (comparing only relevant fields, not Appwrite metadata timestamps)
+        const oldArticlesComparable = oldArticles.map(a => ({
+          id: a.id,
+          title: a.title,
+          author: a.author,
+          date: a.date,
+          tags: a.tags,
+          logo: a.logo,
+          excerpt: a.excerpt,
+          content: a.content
+        }));
+        
+        const newArticlesComparable = articlesForJson.map(a => ({
+          id: a.id,
+          title: a.title,
+          author: a.author,
+          date: a.date,
+          tags: a.tags,
+          logo: a.logo,
+          excerpt: a.excerpt,
+          content: a.content
+        }));
+        
+        hasChanges = JSON.stringify(oldArticlesComparable) !== JSON.stringify(newArticlesComparable);
+      }
+    } catch {
+      // File doesn't exist or is invalid, treat as changes
+      hasChanges = true;
+    }
+
+    if (!hasChanges) {
+      console.log('ℹ️  No changes detected in blog articles, skipping cache update and sitemap regeneration');
+      return { 
+        success: true, 
+        articlesCount: articlesForJson.length,
+        cacheFile: jsonPath,
+        sitemapGenerated: false,
+        created: 0,
+        updated: 0,
+        skipped: articlesForJson.length,
+        message: 'No changes detected'
+      };
+    }
+
     await fs.writeFile(jsonPath, JSON.stringify(articlesForJson, null, 2), 'utf8');
     console.log(`✅ Updated JSON cache with ${articlesForJson.length} articles`);
 
-    // Regenerate sitemap after updating articles
+    // Calculate what changed
+    const created = Math.max(0, articlesForJson.length - oldArticles.length);
+    const updated = oldArticles.length > 0 && articlesForJson.length === oldArticles.length ? articlesForJson.length : 0;
+    const deleted = Math.max(0, oldArticles.length - articlesForJson.length);
+
+    // Regenerate sitemap only when articles changed
     const sitemapResult = await generateSitemap();
 
     console.log('\n📊 Sync Summary:');
     console.log(`   📝 Articles synced: ${articlesForJson.length}`);
+    console.log(`   ➕ Created: ${created}`);
+    console.log(`   ✏️  Updated: ${updated}`);
+    console.log(`   ➖ Deleted: ${deleted}`);
     console.log(`   💾 Cache updated: ${jsonPath}`);
     console.log(`   🗺️  Sitemap updated: ${sitemapResult.success ? 'Yes' : 'No'}`);
     console.log('🎉 Blog data sync completed!\n');
@@ -143,7 +204,11 @@ export async function syncBlogData() {
       success: true, 
       articlesCount: articlesForJson.length,
       cacheFile: jsonPath,
-      sitemapGenerated: sitemapResult.success
+      sitemapGenerated: sitemapResult.success,
+      created,
+      updated,
+      deleted,
+      skipped: 0
     };
 
   } catch (error) {

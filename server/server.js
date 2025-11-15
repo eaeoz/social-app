@@ -733,35 +733,13 @@ async function startServer() {
     // Store cleanup task globally so it can be restarted when settings change
     global.cleanupCronTask = cleanupTask;
     
-    // Get article check schedule from database
-    const articleCheckSchedule = settings.articleCheck || 'every_minute';
-    const articleCronPattern = scheduleMap[articleCheckSchedule] || scheduleMap['every_minute'];
-    const articleScheduleDescription = scheduleDescriptions[articleCheckSchedule] || scheduleDescriptions['every_minute'];
-    
-    // Schedule blog data sync with dynamic schedule
-    const blogSyncTask = cron.schedule(articleCronPattern, async () => {
-      console.log('📝 Running scheduled blog data sync...');
-      try {
-        const result = await syncBlogData();
-        if (result.success) {
-          console.log('✅ Blog sync completed successfully!');
-          console.log(`📊 Created: ${result.created}, Updated: ${result.updated}, Skipped: ${result.skipped}`);
-        } else {
-          console.error('❌ Blog sync failed:', result.error);
-        }
-      } catch (error) {
-        console.error('❌ Blog sync error:', error);
-      }
-    }, {
-      timezone: "Europe/Istanbul"
-    });
-    
-    console.log(`📝 Blog cache sync scheduled: ${articleScheduleDescription} (Europe/Istanbul)`);
-    console.log(`📋 Article sync pattern: ${articleCronPattern}`);
-    console.log(`ℹ️  Note: Appwrite is the source of truth, JSON is cached for fast reads`);
-    
-    // Store blog sync task globally so it can be restarted when settings change
-    global.blogSyncCronTask = blogSyncTask;
+    // Blog sync is NOT scheduled - it runs:
+    // 1. On server startup (below)
+    // 2. When admin creates/updates/deletes articles (in blogRoutes.js)
+    console.log('📝 Blog sync strategy: Manual triggers only (no scheduled sync)');
+    console.log('   ✅ Syncs on server startup');
+    console.log('   ✅ Syncs when admin modifies articles');
+    console.log('   ❌ No scheduled periodic sync (unnecessary)');
     
     // Initial blog sync on startup (Appwrite → JSON cache)
     console.log('📝 Running initial blog cache sync (Appwrite → JSON)...');
