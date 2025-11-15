@@ -774,6 +774,22 @@ router.delete('/users/:userId', authenticateToken, requireAdmin, async (req, res
     
     console.log(`🗑️ Admin ${req.user.userId} is deleting user: ${user.email} (${userId})`);
     
+    // Delete profile picture from Appwrite storage (if exists)
+    if (user.profilePictureId) {
+      try {
+        const { storage, BUCKET_ID } = await import('../config/appwrite.js');
+        await storage.deleteFile(BUCKET_ID, user.profilePictureId);
+        console.log(`✅ Deleted profile picture from Appwrite: ${user.profilePictureId}`);
+      } catch (error) {
+        // If file not found (404), that's okay - it might have been deleted already
+        if (error.code !== 404) {
+          console.error(`⚠️ Could not delete profile picture for ${user.username}:`, error.message);
+        } else {
+          console.log(`ℹ️ Profile picture already deleted or not found: ${user.profilePictureId}`);
+        }
+      }
+    }
+    
     // Delete user's messages
     await db.collection('messages').deleteMany({
       $or: [{ senderId: new ObjectId(userId) }, { receiverId: new ObjectId(userId) }]
