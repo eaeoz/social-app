@@ -822,16 +822,45 @@ router.post('/users/create', authenticateToken, requireAdmin, uploadMiddleware, 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
     
-    // Handle profile picture upload if present (multer stores it in req.file)
+    // Create new user FIRST (without profile picture)
+    const newUser = {
+      username: username.toLowerCase(),
+      email: email.toLowerCase(),
+      passwordHash,
+      fullName: fullName || '',
+      nickName: nickName || username,
+      age: parseInt(age) || 18,
+      gender: gender || 'Male',
+      bio: '',
+      profilePictureId: null, // Will be updated after upload
+      status: 'offline',
+      role: 'user',
+      isEmailVerified: Boolean(emailVerified === 'true' || emailVerified === true),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSeen: new Date(),
+      reports: [],
+      reportCount: 0,
+      userSuspended: false
+    };
+    
+    const result = await db.collection('users').insertOne(newUser);
+    const userId = result.insertedId.toString();
+    
+    // NOW handle profile picture upload with the real user ID
     let profilePictureId = null;
     if (req.file) {
       try {
         // Validate file
         if (!req.file.mimetype.startsWith('image/')) {
+          // Delete the user we just created since upload validation failed
+          await db.collection('users').deleteOne({ _id: result.insertedId });
           return res.status(400).json({ error: 'Profile picture must be an image file' });
         }
         
         if (req.file.size > 5 * 1024 * 1024) {
+          // Delete the user we just created since upload validation failed
+          await db.collection('users').deleteOne({ _id: result.insertedId });
           return res.status(400).json({ error: 'Profile picture must be less than 5MB' });
         }
         
@@ -848,49 +877,36 @@ router.post('/users/create', authenticateToken, requireAdmin, uploadMiddleware, 
           })
           .toBuffer();
         
-        // Create filename using username and temporary ID
+        // Create filename using username and REAL user ID
         const sanitizedUsername = username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const filename = `${sanitizedUsername}_admin_${Date.now()}.jpg`;
+        const filename = `${sanitizedUsername}_${userId}.jpg`;
         
         // Upload to Appwrite using InputFile
         const file = InputFile.fromBuffer(processedBuffer, filename);
-        const result = await storage.createFile(
+        const uploadResult = await storage.createFile(
           BUCKET_ID,
           ID.unique(),
           file
         );
         
-        profilePictureId = result.$id;
+        profilePictureId = uploadResult.$id;
         console.log(`✅ Uploaded profile picture: ${profilePictureId} (filename: ${filename})`);
+        
+        // Update user with profilePictureId
+        await db.collection('users').updateOne(
+          { _id: result.insertedId },
+          { $set: { profilePictureId: profilePictureId } }
+        );
+        
+        // Update newUser object for response
+        newUser.profilePictureId = profilePictureId;
+        
       } catch (uploadError) {
         console.error('Profile picture upload error:', uploadError);
-        return res.status(500).json({ error: 'Failed to upload profile picture' });
+        // Don't fail user creation if just the picture upload fails
+        console.log('⚠️ User created but profile picture upload failed');
       }
     }
-    
-    // Create new user
-    const newUser = {
-      username: username.toLowerCase(),
-      email: email.toLowerCase(),
-      passwordHash,
-      fullName: fullName || '',
-      nickName: nickName || username,
-      age: parseInt(age) || 18,
-      gender: gender || 'Male',
-      bio: '',
-      profilePictureId: profilePictureId,
-      status: 'offline',
-      role: 'user',
-      isEmailVerified: Boolean(emailVerified === 'true' || emailVerified === true),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      lastSeen: new Date(),
-      reports: [],
-      reportCount: 0,
-      userSuspended: false
-    };
-    
-    const result = await db.collection('users').insertOne(newUser);
     
     console.log(`✅ Admin created new user: ${username} (${email}), isEmailVerified: ${Boolean(emailVerified === 'true' || emailVerified === true)}`);
     
