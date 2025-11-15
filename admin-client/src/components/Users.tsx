@@ -358,9 +358,47 @@ function Users() {
 
                 <div className="detail-row">
                   <span className="detail-label">✅ Email Verified:</span>
-                  <span className="detail-value">
-                    {selectedUser.emailVerified ? 'Yes' : 'No'}
-                  </span>
+                  <button 
+                    className="email-verified-toggle"
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem('adminToken');
+                        const response = await fetch(
+                          `${import.meta.env.VITE_API_URL}/admin/users/${selectedUser._id}/email-verification`,
+                          {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ 
+                              isEmailVerified: !selectedUser.emailVerified 
+                            })
+                          }
+                        );
+
+                        if (response.ok) {
+                          // Update local state
+                          setSelectedUser({
+                            ...selectedUser,
+                            emailVerified: !selectedUser.emailVerified
+                          });
+                          // Refresh users list
+                          await fetchUsers();
+                          alert(`Email verification status updated to: ${!selectedUser.emailVerified ? 'Verified' : 'Not Verified'}`);
+                        } else {
+                          const data = await response.json();
+                          alert(`Failed to update: ${data.error || 'Unknown error'}`);
+                        }
+                      } catch (error) {
+                        console.error('Error updating email verification:', error);
+                        alert('Failed to update email verification status');
+                      }
+                    }}
+                    title="Click to toggle email verification status"
+                  >
+                    {selectedUser.emailVerified ? '✅ Yes' : '❌ No'}
+                  </button>
                 </div>
 
                 <div className="detail-row">

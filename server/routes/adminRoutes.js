@@ -930,6 +930,49 @@ router.post('/users/create', authenticateToken, requireAdmin, uploadMiddleware, 
   }
 });
 
+// Update user email verification status
+router.put('/users/:userId/email-verification', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isEmailVerified } = req.body;
+    
+    if (typeof isEmailVerified !== 'boolean') {
+      return res.status(400).json({ error: 'isEmailVerified must be a boolean' });
+    }
+    
+    const db = getDatabase();
+    
+    // Get user details before updating
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log(`🔄 Admin ${req.user.userId} updating email verification for user: ${user.email} (${userId}) to ${isEmailVerified}`);
+    
+    // Update email verification status
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: { 
+          isEmailVerified: isEmailVerified,
+          updatedAt: new Date()
+        }
+      }
+    );
+    
+    console.log(`✅ Email verification status updated: ${user.email} is now ${isEmailVerified ? 'verified' : 'not verified'}`);
+    
+    res.json({ 
+      message: 'Email verification status updated successfully',
+      isEmailVerified: isEmailVerified
+    });
+  } catch (error) {
+    console.error('Update email verification error:', error);
+    res.status(500).json({ error: 'Failed to update email verification status' });
+  }
+});
+
 // Delete user
 router.delete('/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
   try {
