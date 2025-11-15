@@ -560,8 +560,35 @@ export function setupMessageHandlers(io, socket, userSockets) {
         callType
       };
 
-      await db.collection('messages').insertOne(message);
+      const result = await db.collection('messages').insertOne(message);
       console.log(`📝 Call log saved: ${callType} call, ${duration}s`);
+
+      // Get sender information
+      const sender = await db.collection('users').findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { username: 1, displayName: 1, nickName: 1 } }
+      );
+
+      // Prepare message for broadcasting
+      const broadcastMessage = {
+        messageId: result.insertedId.toString(),
+        senderId: userId,
+        receiverId: receiverId,
+        senderName: sender?.nickName || sender?.displayName || sender?.username || 'Unknown',
+        content: message.content,
+        messageType: 'call-log',
+        timestamp: message.timestamp
+      };
+
+      // Emit to sender (current user)
+      socket.emit('private_message', broadcastMessage);
+
+      // Emit to receiver
+      const receiverSocketId = userSockets.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('private_message', broadcastMessage);
+        console.log(`📝 Call log sent to both users: ${userId} and ${receiverId}`);
+      }
     } catch (error) {
       console.error('Error logging call:', error);
     }
