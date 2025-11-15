@@ -578,12 +578,14 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
         // Start screen sharing
         console.log('🖥️ Starting screen share...');
         
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            cursor: 'always' as any // Force cursor to always be visible
-          },
+        // TypeScript doesn't have full types for getDisplayMedia constraints yet
+        // Using proper types with cursor setting
+        const displayMediaOptions: DisplayMediaStreamOptions = {
+          video: true,
           audio: false
-        });
+        };
+
+        const screenStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
 
         screenStreamRef.current = screenStream;
         const screenTrack = screenStream.getVideoTracks()[0];
