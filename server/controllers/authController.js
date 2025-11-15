@@ -7,7 +7,6 @@ import sharp from 'sharp';
 import { InputFile, ID } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
 import crypto from 'crypto';
-import { sendVerificationEmail } from '../utils/sendVerificationEmail.js';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -848,23 +847,35 @@ export async function updateProfile(req, res) {
     // Process and upload profile picture if provided
     if (req.file) {
       try {
+        console.log(`📸 Processing profile picture for user: ${user.username}`);
+        console.log(`📸 File size: ${req.file.size} bytes`);
+        console.log(`📸 File mimetype: ${req.file.mimetype}`);
+        
         // Delete old profile picture if exists
         if (user.profilePictureId) {
           try {
             await storage.deleteFile(BUCKET_ID, user.profilePictureId);
             console.log(`✅ Deleted old profile picture: ${user.profilePictureId}`);
           } catch (deleteError) {
-            console.error('Failed to delete old profile picture:', deleteError);
+            console.error('❌ Failed to delete old profile picture:', deleteError);
+            console.error('Delete error details:', deleteError.message);
             // Continue even if deletion fails
           }
         }
 
         // Upload new profile picture
+        console.log(`📤 Uploading new profile picture...`);
         const profilePictureId = await processAndUploadImage(req.file.buffer, user.username, userId);
         updateData.profilePictureId = profilePictureId;
+        console.log(`✅ Profile picture uploaded successfully: ${profilePictureId}`);
       } catch (uploadError) {
-        console.error('Failed to upload profile picture:', uploadError);
-        return res.status(500).json({ error: 'Failed to upload profile picture' });
+        console.error('❌ Failed to upload profile picture:', uploadError);
+        console.error('Upload error message:', uploadError.message);
+        console.error('Upload error stack:', uploadError.stack);
+        return res.status(500).json({ 
+          error: 'Failed to upload profile picture',
+          details: uploadError.message 
+        });
       }
     }
 
