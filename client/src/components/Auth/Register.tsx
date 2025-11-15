@@ -4,6 +4,7 @@ import PrivacyPolicy from '../Legal/PrivacyPolicy';
 import TermsConditions from '../Legal/TermsConditions';
 import About from '../Legal/About';
 import Contact from '../Legal/Contact';
+import Blog from '../Legal/Blog';
 import ImageCropper from './ImageCropper';
 import NSFWWarningModal from './NSFWWarningModal';
 import { nsfwDetector } from '../../utils/nsfwDetector';
@@ -40,6 +41,7 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [showTerms, setShowTerms] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showBlog, setShowBlog] = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
   const [showNSFWWarning, setShowNSFWWarning] = useState(false);
@@ -529,6 +531,10 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
             Terms
           </button>
           <span className="footer-separator">•</span>
+          <button onClick={() => setShowBlog(true)} className="footer-link-button">
+            Blog
+          </button>
+          <span className="footer-separator">•</span>
           <button onClick={() => setShowAbout(true)} className="footer-link-button">
             About
           </button>
@@ -541,6 +547,7 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
 
       {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
       {showTerms && <TermsConditions onClose={() => setShowTerms(false)} />}
+      {showBlog && <Blog onClose={() => setShowBlog(false)} />}
       {showAbout && <About onClose={() => setShowAbout(false)} />}
       {showContact && <Contact onClose={() => setShowContact(false)} />}
       
