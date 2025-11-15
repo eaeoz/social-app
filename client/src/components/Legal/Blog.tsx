@@ -32,7 +32,7 @@ function Blog({ onClose }: BlogProps) {
     const fetchArticles = async () => {
       try {
         setLoading(true);
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
         const response = await fetch(`${apiUrl}/blog`);
         
         if (!response.ok) {
