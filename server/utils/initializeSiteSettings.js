@@ -110,6 +110,7 @@ export async function getSiteSettings() {
       cleanCycle: settings.cleanCycle !== undefined ? settings.cleanCycle : 129600, // Default 129600 minutes (90 days)
       cleanCheck: settings.cleanCheck || 'every_12_hours', // Default: every 12 hours
       messageNotificationSound: settings.messageNotificationSound || 'stwime_up', // Default: stwime_up
+      senderNotificationSound: settings.senderNotificationSound || 'pop', // Default: pop
       voiceCallSound: settings.voiceCallSound || 'default', // Default: default
       videoCallSound: settings.videoCallSound || 'default' // Default: default
     };

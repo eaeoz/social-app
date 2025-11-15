@@ -56,11 +56,27 @@ const getNotificationSound = (): HTMLAudioElement => {
 
 // Get send message sound (creates and caches Audio object)
 const getSendMessageSound = (): HTMLAudioElement => {
-  if (!cachedSendAudio || cachedSendAudio.src !== `/sounds/sender/${senderNotificationSound}.mp3`) {
-    cachedSendAudio = new Audio(`/sounds/sender/${senderNotificationSound}.mp3`);
-    cachedSendAudio.volume = 0.4;
-    console.log('📤 Loaded sender sound:', senderNotificationSound);
+  const soundPath = `/sounds/sender/${senderNotificationSound}.mp3`;
+  const fullPath = window.location.origin + soundPath;
+  
+  console.log('🔍 Checking sender sound:');
+  console.log('  - Setting from DB:', senderNotificationSound);
+  console.log('  - Sound path:', soundPath);
+  console.log('  - Full URL:', fullPath);
+  
+  if (cachedSendAudio) {
+    console.log('  - Cached src:', cachedSendAudio.src);
+    console.log('  - Match:', cachedSendAudio.src === fullPath);
   }
+  
+  if (!cachedSendAudio || cachedSendAudio.src !== fullPath) {
+    console.log('📤 Creating new sender sound:', senderNotificationSound);
+    cachedSendAudio = new Audio(soundPath);
+    cachedSendAudio.volume = 0.4;
+  } else {
+    console.log('♻️ Reusing cached sender sound');
+  }
+  
   return cachedSendAudio;
 };
 
