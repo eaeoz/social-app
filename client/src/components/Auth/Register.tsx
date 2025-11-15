@@ -187,33 +187,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     }
   };
 
-  const handleResendVerification = async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch(`${API_URL}/auth/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: registeredEmail }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to resend verification email');
-      }
-
-      alert('Verification email sent! Please check your inbox.');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
