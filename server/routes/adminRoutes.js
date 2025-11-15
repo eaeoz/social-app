@@ -781,17 +781,23 @@ router.delete('/users/:userId', authenticateToken, requireAdmin, async (req, res
     // Delete profile picture from Appwrite storage (if exists)
     if (user.profilePictureId) {
       try {
-        const { storage, BUCKET_ID } = await import('../config/appwrite.js');
-        await storage.deleteFile(BUCKET_ID, user.profilePictureId);
-        console.log(`✅ Deleted profile picture from Appwrite: ${user.profilePictureId}`);
+        const { deleteProfilePicture } = await import('../config/appwrite.js');
+        await deleteProfilePicture(user.profilePictureId);
+        console.log(`✅ Deleted profile picture from Appwrite bucket: ${user.profilePictureId}`);
       } catch (error) {
         // If file not found (404), that's okay - it might have been deleted already
-        if (error.code !== 404) {
-          console.error(`⚠️ Could not delete profile picture for ${user.username}:`, error.message);
-        } else {
+        if (error.code === 404 || error.response?.code === 404) {
           console.log(`ℹ️ Profile picture already deleted or not found: ${user.profilePictureId}`);
+        } else {
+          console.error(`⚠️ Failed to delete profile picture for ${user.username}:`, error);
+          console.error(`   - File ID: ${user.profilePictureId}`);
+          console.error(`   - Error code: ${error.code || error.response?.code || 'unknown'}`);
+          console.error(`   - Error message: ${error.message}`);
+          // Don't throw - continue with user deletion even if picture deletion fails
         }
       }
+    } else {
+      console.log(`ℹ️ User ${user.username} has no profile picture to delete`);
     }
     
     // Delete user's messages
@@ -1579,6 +1585,33 @@ router.post('/cleanup/manual-backup-cleanup', authenticateToken, requireAdmin, a
   } catch (error) {
     console.error('Manual cleanup error:', error);
     res.status(500).json({ error: 'Failed to perform cleanup' });
+  }
+});
+
+// Manual article check - manually trigger blog data sync
+router.post('/articles/manual-check', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('📝 Manual article check requested by admin');
+    
+    const { syncBlogData } = await import('../utils/syncBlogData.js');
+    const result = await syncBlogData();
+    
+    if (result.success) {
+      res.json({
+        message: 'Article check completed successfully',
+        created: result.created,
+        updated: result.updated,
+        skipped: result.skipped,
+        total: result.created + result.updated + result.skipped
+      });
+    } else {
+      res.status(500).json({ 
+        error: result.error || 'Article check failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Manual article check error:', error);
+    res.status(500).json({ error: 'Failed to perform article check' });
   }
 });
 

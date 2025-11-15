@@ -71,7 +71,7 @@ router.get('/', async (req, res) => {
         DATABASE_ID,
         COLLECTION_ID,
         [
-          Query.orderDesc('date'),
+          Query.orderDesc('$createdAt'),
           Query.limit(100)
         ]
       );

@@ -131,6 +131,41 @@ function Settings() {
     }
   };
 
+  const handleManualArticleCheck = async () => {
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      console.log('🔄 Manually checking articles...');
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/articles/manual-check`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Article check completed:', data);
+        setMessage(`Article check completed! Created: ${data.created}, Updated: ${data.updated}, Skipped: ${data.skipped}`);
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Article check failed:', response.status, errorData);
+        setMessage('Failed to check articles: ' + (errorData.error || 'Unknown error'));
+        setTimeout(() => setMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('❌ Error checking articles:', error);
+      setMessage('An error occurred while checking articles.');
+      setTimeout(() => setMessage(''), 5000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -417,20 +452,36 @@ function Settings() {
                 How often the system checks for article-related updates or maintenance tasks
               </span>
             </div>
-            <select
-              className="setting-input"
-              value={settings.articleCheck || 'every_minute'}
-              onChange={(e) => setSettings({...settings, articleCheck: e.target.value})}
-            >
-              <option value="every_minute">Every Minute (testing only)</option>
-              <option value="every_5_minutes">Every 5 Minutes (testing only)</option>
-              <option value="every_hour">Every Hour</option>
-              <option value="every_12_hours">Every 12 Hours (3 AM & 3 PM)</option>
-              <option value="every_day">Daily (3 AM)</option>
-              <option value="every_week">Weekly (Sunday 3 AM)</option>
-              <option value="every_2_weeks">Twice Monthly (1st & 15th at 3 AM)</option>
-              <option value="every_month">Monthly (1st at 3 AM)</option>
-            </select>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <select
+                className="setting-input"
+                value={settings.articleCheck || 'every_minute'}
+                onChange={(e) => setSettings({...settings, articleCheck: e.target.value})}
+                style={{ flex: 1 }}
+              >
+                <option value="every_minute">Every Minute (testing only)</option>
+                <option value="every_5_minutes">Every 5 Minutes (testing only)</option>
+                <option value="every_hour">Every Hour</option>
+                <option value="every_12_hours">Every 12 Hours (3 AM & 3 PM)</option>
+                <option value="every_day">Daily (3 AM)</option>
+                <option value="every_week">Weekly (Sunday 3 AM)</option>
+                <option value="every_2_weeks">Twice Monthly (1st & 15th at 3 AM)</option>
+                <option value="every_month">Monthly (1st at 3 AM)</option>
+              </select>
+              <button 
+                type="button"
+                className="btn-secondary"
+                onClick={handleManualArticleCheck}
+                disabled={saving}
+                style={{ 
+                  padding: '8px 16px',
+                  whiteSpace: 'nowrap',
+                  fontSize: '13px'
+                }}
+              >
+                🔄 Check Now
+              </button>
+            </div>
           </div>
         </div>
 
