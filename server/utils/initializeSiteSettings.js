@@ -25,6 +25,7 @@ export async function initializeSiteSettings() {
       const defaultSettings = {
         settingType: 'global',
         showuserlistpicture: 1, // 1 = show pictures, 0 = hide pictures
+        registrationEnabled: true, // true = enable user registration and show full login UI, false = hide registration-related UI elements
         searchUserCount: 50, // Maximum number of users to show in search
         defaultUsersDisplayCount: 20, // Maximum number of users to show by default (online users only)
         siteEmail: '', // Email address to receive contact form submissions
@@ -81,6 +82,7 @@ export async function getSiteSettings() {
       await initializeSiteSettings();
       return {
         showuserlistpicture: 1,
+        registrationEnabled: true,
         searchUserCount: 50,
         defaultUsersDisplayCount: 20,
         siteEmail: '',
@@ -96,6 +98,7 @@ export async function getSiteSettings() {
 
     const result = {
       showuserlistpicture: settings.showuserlistpicture !== undefined ? settings.showuserlistpicture : 1,
+      registrationEnabled: settings.registrationEnabled !== undefined ? settings.registrationEnabled : true,
       searchUserCount: settings.searchUserCount !== undefined ? settings.searchUserCount : 50,
       defaultUsersDisplayCount: settings.defaultUsersDisplayCount !== undefined ? settings.defaultUsersDisplayCount : 20,
       siteEmail: settings.siteEmail || '',
@@ -122,6 +125,7 @@ export async function getSiteSettings() {
     // Return default on error
     return {
       showuserlistpicture: 1,
+        registrationEnabled: true,
       searchUserCount: 50,
       defaultUsersDisplayCount: 20,
       verificationEmailResendCount: 4,

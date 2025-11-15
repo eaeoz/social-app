@@ -220,6 +220,23 @@ function Settings() {
 
           <div className="setting-item">
             <div className="setting-info">
+              <label>Enable User Registration</label>
+              <span className="setting-description">
+                Enable user registration and show signup options on login page
+              </span>
+            </div>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={settings.registrationEnabled}
+                onChange={(e) => setSettings({...settings, registrationEnabled: e.target.checked})}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
               <label>Default Users Display Count</label>
               <span className="setting-description">
                 Number of users to display by default in lists

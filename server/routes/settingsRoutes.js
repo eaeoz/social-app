@@ -18,16 +18,23 @@ router.get('/site', async (req, res) => {
 // Update site settings (protected endpoint - requires auth)
 router.put('/site', authenticateToken, async (req, res) => {
   try {
-    const { showuserlistpicture } = req.body;
+    const { showuserlistpicture, registrationEnabled } = req.body;
 
     // Validate input
     if (showuserlistpicture !== undefined && showuserlistpicture !== 0 && showuserlistpicture !== 1) {
       return res.status(400).json({ error: 'showuserlistpicture must be 0 or 1' });
     }
 
+    if (registrationEnabled !== undefined && typeof registrationEnabled !== 'boolean') {
+      return res.status(400).json({ error: 'registrationEnabled must be a boolean' });
+    }
+
     const settings = {};
     if (showuserlistpicture !== undefined) {
       settings.showuserlistpicture = showuserlistpicture;
+    }
+    if (registrationEnabled !== undefined) {
+      settings.registrationEnabled = registrationEnabled;
     }
 
     await updateSiteSettings(settings);

@@ -39,6 +39,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showBlog, setShowBlog] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -97,6 +98,25 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     };
     document.head.appendChild(script);
   }, []);
+
+  // Fetch site settings to get registrationEnabled value
+  useEffect(() => {
+    const fetchSiteSettings = async () => {
+      try {
+        const response = await fetch(`${API_URL}/settings/site`);
+        if (response.ok) {
+          const data = await response.json();
+          setRegistrationEnabled(data.settings.registrationEnabled !== false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch site settings:', error);
+        // Default to true if fetch fails
+        setRegistrationEnabled(true);
+      }
+    };
+
+    fetchSiteSettings();
+  }, [API_URL]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('authTheme') as 'light' | 'dark' | null;
@@ -329,42 +349,46 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
                 {loading ? 'Signing in...' : !recaptchaLoaded ? 'Loading...' : 'Sign In'}
               </button>
 
-              <div style={{ 
-                margin: '20px 0', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '10px',
-                color: '#666'
-              }}>
-                <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
-                <span style={{ fontSize: '14px' }}>OR</span>
-                <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
-              </div>
+              {registrationEnabled && (
+                <>
+                  <div style={{ 
+                    margin: '20px 0', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px',
+                    color: '#666'
+                  }}>
+                    <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
+                    <span style={{ fontSize: '14px' }}>OR</span>
+                    <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="auth-button"
-                disabled={loading}
-                style={{
-                  background: 'white',
-                  color: '#444',
-                  border: '2px solid #ddd',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  fontWeight: '500'
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18">
-                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-                  <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.593.102-1.17.282-1.709V4.958H.957C.347 6.173 0 7.548 0 9c0 1.452.348 2.827.957 4.042l3.007-2.335z"/>
-                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-                </svg>
-                Continue with Google
-              </button>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="auth-button"
+                    disabled={loading}
+                    style={{
+                      background: 'white',
+                      color: '#444',
+                      border: '2px solid #ddd',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18">
+                      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                      <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.593.102-1.17.282-1.709V4.958H.957C.347 6.173 0 7.548 0 9c0 1.452.348 2.827.957 4.042l3.007-2.335z"/>
+                      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                    </svg>
+                    Continue with Google
+                  </button>
+                </>
+              )}
             </>
           )}
 
@@ -425,23 +449,27 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             </>
           )}
 
-          <div className="recaptcha-notice">
-            <small>
-              This site is protected by reCAPTCHA and the Google{' '}
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" aria-label="Read Google's Privacy Policy">Privacy Policy</a> and{' '}
-              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" aria-label="Read Google's Terms of Service">Terms of Service</a> apply.
-            </small>
-          </div>
+          {registrationEnabled && (
+            <div className="recaptcha-notice">
+              <small>
+                This site is protected by reCAPTCHA and the Google{' '}
+                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" aria-label="Read Google's Privacy Policy">Privacy Policy</a> and{' '}
+                <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" aria-label="Read Google's Terms of Service">Terms of Service</a> apply.
+              </small>
+            </div>
+          )}
         </form>
 
-        <div className="auth-footer">
-          <p>
-            Don't have an account?{' '}
-            <button onClick={onSwitchToRegister} className="link-button">
-              Sign Up
-            </button>
-          </p>
-        </div>
+        {registrationEnabled && (
+          <div className="auth-footer">
+            <p>
+              Don't have an account?{' '}
+              <button onClick={onSwitchToRegister} className="link-button">
+                Sign Up
+              </button>
+            </p>
+          </div>
+        )}
 
         <div className="auth-footer-links">
           <button onClick={() => setShowPrivacyPolicy(true)} className="footer-link-button">
