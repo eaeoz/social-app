@@ -460,6 +460,40 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             Contact
           </button>
         </div>
+
+        <div style={{
+          marginTop: '20px',
+          padding: '15px',
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '8px',
+          fontSize: '12px',
+          lineHeight: '1.6',
+          color: theme === 'dark' ? '#94a3b8' : '#64748b'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            marginBottom: '8px',
+            fontWeight: '600',
+            color: theme === 'dark' ? '#cbd5e1' : '#475569'
+          }}>
+            <span>🛡️</span>
+            <span>Safety & Protection Features</span>
+          </div>
+          <ul style={{ 
+            margin: '0', 
+            paddingLeft: '25px',
+            listStyleType: 'none'
+          }}>
+            <li style={{ marginBottom: '4px' }}>✓ AI-powered +18 image protection with automatic detection</li>
+            <li style={{ marginBottom: '4px' }}>✓ Real-time chat filtering for inappropriate words and content</li>
+            <li style={{ marginBottom: '4px' }}>✓ Automatic user suspension after 10 reports from different users</li>
+            <li style={{ marginBottom: '4px' }}>✓ Advanced spam and repetitive message monitoring system</li>
+            <li style={{ marginBottom: '4px' }}>✓ Suspended users kept without email confirmation for security</li>
+            <li style={{ marginBottom: '4px' }}>✓ System logs backed up and maintained for a specific period</li>
+          </ul>
+        </div>
       </div>
 
       {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
