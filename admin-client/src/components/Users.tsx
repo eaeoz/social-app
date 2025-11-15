@@ -33,6 +33,7 @@ function Users() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPasswordRecoveryModal, setShowPasswordRecoveryModal] = useState(false);
   const [recoveryUser, setRecoveryUser] = useState<User | null>(null);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -142,6 +143,13 @@ function Users() {
         <div className="users-stats">
           <span className="stat-badge">Total: {users.length}</span>
           <span className="stat-badge online">Online: {users.filter(u => u.status === 'online').length}</span>
+          <button 
+            className="btn-create-user"
+            onClick={() => setShowCreateUserModal(true)}
+            title="Create New User"
+          >
+            ➕ Create User
+          </button>
         </div>
       </div>
 
@@ -446,6 +454,265 @@ function Users() {
           }}
         />
       )}
+
+      {/* Create User Modal */}
+      {showCreateUserModal && (
+        <CreateUserModal
+          onClose={() => setShowCreateUserModal(false)}
+          onSuccess={() => {
+            setShowCreateUserModal(false);
+            fetchUsers();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+interface CreateUserModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function CreateUserModal({ onClose, onSuccess }: CreateUserModalProps) {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    fullName: '',
+    nickName: '',
+    age: 18,
+    gender: 'Male',
+    emailVerified: true
+  });
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB');
+        return;
+      }
+      setProfilePicture(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setError('');
+    }
+  };
+
+  const removeImage = () => {
+    setProfilePicture(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl('');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const formDataToSend = new FormData();
+      
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, value.toString());
+      });
+      
+      if (profilePicture) {
+        formDataToSend.append('profilePicture', profilePicture);
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/users/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create user');
+      }
+
+      alert('User created successfully!');
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content create-user-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>➕ Create New User</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-body">
+          {error && <div className="error-message">{error}</div>}
+
+          <div className="form-group">
+            <div className="profile-picture-upload">
+              {previewUrl ? (
+                <div className="profile-preview-container">
+                  <img src={previewUrl} alt="Profile preview" className="profile-preview" />
+                  <button type="button" onClick={removeImage} className="remove-image-btn">×</button>
+                </div>
+              ) : (
+                <label htmlFor="profilePicture" className="upload-label">
+                  <div className="upload-placeholder">
+                    <span className="upload-icon">📷</span>
+                    <span className="upload-text">Click to upload photo</span>
+                  </div>
+                  <input
+                    type="file"
+                    id="profilePicture"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={loading}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Username *</label>
+            <input
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({...formData, username: e.target.value})}
+              required
+              disabled={loading}
+              placeholder="Enter username"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Email *</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              required
+              disabled={loading}
+              placeholder="Enter email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Password *</label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              required
+              minLength={6}
+              disabled={loading}
+              placeholder="Min 6 characters"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Full Name</label>
+            <input
+              type="text"
+              value={formData.fullName}
+              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+              disabled={loading}
+              placeholder="Enter full name"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Nick Name</label>
+            <input
+              type="text"
+              value={formData.nickName}
+              onChange={(e) => setFormData({...formData, nickName: e.target.value})}
+              disabled={loading}
+              placeholder="Display name"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Age *</label>
+            <select
+              value={formData.age}
+              onChange={(e) => setFormData({...formData, age: parseInt(e.target.value)})}
+              required
+              disabled={loading}
+            >
+              {Array.from({ length: 83 }, (_, i) => i + 18).map((age) => (
+                <option key={age} value={age}>{age}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Gender *</label>
+            <div className="radio-group">
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="Male"
+                  checked={formData.gender === 'Male'}
+                  onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                  disabled={loading}
+                />
+                <span>Male</span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="Female"
+                  checked={formData.gender === 'Female'}
+                  onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                  disabled={loading}
+                />
+                <span>Female</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.emailVerified}
+                onChange={(e) => setFormData({...formData, emailVerified: e.target.checked})}
+                disabled={loading}
+              />
+              <span>Email Verified (Skip email confirmation)</span>
+            </label>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -4,10 +4,15 @@ import { getDatabase } from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { transferUserReportsToCollection, getUserReportsFromCollection } from '../utils/transferUserReportsToCollection.js';
 import { manualCleanup } from '../utils/backupAndCleanup.js';
+import { uploadMiddleware } from '../controllers/authController.js';
+import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { InputFile, ID } from 'node-appwrite';
+import { storage, BUCKET_ID } from '../config/appwrite.js';
+import sharp from 'sharp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -761,6 +766,151 @@ router.post('/users/:userId/password-recovery', authenticateToken, requireAdmin,
   } catch (error) {
     console.error('Generate password recovery link error:', error);
     res.status(500).json({ error: 'Failed to generate recovery link' });
+  }
+});
+
+// Create new user
+router.post('/users/create', authenticateToken, requireAdmin, uploadMiddleware, async (req, res) => {
+  try {
+    console.log('📝 Create user request received:', {
+      body: req.body,
+      hasFile: !!req.file,
+      fileInfo: req.file ? {
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        fieldname: req.file.fieldname
+      } : null
+    });
+    
+    const { 
+      username, 
+      email, 
+      password, 
+      fullName, 
+      nickName, 
+      age, 
+      gender, 
+      emailVerified 
+    } = req.body;
+    
+    // Validate required fields
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+    
+    const db = getDatabase();
+    
+    // Check if username already exists
+    const existingUsername = await db.collection('users').findOne({ 
+      username: username.toLowerCase() 
+    });
+    
+    if (existingUsername) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+    
+    // Check if email already exists
+    const existingEmail = await db.collection('users').findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Handle profile picture upload if present (multer stores it in req.file)
+    let profilePictureId = null;
+    if (req.file) {
+      try {
+        // Validate file
+        if (!req.file.mimetype.startsWith('image/')) {
+          return res.status(400).json({ error: 'Profile picture must be an image file' });
+        }
+        
+        if (req.file.size > 5 * 1024 * 1024) {
+          return res.status(400).json({ error: 'Profile picture must be less than 5MB' });
+        }
+        
+        // Process image: auto-rotate, resize to 80x80 and convert to JPG
+        const processedBuffer = await sharp(req.file.buffer)
+          .rotate() // Auto-rotate based on EXIF orientation
+          .resize(80, 80, {
+            fit: 'cover',
+            position: 'center'
+          })
+          .jpeg({
+            quality: 90,
+            mozjpeg: true
+          })
+          .toBuffer();
+        
+        // Create filename using username and temporary ID
+        const sanitizedUsername = username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const filename = `${sanitizedUsername}_admin_${Date.now()}.jpg`;
+        
+        // Upload to Appwrite using InputFile
+        const file = InputFile.fromBuffer(processedBuffer, filename);
+        const result = await storage.createFile(
+          BUCKET_ID,
+          ID.unique(),
+          file
+        );
+        
+        profilePictureId = result.$id;
+        console.log(`✅ Uploaded profile picture: ${profilePictureId} (filename: ${filename})`);
+      } catch (uploadError) {
+        console.error('Profile picture upload error:', uploadError);
+        return res.status(500).json({ error: 'Failed to upload profile picture' });
+      }
+    }
+    
+    // Create new user
+    const newUser = {
+      username: username.toLowerCase(),
+      email: email.toLowerCase(),
+      passwordHash,
+      fullName: fullName || '',
+      nickName: nickName || username,
+      age: parseInt(age) || 18,
+      gender: gender || 'Male',
+      bio: '',
+      profilePictureId: profilePictureId,
+      status: 'offline',
+      role: 'user',
+      isEmailVerified: Boolean(emailVerified === 'true' || emailVerified === true),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSeen: new Date(),
+      reports: [],
+      reportCount: 0,
+      userSuspended: false
+    };
+    
+    const result = await db.collection('users').insertOne(newUser);
+    
+    console.log(`✅ Admin created new user: ${username} (${email}), isEmailVerified: ${Boolean(emailVerified === 'true' || emailVerified === true)}`);
+    
+    // Return user data without sensitive information
+    const { passwordHash: _, ...userWithoutPassword } = newUser;
+    
+    res.json({ 
+      message: 'User created successfully',
+      user: {
+        _id: result.insertedId,
+        ...userWithoutPassword
+      }
+    });
+  } catch (error) {
+    console.error('❌ Create user error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to create user',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
