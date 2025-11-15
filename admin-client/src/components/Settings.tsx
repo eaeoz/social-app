@@ -68,7 +68,16 @@ function Settings() {
         const data = await response.json();
         console.log('✅ Settings fetched:', data);
         if (data.settings) {
-          setSettings(data.settings);
+          // Merge with defaults to ensure all fields exist
+          const mergedSettings = {
+            ...settings,
+            ...data.settings,
+            // Explicitly set sound settings to ensure they're not undefined
+            voiceCallSound: data.settings.voiceCallSound || 'default',
+            videoCallSound: data.settings.videoCallSound || 'default'
+          };
+          console.log('📋 Merged settings with defaults:', mergedSettings);
+          setSettings(mergedSettings);
         }
       } else {
         console.error('❌ Failed to fetch settings:', response.status, response.statusText);
