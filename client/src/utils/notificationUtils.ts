@@ -8,6 +8,7 @@ let unreadCount = 0;
 
 // Sound settings from database
 let messageNotificationSound = 'stwime_up';
+let senderNotificationSound = 'pop';
 let cachedNotificationAudio: HTMLAudioElement | null = null;
 let cachedSendAudio: HTMLAudioElement | null = null;
 
@@ -17,11 +18,19 @@ const fetchSoundSettings = async () => {
     const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/site`);
     if (response.ok) {
       const data = await response.json();
-      if (data.settings && data.settings.messageNotificationSound) {
-        messageNotificationSound = data.settings.messageNotificationSound;
-        console.log('🔔 Loaded notification sound setting:', messageNotificationSound);
-        // Clear cache so new sound will be loaded next time
-        cachedNotificationAudio = null;
+      if (data.settings) {
+        if (data.settings.messageNotificationSound) {
+          messageNotificationSound = data.settings.messageNotificationSound;
+          console.log('🔔 Loaded receiver notification sound:', messageNotificationSound);
+          // Clear cache so new sound will be loaded next time
+          cachedNotificationAudio = null;
+        }
+        if (data.settings.senderNotificationSound) {
+          senderNotificationSound = data.settings.senderNotificationSound;
+          console.log('📤 Loaded sender notification sound:', senderNotificationSound);
+          // Clear cache so new sound will be loaded next time
+          cachedSendAudio = null;
+        }
       }
     }
   } catch (error) {
@@ -47,10 +56,10 @@ const getNotificationSound = (): HTMLAudioElement => {
 
 // Get send message sound (creates and caches Audio object)
 const getSendMessageSound = (): HTMLAudioElement => {
-  if (!cachedSendAudio) {
-    // Use a lighter default sound for sending messages
-    cachedSendAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGa657yRPwsUXrPp66hVFAo+ldn0xHQnBSh+y/DglEILFF607e2rWRQLPJHX88p3KgYnfsvw4JRCC0dSqu23ZxsJM4nU8cl0KwYnfsnw4ZVCDERRpuw0XBsKMYrV8sp1KwYngMnw4JRCDERRpe02XBwKL4rT8sp1KwYngMnv4JRCDERRpe02XBwKL4rT8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv3pNCCw==');
-    cachedSendAudio.volume = 0.3; // Softer than notification sound
+  if (!cachedSendAudio || cachedSendAudio.src !== `/sounds/sender/${senderNotificationSound}.mp3`) {
+    cachedSendAudio = new Audio(`/sounds/sender/${senderNotificationSound}.mp3`);
+    cachedSendAudio.volume = 0.4;
+    console.log('📤 Loaded sender sound:', senderNotificationSound);
   }
   return cachedSendAudio;
 };
@@ -168,6 +177,9 @@ export const stopTitleNotification = () => {
  * Play notification sound (for receiving messages)
  */
 export const playNotificationSound = () => {
+  // Don't play sound if set to "none"
+  if (messageNotificationSound === 'none') return;
+  
   try {
     const sound = getNotificationSound();
     // Reset the sound to play from beginning
@@ -186,6 +198,9 @@ export const playNotificationSound = () => {
 export const playSendMessageSound = (doNotDisturb: boolean = false) => {
   // Don't play sound if Do Not Disturb is enabled
   if (doNotDisturb) return;
+  
+  // Don't play sound if set to "none"
+  if (senderNotificationSound === 'none') return;
   
   try {
     const sound = getSendMessageSound();

@@ -18,6 +18,7 @@ interface SiteSettings {
   cleanCheck: string;
   articleCheck: string;
   messageNotificationSound: string;
+  senderNotificationSound: string;
   voiceCallSound: string;
   videoCallSound: string;
 }
@@ -39,7 +40,8 @@ function Settings() {
     cleanMinSize: 512000,
     cleanCheck: 'every_12_hours',
     articleCheck: 'every_minute',
-    messageNotificationSound: 'default',
+    messageNotificationSound: 'stwime_up',
+    senderNotificationSound: 'pop',
     voiceCallSound: 'default',
     videoCallSound: 'default'
   });
@@ -431,9 +433,9 @@ function Settings() {
           
           <div className="setting-item">
             <div className="setting-info">
-              <label>Message Notification Sound</label>
+              <label>Message Notification Sound (Receiver)</label>
               <span className="setting-description">
-                Sound played when receiving new messages
+                Sound played when receiving new messages from others
               </span>
             </div>
             <select
@@ -447,6 +449,27 @@ function Settings() {
               <option value="chime">Chime</option>
               <option value="formula">Formula</option>
               <option value="iphone">iPhone</option>
+              <option value="none">None (Silent)</option>
+            </select>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Sender Notification Sound</label>
+              <span className="setting-description">
+                Sound played when YOU send a message (confirmation sound)
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.senderNotificationSound || 'pop'}
+              onChange={(e) => setSettings({...settings, senderNotificationSound: e.target.value})}
+            >
+              <option value="pop">Pop (Default)</option>
+              <option value="click">Click</option>
+              <option value="swoosh">Swoosh</option>
+              <option value="ding">Ding</option>
+              <option value="tap">Tap</option>
               <option value="none">None (Silent)</option>
             </select>
           </div>
