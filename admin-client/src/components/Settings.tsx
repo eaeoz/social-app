@@ -17,6 +17,9 @@ interface SiteSettings {
   cleanMinSize: number;
   cleanCheck: string;
   articleCheck: string;
+  messageNotificationSound: string;
+  voiceCallSound: string;
+  videoCallSound: string;
 }
 
 function Settings() {
@@ -35,7 +38,10 @@ function Settings() {
     cleanCycle: 129600,
     cleanMinSize: 512000,
     cleanCheck: 'every_12_hours',
-    articleCheck: 'every_minute'
+    articleCheck: 'every_minute',
+    messageNotificationSound: 'default',
+    voiceCallSound: 'default',
+    videoCallSound: 'default'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -413,6 +419,79 @@ function Settings() {
               <option value="every_week">Weekly (Sunday 3 AM)</option>
               <option value="every_2_weeks">Twice Monthly (1st & 15th at 3 AM)</option>
               <option value="every_month">Monthly (1st at 3 AM)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="setting-card">
+          <div className="setting-header">
+            <h3>🔔 Sound Settings</h3>
+            <p>Customize notification and call sounds</p>
+          </div>
+          
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Message Notification Sound</label>
+              <span className="setting-description">
+                Sound played when receiving new messages
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.messageNotificationSound || 'stwime_up'}
+              onChange={(e) => setSettings({...settings, messageNotificationSound: e.target.value})}
+            >
+              <option value="stwime_up">Stwime Up (Default)</option>
+              <option value="alixtwix">Alixtwix</option>
+              <option value="bright-bell">Bright Bell</option>
+              <option value="chime">Chime</option>
+              <option value="formula">Formula</option>
+              <option value="iphone">iPhone</option>
+              <option value="none">None (Silent)</option>
+            </select>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Voice Call Sound</label>
+              <span className="setting-description">
+                Ringtone for incoming voice calls
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.voiceCallSound || 'default'}
+              onChange={(e) => setSettings({...settings, voiceCallSound: e.target.value})}
+            >
+              <option value="default">Default Ringtone</option>
+              <option value="ringtone1">Ringtone 1</option>
+              <option value="ringtone2">Ringtone 2</option>
+              <option value="ringtone3">Ringtone 3</option>
+              <option value="ringtone4">Ringtone 4</option>
+              <option value="ringtone5">Ringtone 5</option>
+              <option value="none">None (Silent)</option>
+            </select>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>Video Call Sound</label>
+              <span className="setting-description">
+                Ringtone for incoming video calls
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.videoCallSound || 'default'}
+              onChange={(e) => setSettings({...settings, videoCallSound: e.target.value})}
+            >
+              <option value="default">Default Ringtone</option>
+              <option value="ringtone1">Ringtone 1</option>
+              <option value="ringtone2">Ringtone 2</option>
+              <option value="ringtone3">Ringtone 3</option>
+              <option value="ringtone4">Ringtone 4</option>
+              <option value="ringtone5">Ringtone 5</option>
+              <option value="none">None (Silent)</option>
             </select>
           </div>
         </div>

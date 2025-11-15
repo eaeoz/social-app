@@ -6,15 +6,54 @@ let isBlinking = false;
 let originalFavicon: string | null = null;
 let unreadCount = 0;
 
-// Create and cache the notification sound (for receiving messages)
-const notificationSound = new Audio();
-notificationSound.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGa657yRPwsUXrPp66hVFAo+ldn0xHQnBSh+y/DglEILFF607e2rWRQLPJHX88p3KgYnfsvw4JRCC0dSqu23ZxsJM4nU8cl0KwYnfsnw4ZVCDERRpuw0XBsKMYrV8sp1KwYngMnw4JRCDERRpe02XBwKL4rT8sp1KwYngMnv4JRCDERRpe02XBwKL4rT8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv3pNCCw==';
-notificationSound.volume = 0.5;
+// Sound settings from database
+let messageNotificationSound = 'stwime_up';
+let cachedNotificationAudio: HTMLAudioElement | null = null;
+let cachedSendAudio: HTMLAudioElement | null = null;
 
-// Create and cache the send message sound (lighter, softer sound)
-const sendMessageSound = new Audio();
-sendMessageSound.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGa657yRPwsUXrPp66hVFAo+ldn0xHQnBSh+y/DglEILFF607e2rWRQLPJHX88p3KgYnfsvw4JRCC0dSqu23ZxsJM4nU8cl0KwYnfsnw4ZVCDERRpuw0XBsKMYrV8sp1KwYngMnw4JRCDERRpe02XBwKL4rT8sp1KwYngMnv4JRCDERRpe02XBwKL4rT8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv3pNCCw==';
-sendMessageSound.volume = 0.3; // Softer than notification sound
+// Fetch sound settings from the database
+const fetchSoundSettings = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/site`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.settings && data.settings.messageNotificationSound) {
+        messageNotificationSound = data.settings.messageNotificationSound;
+        console.log('🔔 Loaded notification sound setting:', messageNotificationSound);
+        // Clear cache so new sound will be loaded next time
+        cachedNotificationAudio = null;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch sound settings:', error);
+  }
+};
+
+// Fetch settings on module load
+fetchSoundSettings();
+
+// Refresh settings every 30 seconds to pick up changes
+setInterval(fetchSoundSettings, 30000);
+
+// Get notification sound (creates and caches Audio object)
+const getNotificationSound = (): HTMLAudioElement => {
+  if (!cachedNotificationAudio || cachedNotificationAudio.src !== `/sounds/notifications/${messageNotificationSound}.mp3`) {
+    cachedNotificationAudio = new Audio(`/sounds/notifications/${messageNotificationSound}.mp3`);
+    cachedNotificationAudio.volume = 0.5;
+    console.log('🔊 Loaded notification sound:', messageNotificationSound);
+  }
+  return cachedNotificationAudio;
+};
+
+// Get send message sound (creates and caches Audio object)
+const getSendMessageSound = (): HTMLAudioElement => {
+  if (!cachedSendAudio) {
+    // Use a lighter default sound for sending messages
+    cachedSendAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGa657yRPwsUXrPp66hVFAo+ldn0xHQnBSh+y/DglEILFF607e2rWRQLPJHX88p3KgYnfsvw4JRCC0dSqu23ZxsJM4nU8cl0KwYnfsnw4ZVCDERRpuw0XBsKMYrV8sp1KwYngMnw4JRCDERRpe02XBwKL4rT8sp1KwYngMnv4JRCDERRpe02XBwKL4rT8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCC0dTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv4JRCDEdTp+02XBwKMIrU8sl1KwYmfsnv3pNCCw==');
+    cachedSendAudio.volume = 0.3; // Softer than notification sound
+  }
+  return cachedSendAudio;
+};
 
 /**
  * Create a canvas-based favicon with a notification badge
@@ -130,9 +169,10 @@ export const stopTitleNotification = () => {
  */
 export const playNotificationSound = () => {
   try {
+    const sound = getNotificationSound();
     // Reset the sound to play from beginning
-    notificationSound.currentTime = 0;
-    notificationSound.play().catch((error) => {
+    sound.currentTime = 0;
+    sound.play().catch((error: any) => {
       console.log('Could not play notification sound:', error);
     });
   } catch (error) {
@@ -148,9 +188,10 @@ export const playSendMessageSound = (doNotDisturb: boolean = false) => {
   if (doNotDisturb) return;
   
   try {
+    const sound = getSendMessageSound();
     // Reset the sound to play from beginning
-    sendMessageSound.currentTime = 0;
-    sendMessageSound.play().catch((error) => {
+    sound.currentTime = 0;
+    sound.play().catch((error: any) => {
       console.log('Could not play send message sound:', error);
     });
   } catch (error) {

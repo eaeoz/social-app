@@ -729,7 +729,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         setIncomingCall(data);
         // Start playing ringtone for incoming call (only if not in DND)
-        ringtoneManager.startRingtone();
+        // Pass the call type so the appropriate ringtone is played
+        ringtoneManager.startRingtone(data.callType);
       });
 
       socket.on('call-cancelled', () => {
