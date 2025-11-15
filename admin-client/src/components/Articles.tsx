@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Query } from 'appwrite';
-import { databases, DATABASE_ID, COLLECTION_ID } from '../config/appwrite';
 import './Articles.css';
 
 interface Article {
@@ -47,34 +45,35 @@ function Articles() {
     try {
       setLoading(true);
       
-      // Read directly from Appwrite (no server, no cache!)
-      console.log('📖 Fetching articles directly from Appwrite...');
+      // Fetch articles through backend API (which reads from Appwrite)
+      console.log('📖 Fetching articles from backend API...');
       
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.orderDesc('$createdAt'),
-          Query.limit(100)
-        ]
-      );
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const token = localStorage.getItem('adminToken');
 
-      const articles = response.documents.map((doc: any) => ({
-        id: doc.articleId,
-        title: doc.title,
-        author: doc.author,
-        date: doc.date,
-        tags: typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags,
-        logo: doc.logo,
-        excerpt: doc.excerpt,
-        content: doc.content
-      }));
+      const response = await fetch(`${apiUrl}/blog/admin/direct`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      console.log(`✅ Fetched ${articles.length} articles from Appwrite`);
-      setArticles(articles);
+      if (!response.ok) {
+        throw new Error('Failed to fetch articles');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log(`✅ Fetched ${data.articles.length} articles from backend`);
+        setArticles(data.articles);
+      } else {
+        throw new Error(data.error || 'Failed to load articles');
+      }
     } catch (err) {
-      console.error('Error fetching articles from Appwrite:', err);
-      setError('Failed to load articles from Appwrite');
+      console.error('Error fetching articles:', err);
+      setError('Failed to load articles');
     } finally {
       setLoading(false);
     }
