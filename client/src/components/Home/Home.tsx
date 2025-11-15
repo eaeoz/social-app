@@ -586,8 +586,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
           timestamp: new Date()
         });
         
-        // Trigger notification for new room message
-        if (message.senderId !== user.userId) {
+        // Trigger notification for new room message (but not for system messages)
+        if (message.senderId !== user.userId && message.messageType !== 'system') {
           handleNewMessageNotification('New message', message.senderId, user.userId, doNotDisturb);
         }
         
@@ -652,8 +652,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
         const otherUserId = message.senderId === user.userId ? message.receiverId : message.senderId;
         const isCurrentChat = chatType === 'private' && selectedPrivateChat?.otherUser.userId === otherUserId;
         
-        // Trigger notification for new private message
-        if (message.senderId !== user.userId) {
+        // Trigger notification for new private message (but not for system messages)
+        if (message.senderId !== user.userId && message.messageType !== 'system') {
           handleNewMessageNotification(`New message from ${message.senderName}`, message.senderId, user.userId, doNotDisturb);
         }
         
