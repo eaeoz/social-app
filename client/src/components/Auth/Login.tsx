@@ -102,6 +102,10 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     const savedTheme = localStorage.getItem('authTheme') as 'light' | 'dark' | null;
     if (savedTheme) {
       setTheme(savedTheme);
+    } else {
+      // Set dark theme as default for first visit
+      setTheme('dark');
+      localStorage.setItem('authTheme', 'dark');
     }
   }, []);
 
