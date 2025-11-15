@@ -309,10 +309,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
 
   return (
     <div className="auth-container" data-theme={theme}>
-      <button className="auth-theme-toggle" onClick={toggleTheme} title="Toggle theme">
-        {theme === 'light' ? '🌙' : '☀️'}
-      </button>
-
       {/* Email Verification Modal */}
       {showVerificationModal && (
         <div className="modal-overlay">
@@ -350,6 +346,13 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
       <div className="auth-card">
         <div className="auth-logo">
           <h1 className="auth-logo-text">💬 {import.meta.env.VITE_APP_NAME || 'Netcify'}</h1>
+          <button className="auth-theme-toggle-card" onClick={toggleTheme} title="Toggle theme" aria-label="Toggle theme">
+            <div className={`toggle-switch ${theme === 'dark' ? 'active' : ''}`}>
+              <div className="toggle-slider">
+                <span className="toggle-icon">{theme === 'light' ? '☀️' : '🌙'}</span>
+              </div>
+            </div>
+          </button>
         </div>
         <div className="auth-header-with-logo">
           <img 
