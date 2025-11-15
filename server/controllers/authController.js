@@ -257,35 +257,26 @@ export async function register(req, res) {
       profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
     }
 
-    // Send verification email (non-blocking)
+    // Send verification email via Netlify function (non-blocking)
     try {
-      // Try direct email sending first
-      await sendVerificationEmail(email, username, emailVerificationToken);
-      console.log('✅ Verification email sent to:', email);
-    } catch (emailError) {
-      console.error('❌ Failed to send verification email via direct method:', emailError);
+      const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
       
-      // Fallback to Netlify function if direct method fails
-      try {
-        const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-        const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
-        
-        await fetch(emailFunctionUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email,
-            username,
-            verificationToken: emailVerificationToken
-          })
-        });
-        console.log('✅ Verification email sent via Netlify function to:', email);
-      } catch (netlifyError) {
-        console.error('❌ Failed to send verification email via Netlify function:', netlifyError);
-        // Don't fail registration if email fails
-      }
+      await fetch(emailFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          username,
+          verificationToken: emailVerificationToken
+        })
+      });
+      console.log('✅ Verification email sent via Netlify function to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to send verification email:', emailError);
+      // Don't fail registration if email fails
     }
 
     // Return user data (without password)
@@ -728,35 +719,26 @@ export async function resendVerificationEmail(req, res) {
     const newResendCount = currentResendCount + 1;
     const remainingAttempts = maxResendAttempts - newResendCount;
 
-    // Send verification email
+    // Send verification email via Netlify function
     try {
-      // Try direct email sending first
-      await sendVerificationEmail(email, user.username, emailVerificationToken);
-      console.log(`✅ Verification email resent to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
-    } catch (emailError) {
-      console.error('❌ Failed to send verification email via direct method:', emailError);
+      const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
       
-      // Fallback to Netlify function if direct method fails
-      try {
-        const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-        const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
-        
-        await fetch(emailFunctionUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email,
-            username: user.username,
-            verificationToken: emailVerificationToken
-          })
-        });
-        console.log(`✅ Verification email resent via Netlify function to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
-      } catch (netlifyError) {
-        console.error('❌ Failed to resend verification email via Netlify function:', netlifyError);
-        return res.status(500).json({ error: 'Failed to send verification email' });
-      }
+      await fetch(emailFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          username: user.username,
+          verificationToken: emailVerificationToken
+        })
+      });
+      console.log(`✅ Verification email resent via Netlify function to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
+    } catch (emailError) {
+      console.error('❌ Failed to resend verification email:', emailError);
+      return res.status(500).json({ error: 'Failed to send verification email' });
     }
 
     res.json({
