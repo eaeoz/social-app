@@ -517,12 +517,19 @@ export function setupMessageHandlers(io, socket, userSockets) {
   // End call
   socket.on('end-call', (data) => {
     try {
-      const { to } = data;
+      const { to, callState } = data;
       const toSocketId = userSockets.get(to);
       
       if (toSocketId) {
-        io.to(toSocketId).emit('call-ended');
-        console.log(`📴 Call ended, notifying ${to}`);
+        // If call was cancelled during ringing (before answer), send call-cancelled
+        // Otherwise send call-ended for active calls
+        if (callState === 'ringing') {
+          io.to(toSocketId).emit('call-cancelled');
+          console.log(`🚫 Call cancelled (ringing), notifying ${to}`);
+        } else {
+          io.to(toSocketId).emit('call-ended');
+          console.log(`📴 Call ended, notifying ${to}`);
+        }
       }
     } catch (error) {
       console.error('Error ending call:', error);

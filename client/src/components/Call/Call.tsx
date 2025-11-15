@@ -569,14 +569,17 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
 
   const endCall = () => {
     if (socket && callState !== 'ended') {
-      socket.emit('end-call', { to: otherUser.userId });
+      socket.emit('end-call', { 
+        to: otherUser.userId,
+        callState: callState // Pass current call state to backend
+      });
     }
     
     cleanup();
     setCallState('ended');
     
-    // Send call log message
-    if (socket && callStartTimeRef.current) {
+    // Send call log message only if call was connected
+    if (socket && callStartTimeRef.current && callState === 'connected') {
       const duration = Math.floor((Date.now() - callStartTimeRef.current) / 1000);
       socket.emit('call-ended-log', {
         receiverId: otherUser.userId,
