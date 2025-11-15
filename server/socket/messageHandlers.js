@@ -522,14 +522,16 @@ export function setupMessageHandlers(io, socket, userSockets) {
       
       if (toSocketId) {
         // If call was cancelled during ringing (before answer), send call-cancelled
-        // Otherwise send call-ended for active calls
+        // Otherwise send call-ended for active/connecting calls
         if (callState === 'ringing') {
           io.to(toSocketId).emit('call-cancelled');
           console.log(`🚫 Call cancelled (ringing), notifying ${to}`);
         } else {
           io.to(toSocketId).emit('call-ended');
-          console.log(`📴 Call ended, notifying ${to}`);
+          console.log(`📴 Call ended (state: ${callState}), notifying ${to}`);
         }
+      } else {
+        console.log(`⚠️ Could not find socket for user ${to} to end call`);
       }
     } catch (error) {
       console.error('Error ending call:', error);
