@@ -281,10 +281,14 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
       })
       .toArray();
     
-    // Ensure isEmailVerified field exists (default to false if not present)
+    // Import Appwrite helper to construct profile picture URLs
+    const { getProfilePictureUrl } = await import('../config/appwrite.js');
+    
+    // Ensure isEmailVerified field exists and construct profile picture URL
     const usersWithVerification = users.map(user => ({
       ...user,
-      isEmailVerified: user.isEmailVerified ?? false
+      isEmailVerified: user.isEmailVerified ?? false,
+      profilePicture: user.profilePictureId ? getProfilePictureUrl(user.profilePictureId) : null
     }));
     
     // Add report count for each user

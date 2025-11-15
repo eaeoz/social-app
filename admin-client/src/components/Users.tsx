@@ -172,13 +172,6 @@ function Users() {
               <tr key={user._id} className={user.userSuspended ? 'suspended-row' : ''}>
                 <td>
                   <div className="user-cell">
-                    <div className="user-avatar">
-                      {user.profilePicture ? (
-                        <img src={user.profilePicture} alt={user.username} />
-                      ) : (
-                        user.username.charAt(0).toUpperCase()
-                      )}
-                    </div>
                     <div className="user-info">
                       <div className="user-name">
                         {user.nickName || user.username}
@@ -243,13 +236,6 @@ function Users() {
         {filteredUsers.map((user) => (
           <div key={user._id} className={`user-card ${user.userSuspended ? 'suspended' : ''}`}>
             <div className="user-card-header">
-              <div className="user-card-avatar">
-                {user.profilePicture ? (
-                  <img src={user.profilePicture} alt={user.username} />
-                ) : (
-                  user.username.charAt(0).toUpperCase()
-                )}
-              </div>
               <div className="user-card-info">
                 <div className="user-card-name">
                   {user.nickName || user.username}
