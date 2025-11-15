@@ -101,18 +101,65 @@ const endCall = () => {
 - ✅ Clear separation between cancelled calls and ended calls
 - ✅ Better user experience with proper cleanup
 
+## Additional Issues Found and Fixed
+
+### Netlify Deployment Issues (Not Related to Call Cancellation Fix)
+
+During testing, the following pre-existing deployment issues were discovered:
+
+#### 1. Content Security Policy (CSP) Blocking Audio
+**Problem**: Notification sounds were blocked by CSP because `media-src` directive was missing.
+
+**Error**: `Content-Security-Policy: The page's settings blocked the loading of a resource (media-src) at data:audio/wav`
+
+**Solution**: Added `media-src 'self' data: blob:;` to the CSP in `client/netlify.toml`
+
+#### 2. Permissions Policy Blocking Camera/Microphone
+**Problem**: Camera and microphone access was completely disabled in production.
+
+**Error**: 
+- `[Violation] Permissions policy violation: microphone is not allowed in this document.`
+- `[Violation] Permissions policy violation: camera is not allowed in this document.`
+- `Error initializing call: NotAllowedError: Permission denied`
+
+**Solution**: Changed Permissions-Policy from:
+- `microphone=(), camera=()` (completely disabled)
+- To: `microphone=(self), camera=(self)` (enabled for same-origin)
+
+### Files Modified for Deployment Fix
+3. `client/netlify.toml` - Added `media-src` to CSP and enabled camera/microphone permissions
+
 ## Testing Checklist
 - [x] Call cancellation during ringing stops the ringtone immediately
-- [ ] Call ending after connection still works properly
+- [ ] Call ending after connection works properly
 - [ ] Call logs are only created for connected calls
 - [ ] No console errors during call cancellation
 - [ ] Works on both voice and video calls
 - [ ] Works with Do Not Disturb mode enabled
-- [ ] Works when caller has network issues
+- [ ] Message notification sounds play correctly on Netlify
+- [ ] Camera and microphone permissions work on Netlify
+- [ ] Calls can connect successfully on Netlify (not just localhost)
+
+## Important Notes
+
+The issues with:
+- Message notification sounds not playing
+- Calls not connecting on Netlify
+- "Permission denied" errors for camera/microphone
+
+Were **NOT caused by the call cancellation fix**. These were pre-existing deployment/configuration issues in the Netlify security headers that blocked media and device access.
 
 ## Files Modified
 1. `server/socket/messageHandlers.js` - Added call state handling in `end-call` event
 2. `client/src/components/Call/Call.tsx` - Modified `endCall()` to pass call state and conditionally log calls
+3. `client/netlify.toml` - Fixed CSP and Permissions-Policy for audio and WebRTC functionality
+
+## Deployment Instructions
+After these changes, you need to:
+1. Commit and push the changes
+2. Redeploy to Netlify
+3. Clear browser cache or use incognito mode to test
+4. Grant camera/microphone permissions when prompted
 
 ## Date
 November 15, 2025

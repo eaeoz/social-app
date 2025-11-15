@@ -23,11 +23,11 @@
     # Referrer Policy
     Referrer-Policy = "strict-origin-when-cross-origin"
     
-    # Permissions Policy - Disable unnecessary browser features
-    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
+    # Permissions Policy - Allow camera/microphone for calls, disable other unnecessary features
+    Permissions-Policy = "geolocation=(), microphone=(self), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
     
     # Feature Policy (legacy support for older browsers)
-    Feature-Policy = "geolocation 'none'; microphone 'none'; camera 'none'; payment 'none'; usb 'none'"
+    Feature-Policy = "geolocation 'none'; microphone 'self'; camera 'self'; payment 'none'; usb 'none'"
     
     # Strict Transport Security (HTTPS only)
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
@@ -41,6 +41,7 @@
       font-src 'self' data: https://fonts.gstatic.com;
       connect-src 'self' https://social-app-5hge.onrender.com https://accounts.google.com https://www.google-analytics.com https://analytics.google.com https://*.google.com https://*.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com https://region1.analytics.google.com wss://social-app-5hge.onrender.com ws://localhost:* http://localhost:*;
       frame-src 'self' https://accounts.google.com https://www.googletagmanager.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/;
+      media-src 'self' data: blob:;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
