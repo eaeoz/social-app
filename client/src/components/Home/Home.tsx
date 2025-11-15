@@ -1541,7 +1541,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Close all modals before logout
     setShowUserModal(false);
     setShowProfileModal(false);
@@ -1553,6 +1553,27 @@ function Home({ user, socket, onLogout }: HomeProps) {
         userId: user.userId,
         username: user.username
       });
+    }
+    
+    try {
+      // Call logout endpoint to update user status in database
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error calling logout endpoint:', error);
+      // Continue with logout even if API call fails
+    }
+    
+    // Emit logout event to notify other users
+    if (socket) {
+      socket.emit('user-logout', { reason: 'manual-logout' });
     }
     
     // Clear ALL localStorage items related to auth

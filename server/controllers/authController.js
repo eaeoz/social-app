@@ -776,7 +776,24 @@ export async function resendVerificationEmail(req, res) {
 // Logout user
 export async function logout(req, res) {
   try {
-    // In a production app, you might want to invalidate the refresh token here
+    const userId = req.user.userId;
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Immediately update user status to offline in database
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: { 
+          status: 'offline',
+          lastSeen: new Date(),
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`🚪 User ${userId} logged out - status set to offline`);
+
     res.json({ message: 'Logout successful' });
   } catch (error) {
     console.error('Logout error:', error);
