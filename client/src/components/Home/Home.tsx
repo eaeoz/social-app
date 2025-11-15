@@ -13,7 +13,7 @@ import NSFWWarningModal from '../Auth/NSFWWarningModal';
 import ReportModal from './ReportModal';
 import { canSendMessage, recordMessageSent, getSecondsUntilReset } from '../../utils/rateLimiter';
 import { nsfwDetector } from '../../utils/nsfwDetector';
-import { handleNewMessageNotification, resetNotifications } from '../../utils/notificationUtils';
+import { handleNewMessageNotification, resetNotifications, playSendMessageSound } from '../../utils/notificationUtils';
 import { ringtoneManager } from '../../utils/ringtoneUtils';
 import { profanityFilter } from '../../utils/profanityFilter';
 import './Home.css';
@@ -1268,6 +1268,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
 
     // Record the message sent
     recordMessageSent();
+
+    // Play send message sound
+    playSendMessageSound(doNotDisturb);
 
     if (chatType === 'private' && selectedPrivateChat) {
       socket.emit('send_private_message', {
