@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import './Legal.css';
 
 interface PrivacyPolicyProps {
@@ -5,13 +6,30 @@ interface PrivacyPolicyProps {
 }
 
 function PrivacyPolicy({ onClose }: PrivacyPolicyProps) {
+  // Handle ESC key press globally
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [onClose]);
+
   return (
     <div className="legal-modal-overlay" onClick={onClose}>
       <div className="legal-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="legal-modal-header">
           <div className="legal-header-content">
             <span className="legal-icon">🔒</span>
-            <h2>Privacy Policy</h2>
+            <div className="modal-title-row">
+              <h2>Privacy Policy</h2>
+              <span className="esc-hint">ESC</span>
+            </div>
           </div>
           <button className="legal-modal-close" onClick={onClose} aria-label="Close">
             ×

@@ -135,7 +135,10 @@ function Blog({ onClose }: BlogProps) {
             <div className="legal-modal-header blog-header">
               <div className="legal-header-content">
                 <span className="legal-icon">📝</span>
-                <h2>Blog</h2>
+                <div className="modal-title-row">
+                  <h2>Blog</h2>
+                  <span className="esc-hint">ESC</span>
+                </div>
               </div>
               <button className="legal-modal-close" onClick={onClose} aria-label="Close">
                 ×

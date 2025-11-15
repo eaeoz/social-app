@@ -26,7 +26,10 @@ function About({ onClose }: AboutProps) {
         <div className="legal-modal-header">
           <div className="legal-header-content">
             <span className="legal-icon">ℹ️</span>
-            <h2>About Netcify</h2>
+            <div className="modal-title-row">
+              <h2>About Netcify</h2>
+              <span className="esc-hint">ESC</span>
+            </div>
           </div>
           <button className="legal-modal-close" onClick={onClose} aria-label="Close">
             ×
