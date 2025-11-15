@@ -579,7 +579,9 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
         console.log('🖥️ Starting screen share...');
         
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
+          video: {
+            cursor: 'always' as any // Force cursor to always be visible
+          },
           audio: false
         });
 
