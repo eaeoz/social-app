@@ -1345,8 +1345,8 @@
         
         alert('SAVE FAILED!\n\nError: ' + (error.message || 'Unknown error') + '\n\nCheck browser console (F12) for details.');
         showNotification('Save failed: ' + (error.message || 'Unknown error'), 'error');
-        
-        // Re-enable button on error
+      } finally {
+        // Always re-enable button, whether success or error
         saveButton.disabled = false;
         saveButton.textContent = originalText;
       }
