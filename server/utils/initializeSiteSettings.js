@@ -26,6 +26,7 @@ export async function initializeSiteSettings() {
         settingType: 'global',
         showuserlistpicture: 1, // 1 = show pictures, 0 = hide pictures
         registrationEnabled: true, // true = enable user registration and show full login UI, false = hide registration-related UI elements
+        allowUserPictures: true, // true = allow profile picture uploads during registration, false = hide photo upload section
         searchUserCount: 50, // Maximum number of users to show in search
         defaultUsersDisplayCount: 20, // Maximum number of users to show by default (online users only)
         siteEmail: '', // Email address to receive contact form submissions
@@ -99,6 +100,7 @@ export async function getSiteSettings() {
     const result = {
       showuserlistpicture: settings.showuserlistpicture !== undefined ? settings.showuserlistpicture : 1,
       registrationEnabled: settings.registrationEnabled !== undefined ? settings.registrationEnabled : true,
+      allowUserPictures: settings.allowUserPictures !== undefined ? settings.allowUserPictures : true,
       searchUserCount: settings.searchUserCount !== undefined ? settings.searchUserCount : 50,
       defaultUsersDisplayCount: settings.defaultUsersDisplayCount !== undefined ? settings.defaultUsersDisplayCount : 20,
       siteEmail: settings.siteEmail || '',

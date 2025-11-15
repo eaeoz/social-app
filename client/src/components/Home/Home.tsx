@@ -154,6 +154,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
     // Initialize from user data from database
     return user.doNotDisturb === true;
   });
+  const [allowUserPictures, setAllowUserPictures] = useState(true);
 
   // Toggle Do Not Disturb mode
   const toggleDoNotDisturb = async () => {
@@ -333,9 +334,11 @@ function Home({ user, socket, onLogout }: HomeProps) {
         if (data.settings) {
           const newMaxLength = data.settings.maxMessageLength || 500;
           const newRateLimit = data.settings.rateLimit || 10;
-          console.log(`✅ Max message length: ${newMaxLength}, Rate limit: ${newRateLimit}`);
+          const allowPictures = data.settings.allowUserPictures !== false;
+          console.log(`✅ Max message length: ${newMaxLength}, Rate limit: ${newRateLimit}, Allow pictures: ${allowPictures}`);
           setMaxMessageLength(newMaxLength);
           setRateLimit(newRateLimit);
+          setAllowUserPictures(allowPictures);
         }
       } else {
         console.error('Failed to fetch settings:', response.status);
@@ -2724,39 +2727,41 @@ function Home({ user, socket, onLogout }: HomeProps) {
               <button className="modal-close" onClick={() => setShowProfileModal(false)}>×</button>
             </div>
             <div className="modal-body profile-modal-body">
-              <div className="profile-picture-section">
-                <div 
-                  className={`profile-picture-preview ${isUpdatingProfile ? 'updating' : ''}`}
-                  onClick={() => !isUpdatingProfile && fileInputRef.current?.click()}
-                  style={{ cursor: isUpdatingProfile ? 'default' : 'pointer' }}
-                  title={isUpdatingProfile ? '' : 'Click to change picture'}
-                >
-                  {profilePicture ? (
-                    <img src={profilePicture} alt="Profile" />
-                  ) : (
-                    <span>{user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}</span>
-                  )}
-                  {isUpdatingProfile && (
-                    <div className="update-overlay">
-                      <div className="spinner"></div>
-                    </div>
-                  )}
-                  {!isUpdatingProfile && (
-                    <div className="picture-hover-overlay">
-                      <span className="hover-icon">📷</span>
-                      <span className="hover-text">Change Picture</span>
-                    </div>
-                  )}
+              {allowUserPictures && (
+                <div className="profile-picture-section">
+                  <div 
+                    className={`profile-picture-preview ${isUpdatingProfile ? 'updating' : ''}`}
+                    onClick={() => !isUpdatingProfile && fileInputRef.current?.click()}
+                    style={{ cursor: isUpdatingProfile ? 'default' : 'pointer' }}
+                    title={isUpdatingProfile ? '' : 'Click to change picture'}
+                  >
+                    {profilePicture ? (
+                      <img src={profilePicture} alt="Profile" />
+                    ) : (
+                      <span>{user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}</span>
+                    )}
+                    {isUpdatingProfile && (
+                      <div className="update-overlay">
+                        <div className="spinner"></div>
+                      </div>
+                    )}
+                    {!isUpdatingProfile && (
+                      <div className="picture-hover-overlay">
+                        <span className="hover-icon">📷</span>
+                        <span className="hover-text">Change Picture</span>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureChange}
+                    style={{ display: 'none' }}
+                  />
+                  <p className="picture-hint">Click on the picture to change it</p>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfilePictureChange}
-                  style={{ display: 'none' }}
-                />
-                <p className="picture-hint">Click on the picture to change it</p>
-              </div>
+              )}
 
               <div className="profile-form-section">
                 <div className="form-group">

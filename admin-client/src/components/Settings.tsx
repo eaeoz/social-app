@@ -237,6 +237,23 @@ function Settings() {
 
           <div className="setting-item">
             <div className="setting-info">
+              <label>Allow User Profile Pictures</label>
+              <span className="setting-description">
+                Allow users to upload profile pictures during registration
+              </span>
+            </div>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={settings.allowUserPictures}
+                onChange={(e) => setSettings({...settings, allowUserPictures: e.target.checked})}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
               <label>Default Users Display Count</label>
               <span className="setting-description">
                 Number of users to display by default in lists

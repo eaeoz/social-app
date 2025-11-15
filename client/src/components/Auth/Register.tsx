@@ -48,8 +48,28 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [nsfwWarnings, setNsfwWarnings] = useState<string[]>([]);
   const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [allowUserPictures, setAllowUserPictures] = useState(true);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+  // Fetch site settings to get allowUserPictures value
+  useEffect(() => {
+    const fetchSiteSettings = async () => {
+      try {
+        const response = await fetch(`${API_URL}/settings/site`);
+        if (response.ok) {
+          const data = await response.json();
+          setAllowUserPictures(data.settings.allowUserPictures !== false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch site settings:', error);
+        // Default to true if fetch fails
+        setAllowUserPictures(true);
+      }
+    };
+
+    fetchSiteSettings();
+  }, [API_URL]);
 
   // Load reCAPTCHA script
   useEffect(() => {
@@ -338,34 +358,36 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
 
-          {/* Profile Picture Upload */}
-          <div className="form-group">
-            <div className="profile-picture-upload">
-              {previewUrl ? (
-                <div className="profile-preview-container">
-                  <img src={previewUrl} alt="Profile preview" className="profile-preview" />
-                  <button type="button" onClick={removeImage} className="remove-image-btn" disabled={loading}>
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <label htmlFor="profilePicture" className="upload-label">
-                  <div className="upload-placeholder">
-                    <span className="upload-icon">📷</span>
-                    <span className="upload-text">Click to upload photo</span>
+          {/* Profile Picture Upload - Only show if allowed */}
+          {allowUserPictures && (
+            <div className="form-group">
+              <div className="profile-picture-upload">
+                {previewUrl ? (
+                  <div className="profile-preview-container">
+                    <img src={previewUrl} alt="Profile preview" className="profile-preview" />
+                    <button type="button" onClick={removeImage} className="remove-image-btn" disabled={loading}>
+                      ×
+                    </button>
                   </div>
-                  <input
-                    type="file"
-                    id="profilePicture"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    disabled={loading}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              )}
+                ) : (
+                  <label htmlFor="profilePicture" className="upload-label">
+                    <div className="upload-placeholder">
+                      <span className="upload-icon">📷</span>
+                      <span className="upload-text">Click to upload photo</span>
+                    </div>
+                    <input
+                      type="file"
+                      id="profilePicture"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      disabled={loading}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="form-group">
             <input
