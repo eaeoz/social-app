@@ -15,7 +15,7 @@ interface User {
   age?: number;
   gender?: string;
   lastSeen?: string;
-  emailVerified?: boolean;
+  isEmailVerified?: boolean;
   reportCount?: number;
 }
 
@@ -363,6 +363,7 @@ function Users() {
                     onClick={async () => {
                       try {
                         const token = localStorage.getItem('adminToken');
+                        const currentStatus = selectedUser.isEmailVerified === true;
                         const response = await fetch(
                           `${import.meta.env.VITE_API_URL}/admin/users/${selectedUser._id}/email-verification`,
                           {
@@ -372,7 +373,7 @@ function Users() {
                               'Authorization': `Bearer ${token}`
                             },
                             body: JSON.stringify({ 
-                              isEmailVerified: !selectedUser.emailVerified 
+                              isEmailVerified: !currentStatus
                             })
                           }
                         );
@@ -381,11 +382,11 @@ function Users() {
                           // Update local state
                           setSelectedUser({
                             ...selectedUser,
-                            emailVerified: !selectedUser.emailVerified
+                            isEmailVerified: !currentStatus
                           });
                           // Refresh users list
                           await fetchUsers();
-                          alert(`Email verification status updated to: ${!selectedUser.emailVerified ? 'Verified' : 'Not Verified'}`);
+                          alert(`Email verification status updated to: ${!currentStatus ? 'Verified' : 'Not Verified'}`);
                         } else {
                           const data = await response.json();
                           alert(`Failed to update: ${data.error || 'Unknown error'}`);
@@ -397,7 +398,7 @@ function Users() {
                     }}
                     title="Click to toggle email verification status"
                   >
-                    {selectedUser.emailVerified ? '✅ Yes' : '❌ No'}
+                    {selectedUser.isEmailVerified === true ? '✅ Yes' : '❌ No'}
                   </button>
                 </div>
 
