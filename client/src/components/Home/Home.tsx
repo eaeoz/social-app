@@ -2128,6 +2128,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
             <button 
               className="sidebar-footer-link" 
               onClick={() => {
+                setShowBlog(true);
+                setSidebarOpen(false);
+              }}
+              aria-label="View Blog"
+            >
+              📝 Blog
+            </button>
+            <button 
+              className="sidebar-footer-link" 
+              onClick={() => {
                 setShowAbout(true);
                 setSidebarOpen(false);
               }}
@@ -2144,16 +2154,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
               aria-label="Contact Us"
             >
               ✉️ Contact Us
-            </button>
-            <button 
-              className="sidebar-footer-link" 
-              onClick={() => {
-                setShowBlog(true);
-                setSidebarOpen(false);
-              }}
-              aria-label="View Blog"
-            >
-              📝 Blog
             </button>
             <button 
               className="sidebar-footer-link" 
