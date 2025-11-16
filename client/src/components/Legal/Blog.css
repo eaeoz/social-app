@@ -632,9 +632,12 @@
 
 /* Responsive Styles */
 @media (max-width: 768px) {
+  .blog-modal-overlay{
+    padding-left: 0px;
+  }
   .blog-modal-content {
-    max-width: 95vw;
-    max-height: 95vh;
+    max-width: 90vw;
+    max-height: 98vh;
   }
 
   .blog-search-section {
