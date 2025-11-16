@@ -146,19 +146,19 @@
   color: var(--text-secondary);
   line-height: 1;
   padding: 0;
-  padding-bottom: 3px;
+  padding-bottom: 5px;
   flex-shrink: 0;
 }
 
 .legal-modal-close:hover {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  transform: scale(1.1) rotate(90deg);
+  transform: scale(1.05);
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 .legal-modal-close:active {
-  transform: scale(0.95) rotate(90deg);
+  transform: scale(0.95);
 }
 
 .legal-modal-body {
