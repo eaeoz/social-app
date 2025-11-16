@@ -40,6 +40,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
   const [showContact, setShowContact] = useState(false);
   const [showBlog, setShowBlog] = useState(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [allowUserPictures, setAllowUserPictures] = useState(true);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -99,7 +100,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     document.head.appendChild(script);
   }, []);
 
-  // Fetch site settings to get registrationEnabled value
+  // Fetch site settings to get registrationEnabled and allowUserPictures values
   useEffect(() => {
     const fetchSiteSettings = async () => {
       try {
@@ -107,11 +108,13 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
         if (response.ok) {
           const data = await response.json();
           setRegistrationEnabled(data.settings.registrationEnabled !== false);
+          setAllowUserPictures(data.settings.allowUserPictures !== false);
         }
       } catch (error) {
         console.error('Failed to fetch site settings:', error);
         // Default to true if fetch fails
         setRegistrationEnabled(true);
+        setAllowUserPictures(true);
       }
     };
 
@@ -518,7 +521,9 @@ function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             paddingLeft: '25px',
             listStyleType: 'none'
           }}>
-            <li style={{ marginBottom: '4px' }}>✓ AI-powered +18 image protection with automatic detection</li>
+            {allowUserPictures && (
+              <li style={{ marginBottom: '4px' }}>✓ AI-powered +18 image protection with automatic detection</li>
+            )}
             <li style={{ marginBottom: '4px' }}>✓ Real-time chat filtering for inappropriate words and content</li>
             <li style={{ marginBottom: '4px' }}>✓ Automatic user suspension after 10 reports from different users</li>
             <li style={{ marginBottom: '4px' }}>✓ Advanced spam and repetitive message monitoring system</li>

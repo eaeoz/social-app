@@ -563,7 +563,9 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
             paddingLeft: '25px',
             listStyleType: 'none'
           }}>
-            <li style={{ marginBottom: '4px' }}>✓ AI-powered +18 image protection with automatic detection</li>
+            {allowUserPictures && (
+              <li style={{ marginBottom: '4px' }}>✓ AI-powered +18 image protection with automatic detection</li>
+            )}
             <li style={{ marginBottom: '4px' }}>✓ Real-time chat filtering for inappropriate words and content</li>
             <li style={{ marginBottom: '4px' }}>✓ Automatic user suspension after 10 reports from different users</li>
             <li style={{ marginBottom: '4px' }}>✓ Advanced spam and repetitive message monitoring system</li>
