@@ -3,6 +3,7 @@ import { Excalidraw, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import { Socket } from 'socket.io-client';
 import './Whiteboard.css';
+import { excalidrawLibraries } from './excalidrawLibraries';
 
 // Type definitions for Excalidraw
 type ExcalidrawImperativeAPI = any;
@@ -245,8 +246,15 @@ function Whiteboard({ socket, roomId, isOpen, onClose }: WhiteboardProps) {
                 currentItemStrokeWidth: 2,
                 currentItemRoughness: 1,
                 currentItemOpacity: 100,
+                activeTool: { 
+                  type: 'freedraw',
+                  customType: null,
+                  lastActiveTool: null,
+                  locked: false
+                },
                 theme: 'light'
-              }
+              },
+              libraryItems: excalidrawLibraries
             }}
             UIOptions={{
               canvasActions: {
@@ -261,6 +269,7 @@ function Whiteboard({ socket, roomId, isOpen, onClose }: WhiteboardProps) {
                 image: false
               }
             }}
+            libraryReturnUrl={window.location.origin}
           >
             <MainMenu>
               <MainMenu.DefaultItems.Export />
