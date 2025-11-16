@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Excalidraw, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
+import '@excalidraw/excalidraw/index.css';
 import { Socket } from 'socket.io-client';
 import './Whiteboard.css';
 

@@ -130,126 +130,21 @@
   background: #ffffff;
 }
 
-/* Excalidraw wrapper - Force proper height */
-.whiteboard-content > div {
-  height: 100% !important;
-  width: 100% !important;
-  position: relative !important;
-}
-
-/* Override Excalidraw default styles */
+/* Excalidraw wrapper - Let Excalidraw handle its own sizing */
 .whiteboard-content .excalidraw {
-  height: 100% !important;
-  width: 100% !important;
-  --color-primary: #8b5cf6 !important;
-  --color-primary-dark: #7c3aed !important;
-  --color-primary-darker: #6d28d9 !important;
-  --color-primary-darkest: #5b21b6 !important;
-  --color-primary-light: #a78bfa !important;
-  position: relative !important;
+  height: 100%;
+  width: 100%;
+  --color-primary: #8b5cf6;
+  --color-primary-dark: #7c3aed;
+  --color-primary-darker: #6d28d9;
+  --color-primary-darkest: #5b21b6;
+  --color-primary-light: #a78bfa;
 }
 
-/* Force all Excalidraw layers to be visible */
-.whiteboard-content .excalidraw * {
-  visibility: visible !important;
-}
-
-/* Main toolbar container */
-.whiteboard-content .excalidraw .App-toolbar-container {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Top menu */
-.whiteboard-content .excalidraw .App-menu_top {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Main toolbar */
-.whiteboard-content .excalidraw .App-toolbar {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  flex-direction: column !important;
-  gap: 0 !important;
-}
-
-/* Toolbar content */
-.whiteboard-content .excalidraw .App-toolbar__content {
-  display: flex !important;
-  flex-direction: column !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Island panels (floating toolbars) */
-.whiteboard-content .excalidraw .Island {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: white !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-  pointer-events: auto !important;
-  border-radius: 8px !important;
-  padding: 0.5rem !important;
-}
-
-/* Toolbar buttons */
-.whiteboard-content .excalidraw .ToolIcon {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Layer UI wrapper */
-.whiteboard-content .excalidraw .layer-ui__wrapper {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  position: absolute !important;
-  inset: 0 !important;
-}
-
-/* Fix for toolbar icons size */
-.whiteboard-content .excalidraw .ToolIcon__icon {
-  width: 1.5rem !important;
-  height: 1.5rem !important;
-  display: block !important;
-}
-
-/* Tool buttons group */
-.whiteboard-content .excalidraw .Stack {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Separator */
-.whiteboard-content .excalidraw .Stack__separator {
-  display: block !important;
-  visibility: visible !important;
-}
-
-/* Fix canvas container */
-.whiteboard-content .excalidraw .excalidraw-canvas-container {
-  position: absolute !important;
-  inset: 0 !important;
-}
-
-/* Fix main canvas */
-.whiteboard-content .excalidraw canvas.excalidraw__canvas {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
+/* Ensure Excalidraw container fills the content area */
+.whiteboard-content > div {
+  height: 100%;
+  width: 100%;
 }
 
 /* Loading State */
