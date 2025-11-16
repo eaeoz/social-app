@@ -15,3 +15,4 @@
 # example.com, 12345, RESELLER, AEC242
 
 # Add your advertising partners below:
+google.com, pub-7766172957848399, DIRECT, f08c47fec0942fa0
