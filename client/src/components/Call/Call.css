@@ -433,6 +433,50 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
+/* Whiteboard Button State */
+.call-whiteboard-button {
+  background: rgba(255, 255, 255, 0.15);
+  animation: buttonAppear 0.5s ease 0.2s backwards;
+}
+
+.call-button-whiteboard-active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 
+    0 4px 15px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  animation: whiteboardActivePulse 2s ease-in-out infinite;
+}
+
+.call-button-whiteboard-active::before {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+@keyframes whiteboardActivePulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 15px rgba(139, 92, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 6px 25px rgba(139, 92, 246, 0.6),
+      0 0 40px rgba(139, 92, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+}
+
+.call-button-whiteboard-active:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 
+    0 10px 30px rgba(139, 92, 246, 0.6),
+    0 0 50px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .call-header {
@@ -482,8 +526,9 @@
     font-size: 4rem;
   }
 
-  /* Hide screen share button on mobile */
+  /* Hide screen share and whiteboard buttons on mobile */
   .call-button-screen-sharing,
+  .call-whiteboard-button,
   .call-button:has(svg path[d*="M20 18c1.1 0"]) {
     display: none;
   }
@@ -537,8 +582,9 @@
     font-size: 3rem;
   }
 
-  /* Hide screen share button on mobile */
+  /* Hide screen share and whiteboard buttons on mobile */
   .call-button-screen-sharing,
+  .call-whiteboard-button,
   .call-button:has(svg path[d*="M20 18c1.1 0"]) {
     display: none;
   }
@@ -593,8 +639,9 @@
     font-size: 2.5rem;
   }
 
-  /* Hide screen share button on mobile landscape */
+  /* Hide screen share and whiteboard buttons on mobile landscape */
   .call-button-screen-sharing,
+  .call-whiteboard-button,
   .call-button:has(svg path[d*="M20 18c1.1 0"]) {
     display: none;
   }

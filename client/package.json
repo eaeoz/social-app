@@ -13,6 +13,7 @@
     "seo:check": "echo Checking SEO configuration... && node -e \"console.log('✅ Sitemap:', require('fs').existsSync('public/sitemap.xml')); console.log('✅ Robots.txt:', require('fs').existsSync('public/robots.txt'));\""
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.0",
     "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.13.2",
     "bad-words": "^4.0.0",
@@ -23,6 +24,7 @@
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.5",
+    "react-use": "^17.6.0",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {

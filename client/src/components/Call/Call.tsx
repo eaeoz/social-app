@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
+import Whiteboard from '../Whiteboard/Whiteboard';
 import './Call.css';
 
 interface CallProps {
@@ -22,6 +23,7 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -760,6 +762,33 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const toggleWhiteboard = () => {
+    setIsWhiteboardOpen(!isWhiteboardOpen);
+    
+    // Notify other user to open/close whiteboard
+    if (socket) {
+      socket.emit('whiteboard-toggle', {
+        to: otherUser.userId,
+        isOpen: !isWhiteboardOpen
+      });
+    }
+  };
+
+  // Listen for whiteboard toggle from remote user
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleWhiteboardToggle = ({ isOpen }: { isOpen: boolean }) => {
+      setIsWhiteboardOpen(isOpen);
+    };
+
+    socket.on('whiteboard-toggle', handleWhiteboardToggle);
+
+    return () => {
+      socket.off('whiteboard-toggle', handleWhiteboardToggle);
+    };
+  }, [socket]);
+
   // Effect to ensure local AND remote video gets streams when component renders
   useEffect(() => {
     // Set local video stream
@@ -922,6 +951,17 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
             )}
             
             <button
+              className={`call-button call-whiteboard-button ${isWhiteboardOpen ? 'call-button-whiteboard-active' : ''}`}
+              onClick={toggleWhiteboard}
+              aria-label={isWhiteboardOpen ? 'Close whiteboard' : 'Open whiteboard'}
+            >
+              <svg className="button-icon" viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+                <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 7h14v2H5zm0 4h14v2H5zm0 4h7v2H5z"/>
+              </svg>
+              <span className="button-label">{isWhiteboardOpen ? 'Close Board' : 'Whiteboard'}</span>
+            </button>
+            
+            <button
               className="call-button call-button-hangup"
               onClick={endCall}
               aria-label="End call"
@@ -934,6 +974,24 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
           </>
         ) : null}
       </div>
+
+      {/* Whiteboard Component */}
+      {socket && (
+        <Whiteboard
+          socket={socket}
+          roomId={`call-${[otherUser.userId, socket.id].sort().join('-')}`}
+          isOpen={isWhiteboardOpen}
+          onClose={() => {
+            setIsWhiteboardOpen(false);
+            if (socket) {
+              socket.emit('whiteboard-toggle', {
+                to: otherUser.userId,
+                isOpen: false
+              });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

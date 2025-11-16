@@ -617,4 +617,77 @@ export function setupMessageHandlers(io, socket, userSockets) {
       console.error('Error handling user logout:', error);
     }
   });
+
+  // Whiteboard collaboration handlers
+  
+  // Store whiteboard state per room
+  const whiteboardStates = new Map();
+
+  // Toggle whiteboard for both users
+  socket.on('whiteboard-toggle', (data) => {
+    try {
+      const { to, isOpen } = data;
+      const toSocketId = userSockets.get(to);
+      
+      if (toSocketId) {
+        io.to(toSocketId).emit('whiteboard-toggle', { isOpen });
+        console.log(`🎨 Whiteboard ${isOpen ? 'opened' : 'closed'} for user ${to}`);
+      }
+    } catch (error) {
+      console.error('Error toggling whiteboard:', error);
+    }
+  });
+
+  // Request whiteboard state
+  socket.on('whiteboard-request-state', (data) => {
+    try {
+      const { roomId } = data;
+      const state = whiteboardStates.get(roomId);
+      
+      if (state) {
+        socket.emit('whiteboard-state', state);
+        console.log(`🎨 Sent whiteboard state for room ${roomId}`);
+      } else {
+        // Send empty state for new whiteboard
+        socket.emit('whiteboard-state', {
+          elements: [],
+          appState: {}
+        });
+        console.log(`🎨 Sent empty whiteboard state for new room ${roomId}`);
+      }
+    } catch (error) {
+      console.error('Error sending whiteboard state:', error);
+    }
+  });
+
+  // Update whiteboard state
+  socket.on('whiteboard-update', (data) => {
+    try {
+      const { roomId, elements, appState } = data;
+      
+      // Store the state
+      whiteboardStates.set(roomId, { elements, appState });
+      
+      // Broadcast to all other users in the room
+      socket.broadcast.emit('whiteboard-update', {
+        elements,
+        appState
+      });
+      
+      console.log(`🎨 Whiteboard updated for room ${roomId} (${elements.length} elements)`);
+    } catch (error) {
+      console.error('Error updating whiteboard:', error);
+    }
+  });
+
+  // Clean up whiteboard state when call ends
+  socket.on('whiteboard-cleanup', (data) => {
+    try {
+      const { roomId } = data;
+      whiteboardStates.delete(roomId);
+      console.log(`🗑️ Cleaned up whiteboard state for room ${roomId}`);
+    } catch (error) {
+      console.error('Error cleaning up whiteboard:', error);
+    }
+  });
 }
