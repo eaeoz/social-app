@@ -49,10 +49,10 @@ function Whiteboard({ socket, roomId, isOpen, onClose }: WhiteboardProps) {
       if (elementsJson !== lastSentElementsRef.current) {
         lastSentElementsRef.current = elementsJson;
         
+        // Only send elements, not appState to avoid serialization issues
         socket.emit('whiteboard-update', {
           roomId,
-          elements: elements,
-          appState: excalidrawAPI.getAppState()
+          elements: elements
         });
       }
     }, 100); // 100ms debounce
@@ -64,21 +64,14 @@ function Whiteboard({ socket, roomId, isOpen, onClose }: WhiteboardProps) {
 
     const handleWhiteboardUpdate = (data: { 
       elements: readonly ExcalidrawElement[];
-      appState: any;
     }) => {
       // Prevent syncing loop
       isSyncingRef.current = true;
 
       try {
-        // Update scene with new elements
+        // Only update elements, keep local appState intact
         excalidrawAPI.updateScene({
-          elements: data.elements,
-          appState: {
-            ...data.appState,
-            // Preserve local view settings
-            viewBackgroundColor: excalidrawAPI.getAppState().viewBackgroundColor,
-            currentItemFontFamily: excalidrawAPI.getAppState().currentItemFontFamily,
-          }
+          elements: data.elements
         });
 
         lastSentElementsRef.current = JSON.stringify(data.elements);

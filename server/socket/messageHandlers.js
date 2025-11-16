@@ -663,15 +663,14 @@ export function setupMessageHandlers(io, socket, userSockets) {
   // Update whiteboard state
   socket.on('whiteboard-update', (data) => {
     try {
-      const { roomId, elements, appState } = data;
+      const { roomId, elements } = data;
       
-      // Store the state
-      whiteboardStates.set(roomId, { elements, appState });
+      // Store only the elements (no appState to avoid serialization issues)
+      whiteboardStates.set(roomId, { elements });
       
       // Broadcast to all other users in the room
       socket.broadcast.emit('whiteboard-update', {
-        elements,
-        appState
+        elements
       });
       
       console.log(`🎨 Whiteboard updated for room ${roomId} (${elements.length} elements)`);
