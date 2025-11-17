@@ -1,0 +1,35 @@
+import { NavigationProp, RouteProp } from '@react-navigation/native';
+import { Room, PrivateChat, User } from '../types';
+
+// Auth Navigator
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+// Main Tab Navigator
+export type MainTabParamList = {
+  Rooms: undefined;
+  Chats: undefined;
+  Users: undefined;
+  Profile: undefined;
+};
+
+// Root Navigator
+export type RootStackParamList = {
+  Auth: undefined;
+  Main: undefined;
+  ChatRoom: { room: Room };
+  PrivateChat: { chat: PrivateChat };
+  UserProfile: { user: User };
+};
+
+// Navigation props
+export type AuthNavigationProp = NavigationProp<AuthStackParamList>;
+export type MainTabNavigationProp = NavigationProp<MainTabParamList>;
+export type RootNavigationProp = NavigationProp<RootStackParamList>;
+
+// Route props
+export type ChatRoomRouteProp = RouteProp<RootStackParamList, 'ChatRoom'>;
+export type PrivateChatRouteProp = RouteProp<RootStackParamList, 'PrivateChat'>;
+export type UserProfileRouteProp = RouteProp<RootStackParamList, 'UserProfile'>;
