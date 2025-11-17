@@ -52,22 +52,41 @@ export default function ChatsScreen() {
     navigation.navigate('PrivateChat', { chat });
   };
 
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const messageDate = new Date(date);
-    const diffMs = now.getTime() - messageDate.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+  const formatTime = (date: any) => {
+    if (!date) return '';
+    
+    try {
+      const now = new Date();
+      const messageDate = new Date(date);
+      
+      // Check if date is valid
+      if (isNaN(messageDate.getTime())) {
+        return '';
+      }
+      
+      const diffMs = now.getTime() - messageDate.getTime();
+      
+      // Handle negative time differences (future dates)
+      if (diffMs < 0) {
+        return messageDate.toLocaleDateString();
+      }
+      
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return messageDate.toLocaleDateString();
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return messageDate.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '';
+    }
   };
 
-  const renderChat = ({ item }: { item: PrivateChat }) => {
+  const renderChat = ({ item }: { item: any }) => {
     const otherUser = item.otherUser;
     
     return (
@@ -95,9 +114,9 @@ export default function ChatsScreen() {
               <Text variant="titleMedium" numberOfLines={1}>
                 {otherUser?.displayName || otherUser?.username || 'Unknown User'}
               </Text>
-              {item.lastMessage && (
+              {item.lastMessageAt && (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {formatTime(item.lastMessage.timestamp)}
+                  {formatTime(item.lastMessageAt)}
                 </Text>
               )}
             </View>
@@ -113,7 +132,7 @@ export default function ChatsScreen() {
                     flex: 1,
                   }}
                 >
-                  {item.lastMessage.content}
+                  {typeof item.lastMessage === 'string' ? item.lastMessage : item.lastMessage.content}
                 </Text>
                 {item.unreadCount && item.unreadCount > 0 && (
                   <Badge style={styles.badge}>{item.unreadCount}</Badge>
