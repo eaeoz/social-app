@@ -53,7 +53,23 @@ export default function App() {
             }
           };
 
+          // Listen for chat read status updates
+          const handleChatRead = async (data: any) => {
+            console.log('✅ Global: Chat marked as read:', data);
+            
+            // Reload chats to update unread counts
+            try {
+              const chatsData = await apiService.getPrivateChats();
+              const chatsArray = Array.isArray(chatsData) ? chatsData : [];
+              setPrivateChats(chatsArray);
+              console.log('✅ Global: Chat list updated after marking as read');
+            } catch (error) {
+              console.error('❌ Global: Error updating chat list:', error);
+            }
+          };
+
           socketService.onPrivateMessage(handlePrivateMessage);
+          socketService.onChatReadStatus(handleChatRead);
         })
         .catch((error) => {
           console.warn('⚠️ Socket.IO connection failed');
@@ -64,8 +80,9 @@ export default function App() {
       return () => {
         if (socketService.isConnected()) {
           console.log('🔌 Disconnecting Socket.IO');
-          // Clean up the global private message listener
+          // Clean up the global listeners
           socketService.off('private_message');
+          socketService.offChatReadStatus();
           socketService.disconnect();
         }
       };

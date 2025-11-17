@@ -9,7 +9,7 @@ import * as Location from 'expo-location';
 import { PrivateChatRouteProp, RootNavigationProp } from '../navigation/types';
 import { apiService } from '../services';
 import { socketService } from '../services';
-import { useAuthStore } from '../store';
+import { useAuthStore, useChatStore } from '../store';
 import { Message } from '../types';
 
 export default function PrivateChatScreen() {
@@ -60,9 +60,12 @@ export default function PrivateChatScreen() {
   const otherUserId = otherUser?.userId;
 
   useEffect(() => {
-    if (!otherUserId) return;
+    if (!otherUserId || !user?.userId) return;
     
     loadMessages();
+
+    // Mark chat as read when opening the conversation
+    markChatAsRead();
 
     // Listen for message history (from get_private_messages)
     const handleMessageHistory = (data: any) => {
@@ -72,6 +75,9 @@ export default function PrivateChatScreen() {
         setLoading(false);
         setRefreshing(false);
         scrollToBottom();
+        
+        // Mark as read again after loading messages
+        markChatAsRead();
       }
     };
 
@@ -98,6 +104,9 @@ export default function PrivateChatScreen() {
           return [...prev, { ...message, _id: messageId }];
         });
         scrollToBottom();
+        
+        // Mark chat as read when receiving new messages in this active conversation
+        markChatAsRead();
       }
     };
 
@@ -109,6 +118,27 @@ export default function PrivateChatScreen() {
       socketService.off('private_message', handleNewMessage);
     };
   }, [otherUserId, user?.userId]);
+
+  const markChatAsRead = async () => {
+    if (!user?.userId || !otherUserId) return;
+    
+    console.log('✅ Marking messages as read between', user.userId, 'and', otherUserId);
+    
+    // Send mark as read with correct parameters (userId and otherUserId)
+    socketService.markChatAsReadByUsers(user.userId, otherUserId);
+    
+    // Force reload chat list after a short delay to update unread counts
+    setTimeout(async () => {
+      try {
+        const chatsData = await apiService.getPrivateChats();
+        const chatsArray = Array.isArray(chatsData) ? chatsData : [];
+        useChatStore.getState().setPrivateChats(chatsArray);
+        console.log('✅ Chat list refreshed after marking as read');
+      } catch (error) {
+        console.error('❌ Error refreshing chat list:', error);
+      }
+    }, 500);
+  };
 
   const loadMessages = async (isRefresh = false) => {
     try {

@@ -150,6 +150,10 @@ class SocketService {
     this.socket?.emit('mark_chat_as_read', { chatId });
   }
 
+  markChatAsReadByUsers(userId: string, otherUserId: string): void {
+    this.socket?.emit('mark_chat_as_read', { userId, otherUserId });
+  }
+
   // Typing indicators
   startTyping(roomId?: string, chatId?: string): void {
     this.socket?.emit('typing', { roomId, chatId });
@@ -221,6 +225,18 @@ class SocketService {
     } else {
       this.socket?.removeAllListeners();
     }
+  }
+
+  // Listen for chat read status updates
+  onChatReadStatus(callback: (data: any) => void): void {
+    this.socket?.on('chat_read_status', callback);
+    this.socket?.on('messages_marked_read', callback);
+  }
+
+  // Remove chat read status listeners
+  offChatReadStatus(callback?: (data: any) => void): void {
+    this.socket?.off('chat_read_status', callback);
+    this.socket?.off('messages_marked_read', callback);
   }
 }
 
