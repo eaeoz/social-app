@@ -5,12 +5,15 @@ import { useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import { apiService, socketService } from '../services';
-import { User } from '../types';
+import { User, PrivateChat } from '../types';
 import { RootNavigationProp } from '../navigation/types';
+import { useChatStore } from '../store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function UsersScreen() {
   const theme = useTheme();
   const navigation = useNavigation<RootNavigationProp>();
+  const { privateChats, setPrivateChats } = useChatStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -80,8 +83,44 @@ export default function UsersScreen() {
     loadUsers(searchQuery);
   };
 
-  const handleUserPress = (user: User) => {
-    navigation.navigate('UserProfile', { user });
+  const handleUserPress = async (user: User) => {
+    // Check if chat already exists with this user
+    const existingChat = privateChats.find(
+      (chat) => chat.otherUser?.userId === user.userId
+    );
+
+    if (existingChat) {
+      // Chat exists, navigate to it
+      console.log('📱 Opening existing chat with:', user.displayName || user.username);
+      navigation.navigate('PrivateChat', { chat: existingChat });
+    } else {
+      // Create new chat object and navigate
+      console.log('📱 Creating new chat with:', user.displayName || user.username);
+      
+      // Get current user info
+      const userDataStr = await AsyncStorage.getItem('user');
+      const currentUser = userDataStr ? JSON.parse(userDataStr) : null;
+      
+      const newChat: PrivateChat = {
+        _id: `temp_${Date.now()}`,
+        participants: [currentUser?.userId || '', user.userId],
+        otherUser: {
+          userId: user.userId,
+          username: user.username,
+          displayName: user.displayName || user.username,
+          profilePicture: user.profilePicture,
+          isOnline: user.isOnline,
+        },
+        unreadCount: 0,
+        updatedAt: new Date(),
+      };
+      
+      // Add to chat store so it appears in Chats tab after first message
+      setPrivateChats([...privateChats, newChat]);
+      
+      // Navigate to the chat
+      navigation.navigate('PrivateChat', { chat: newChat });
+    }
   };
 
   const toggleGender = (gender: string) => {
