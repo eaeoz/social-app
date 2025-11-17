@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   badge: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#DC2626',
   },
   emptyContainer: {
     alignItems: 'center',
