@@ -3,7 +3,7 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { PaperProvider, Text, Button, Card, TextInput } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useAuthStore, useThemeStore } from './src/store';
+import { useAuthStore, useThemeStore, useChatStore } from './src/store';
 import { lightTheme, darkTheme } from './src/theme';
 import { apiService, socketService } from './src/services';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -11,6 +11,7 @@ import RootNavigator from './src/navigation/RootNavigator';
 export default function App() {
   const { user, isLoading, loadUser, login, logout } = useAuthStore();
   const { isDarkMode, loadTheme, setDarkMode } = useThemeStore();
+  const { setPrivateChats } = useChatStore();
   
   // Auth form states
   const [username, setUsername] = useState('');
@@ -35,6 +36,24 @@ export default function App() {
       socketService.connect(user.userId, user.username)
         .then(() => {
           console.log('✅ Socket.IO connected and authenticated!');
+          
+          // Set up global listener for private messages to update chat list
+          // This ensures messages are received even when not on the Messages tab
+          const handlePrivateMessage = async (message: any) => {
+            console.log('📨 Global: Received private message:', message);
+            
+            // Reload chats to update the list with new message and unread count
+            try {
+              const chatsData = await apiService.getPrivateChats();
+              const chatsArray = Array.isArray(chatsData) ? chatsData : [];
+              setPrivateChats(chatsArray);
+              console.log('✅ Global: Chat list updated with new message');
+            } catch (error) {
+              console.error('❌ Global: Error updating chat list:', error);
+            }
+          };
+
+          socketService.onPrivateMessage(handlePrivateMessage);
         })
         .catch((error) => {
           console.warn('⚠️ Socket.IO connection failed');
@@ -45,6 +64,8 @@ export default function App() {
       return () => {
         if (socketService.isConnected()) {
           console.log('🔌 Disconnecting Socket.IO');
+          // Clean up the global private message listener
+          socketService.off('private_message');
           socketService.disconnect();
         }
       };

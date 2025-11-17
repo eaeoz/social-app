@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { Text, Card, Badge, ActivityIndicator, Avatar } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useChatStore } from '../store';
 import { apiService, socketService } from '../services';
 import { PrivateChat } from '../types';
@@ -31,27 +31,17 @@ export default function ChatsScreen() {
   };
 
   useEffect(() => {
+    // Load chats when component mounts
     loadChats();
-
-    // Listen for new private messages to update chat list
-    const handlePrivateMessage = (message: any) => {
-      console.log('📨 Received private message in ChatsScreen:', message);
-      // Reload chats to update the list with new message
-      loadChats();
-    };
-
-    socketService.onPrivateMessage(handlePrivateMessage);
-
-    // Poll for updates every 5 seconds (like web version)
-    const pollInterval = setInterval(() => {
-      loadChats();
-    }, 5000);
-
-    return () => {
-      socketService.off('private_message', handlePrivateMessage);
-      clearInterval(pollInterval);
-    };
   }, []);
+
+  // Reload chats when user focuses on this tab
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('📱 Messages tab focused - reloading chats');
+      loadChats();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
