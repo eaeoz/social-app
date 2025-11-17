@@ -144,7 +144,12 @@ class ApiService {
   async getUsers(filters?: any): Promise<User[]> {
     const response = await this.api.get('/rooms/users', { params: filters });
     // API returns { showPictures: boolean, users: User[] }
-    return response.data.users || [];
+    // Backend sends status: 'online'/'offline', we need to map to isOnline: boolean
+    const users = response.data.users || [];
+    return users.map((user: any) => ({
+      ...user,
+      isOnline: user.status === 'online'
+    }));
   }
 
   async getUserProfile(userId: string): Promise<User> {

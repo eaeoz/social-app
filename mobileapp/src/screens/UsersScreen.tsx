@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { Text, Card, ActivityIndicator, Avatar, Searchbar, Button, Checkbox, Menu } from 'react-native-paper';
+import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { Text, Card, ActivityIndicator, Avatar, Searchbar, Button, Checkbox } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { apiService } from '../services';
+import MultiSlider from '@ptomasroos/react-native-multi-slider';
+import { apiService, socketService } from '../services';
 import { User } from '../types';
 import { RootNavigationProp } from '../navigation/types';
 
@@ -17,13 +18,20 @@ export default function UsersScreen() {
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>(['Male', 'Female']);
   const [showFilters, setShowFilters] = useState(false);
-  const [showMinAgeMenu, setShowMinAgeMenu] = useState(false);
-  const [showMaxAgeMenu, setShowMaxAgeMenu] = useState(false);
 
-  const loadUsers = async () => {
+  const loadUsers = async (searchText: string = '') => {
     try {
-      const usersData = await apiService.getUsers();
+      // Match web frontend behavior:
+      // - No search = only online users (default backend behavior)
+      // - Search with 3+ chars = all users (backend search mode)
+      const params: any = {};
+      if (searchText && searchText.trim().length >= 3) {
+        params.search = searchText.trim();
+      }
+      
+      const usersData = await apiService.getUsers(params);
       const userArray = Array.isArray(usersData) ? usersData : [];
+      console.log('📥 Loaded users:', userArray.length, searchText ? `(search: "${searchText}")` : '(online only)');
       setUsers(userArray);
     } catch (error: any) {
       console.error('❌ Error loading users:', error);
@@ -35,12 +43,41 @@ export default function UsersScreen() {
   };
 
   useEffect(() => {
-    loadUsers();
+    // Initial load without search - shows only online users
+    loadUsers('');
+
+    // Listen for user status changes via socket
+    const handleUserStatusChanged = (data: { userId: string; status: string; lastActiveAt?: Date }) => {
+      console.log('👤 User status changed:', data);
+      setUsers(prevUsers => 
+        prevUsers.map(u => 
+          u.userId === data.userId 
+            ? { ...u, isOnline: data.status === 'online', lastSeen: data.lastActiveAt }
+            : u
+        )
+      );
+    };
+
+    socketService.onUserStatusChanged(handleUserStatusChanged as any);
+
+    return () => {
+      // Cleanup listener when component unmounts
+      socketService.off('user_status_changed', handleUserStatusChanged);
+    };
   }, []);
+
+  // Reload users when search text changes (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadUsers(searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadUsers();
+    loadUsers(searchQuery);
   };
 
   const handleUserPress = (user: User) => {
@@ -89,6 +126,15 @@ export default function UsersScreen() {
           return true;
         }
         return u.gender && selectedGenders.includes(u.gender);
+      })
+      .sort((a, b) => {
+        // PRIORITY: Online users first
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
+        // Then alphabetically by display name
+        const nameA = (a.displayName || a.username).toLowerCase();
+        const nameB = (b.displayName || b.username).toLowerCase();
+        return nameA.localeCompare(nameB);
       });
   };
 
@@ -187,89 +233,72 @@ export default function UsersScreen() {
 
         {showFilters && (
           <View style={[styles.filterContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <Text variant="titleSmall" style={styles.filterTitle}>
-              Age Range
-            </Text>
-            
-            <View style={styles.ageRow}>
-              <View style={styles.ageSelector}>
-                <Text variant="bodySmall" style={{ marginBottom: 4 }}>Min Age</Text>
-                <Menu
-                  visible={showMinAgeMenu}
-                  onDismiss={() => setShowMinAgeMenu(false)}
-                  anchor={
-                    <TouchableOpacity
-                      style={[styles.ageButton, { backgroundColor: theme.colors.surface }]}
-                      onPress={() => setShowMinAgeMenu(true)}
-                    >
-                      <Text variant="bodyLarge">{ageRange[0]}</Text>
-                    </TouchableOpacity>
-                  }
-                >
-                  {Array.from({ length: 21 }, (_, i) => 18 + i * 4).map(age => (
-                    <Menu.Item
-                      key={age}
-                      onPress={() => {
-                        if (age < ageRange[1]) {
-                          setAgeRange([age, ageRange[1]]);
-                        }
-                        setShowMinAgeMenu(false);
-                      }}
-                      title={`${age} years`}
-                    />
-                  ))}
-                </Menu>
-              </View>
-
-              <Text variant="titleLarge" style={{ paddingHorizontal: 16, paddingTop: 20 }}>-</Text>
-
-              <View style={styles.ageSelector}>
-                <Text variant="bodySmall" style={{ marginBottom: 4 }}>Max Age</Text>
-                <Menu
-                  visible={showMaxAgeMenu}
-                  onDismiss={() => setShowMaxAgeMenu(false)}
-                  anchor={
-                    <TouchableOpacity
-                      style={[styles.ageButton, { backgroundColor: theme.colors.surface }]}
-                      onPress={() => setShowMaxAgeMenu(true)}
-                    >
-                      <Text variant="bodyLarge">{ageRange[1]}</Text>
-                    </TouchableOpacity>
-                  }
-                >
-                  {Array.from({ length: 21 }, (_, i) => 18 + i * 4).map(age => (
-                    <Menu.Item
-                      key={age}
-                      onPress={() => {
-                        if (age > ageRange[0]) {
-                          setAgeRange([ageRange[0], age]);
-                        }
-                        setShowMaxAgeMenu(false);
-                      }}
-                      title={`${age} years`}
-                    />
-                  ))}
-                </Menu>
+            {/* Age Range Section */}
+            <View style={styles.filterSection}>
+              <Text variant="titleSmall" style={styles.sectionTitle}>
+                Age: {ageRange[0]} - {ageRange[1]}
+              </Text>
+              <View style={styles.sliderWrapper}>
+                <MultiSlider
+                  values={[ageRange[0], ageRange[1]]}
+                  onValuesChange={(values) => setAgeRange([values[0], values[1]])}
+                  min={18}
+                  max={100}
+                  step={1}
+                  sliderLength={260}
+                  selectedStyle={{
+                    backgroundColor: theme.colors.primary,
+                    height: 4,
+                  }}
+                  unselectedStyle={{
+                    backgroundColor: theme.colors.outline,
+                    height: 4,
+                  }}
+                  markerStyle={{
+                    backgroundColor: theme.colors.primary,
+                    height: 20,
+                    width: 20,
+                    borderRadius: 10,
+                    borderWidth: 2,
+                    borderColor: theme.colors.surface,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 1.5,
+                    elevation: 2,
+                  }}
+                  pressedMarkerStyle={{
+                    backgroundColor: theme.colors.primary,
+                    height: 24,
+                    width: 24,
+                    borderRadius: 12,
+                  }}
+                  containerStyle={styles.sliderContainer}
+                  trackStyle={styles.track}
+                />
               </View>
             </View>
 
-            <Text variant="titleSmall" style={[styles.filterTitle, { marginTop: 16 }]}>
-              Gender
-            </Text>
-            <View style={styles.genderContainer}>
-              <View style={styles.genderOption}>
-                <Checkbox
-                  status={selectedGenders.includes('Male') ? 'checked' : 'unchecked'}
-                  onPress={() => toggleGender('Male')}
-                />
-                <Text variant="bodyMedium">Male</Text>
-              </View>
-              <View style={styles.genderOption}>
-                <Checkbox
-                  status={selectedGenders.includes('Female') ? 'checked' : 'unchecked'}
-                  onPress={() => toggleGender('Female')}
-                />
-                <Text variant="bodyMedium">Female</Text>
+            {/* Gender Section */}
+            <View style={[styles.filterSection, { marginTop: 12 }]}>
+              <Text variant="titleSmall" style={styles.sectionTitle}>
+                Gender
+              </Text>
+              <View style={styles.genderRow}>
+                <View style={styles.genderOption}>
+                  <Checkbox
+                    status={selectedGenders.includes('Male') ? 'checked' : 'unchecked'}
+                    onPress={() => toggleGender('Male')}
+                  />
+                  <Text variant="bodyMedium">Male</Text>
+                </View>
+                <View style={styles.genderOption}>
+                  <Checkbox
+                    status={selectedGenders.includes('Female') ? 'checked' : 'unchecked'}
+                    onPress={() => toggleGender('Female')}
+                  />
+                  <Text variant="bodyMedium">Female</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -319,32 +348,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterContainer: {
-    padding: 16,
+    padding: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
     marginTop: 8,
   },
-  filterTitle: {
+  filterSection: {
+    marginBottom: 4,
+  },
+  sectionTitle: {
     marginBottom: 8,
     fontWeight: '600',
   },
-  ageRow: {
+  sliderWrapper: {
+    paddingVertical: 4,
+  },
+  sliderContainer: {
+    alignSelf: 'center',
+  },
+  track: {
+    height: 4,
+    borderRadius: 2,
+  },
+  genderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  ageSelector: {
-    flex: 1,
-  },
-  ageButton: {
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    elevation: 1,
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    gap: 24,
+    gap: 16,
+    paddingTop: 4,
   },
   genderOption: {
     flexDirection: 'row',
