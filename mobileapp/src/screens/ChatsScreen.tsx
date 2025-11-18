@@ -66,12 +66,12 @@ export default function ChatsScreen() {
           const updatedChats = [...chatsArray];
           const existingChat = updatedChats[existingChatIndex];
           
-          updatedChats[existingChatIndex] = {
-            ...existingChat,
-            lastMessage: message.content || message.text,
-            lastMessageAt: message.timestamp || new Date().toISOString(),
-            unreadCount: (existingChat.unreadCount || 0) + 1,
-          };
+            updatedChats[existingChatIndex] = {
+              ...existingChat,
+              lastMessage: message.content || message.text,
+              updatedAt: message.timestamp || new Date(),
+              unreadCount: (existingChat.unreadCount || 0) + 1,
+            };
           
           // Move updated chat to top
           const [movedChat] = updatedChats.splice(existingChatIndex, 1);
