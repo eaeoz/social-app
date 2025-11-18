@@ -1450,21 +1450,38 @@
   border: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  font-weight: bold;
   padding: 0 8px;
   margin-left: 4px;
   flex-shrink: 0;
   transition: all 0.2s ease;
   opacity: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.room-item:hover .close-chat-button {
+.private-chat-item:hover .close-chat-button {
   opacity: 1;
 }
 
 .close-chat-button:hover {
   color: #ef4444;
-  transform: scale(1.1);
+  transform: scale(1.2) rotate(90deg);
+}
+
+.close-chat-button:active {
+  transform: scale(1.1) rotate(90deg);
+}
+
+.room-item.active .close-chat-button {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.room-item.active .close-chat-button:hover {
+  color: #fca5a5;
 }
 
 .room-item.active .private-chat-name,

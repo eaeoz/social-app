@@ -279,6 +279,15 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
     const db = getDatabase();
     const userId = new ObjectId(req.user.userId);
 
+    // Get user's openChats array to see which chats should be visible
+    const currentUser = await db.collection('users').findOne(
+      { _id: userId },
+      { projection: { openChats: 1 } }
+    );
+
+    // Ensure openChats is an array
+    const openChats = Array.isArray(currentUser?.openChats) ? currentUser.openChats : [];
+
     // Find all private chats for this user
     const privateChats = await db.collection('privatechats')
       .find({
@@ -294,10 +303,14 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
         // Get the other participant's ID
         const otherUserId = chat.participants.find(id => !id.equals(userId));
 
+        // Check if this chat should be visible based on openChats state
+        const openChatEntry = openChats.find(oc => oc && oc.userId === otherUserId.toString());
+        const shouldBeVisible = openChatEntry?.state === true;
+
         // Get other user's info
         const otherUser = await db.collection('users').findOne(
           { _id: otherUserId },
-          { projection: { username: 1, displayName: 1, nickName: 1, status: 1, profilePictureId: 1 } }
+          { projection: { username: 1, displayName: 1, nickName: 1, status: 1, profilePictureId: 1, age: 1, gender: 1, lastSeen: 1 } }
         );
 
         if (!otherUser) return null;
@@ -316,8 +329,8 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
           isRead: false
         });
 
-        // ONLY show chats with unread messages
-        if (unreadCount === 0) return null;
+        // Show chats if: 1) they have unread messages OR 2) they are in openChats with state=true
+        if (unreadCount === 0 && !shouldBeVisible) return null;
 
         // Get last message
         const lastMessage = await db.collection('messages')
@@ -340,6 +353,9 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
             displayName: otherUser.displayName || otherUser.nickName || otherUser.username,
             nickName: otherUser.nickName || otherUser.username,
             status: otherUser.status || 'offline',
+            age: otherUser.age,
+            gender: otherUser.gender,
+            lastSeen: otherUser.lastSeen,
             profilePicture: profilePictureUrl
           },
           unreadCount,
@@ -359,7 +375,7 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
   }
 });
 
-// Close a private chat (marks all messages as read, which removes it from the list)
+// Close a private chat (sets state to false in openChats array)
 router.post('/close-private-chat', authenticateToken, async (req, res) => {
   try {
     const db = getDatabase();
@@ -370,25 +386,80 @@ router.post('/close-private-chat', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Other user ID is required' });
     }
 
-    const otherUserObjectId = new ObjectId(otherUserId);
+    // Get current user's openChats array
+    const currentUser = await db.collection('users').findOne(
+      { _id: userId },
+      { projection: { openChats: 1 } }
+    );
 
-    // Mark all messages from this user as read
-    await db.collection('messages').updateMany(
-      {
-        isPrivate: true,
-        receiverId: userId,
-        senderId: otherUserObjectId,
-        isRead: false
-      },
-      {
-        $set: { isRead: true }
-      }
+    // Ensure openChats is an array
+    let openChats = Array.isArray(currentUser?.openChats) ? currentUser.openChats : [];
+
+    // Find existing entry for this user
+    const existingIndex = openChats.findIndex(oc => oc && oc.userId === otherUserId);
+
+    if (existingIndex >= 0) {
+      // Update existing entry to state: false
+      openChats[existingIndex].state = false;
+    } else {
+      // Add new entry with state: false
+      openChats.push({ userId: otherUserId, state: false });
+    }
+
+    // Update user's openChats array
+    await db.collection('users').updateOne(
+      { _id: userId },
+      { $set: { openChats: openChats } }
     );
 
     res.json({ success: true });
   } catch (error) {
     console.error('Error closing private chat:', error);
     res.status(500).json({ error: 'Failed to close private chat' });
+  }
+});
+
+// Open/show a private chat (sets state to true in openChats array)
+router.post('/open-private-chat', authenticateToken, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const userId = new ObjectId(req.user.userId);
+    const { otherUserId } = req.body;
+
+    if (!otherUserId) {
+      return res.status(400).json({ error: 'Other user ID is required' });
+    }
+
+    // Get current user's openChats array
+    const currentUser = await db.collection('users').findOne(
+      { _id: userId },
+      { projection: { openChats: 1 } }
+    );
+
+    // Ensure openChats is an array
+    let openChats = Array.isArray(currentUser?.openChats) ? currentUser.openChats : [];
+
+    // Find existing entry for this user
+    const existingIndex = openChats.findIndex(oc => oc && oc.userId === otherUserId);
+
+    if (existingIndex >= 0) {
+      // Update existing entry to state: true
+      openChats[existingIndex].state = true;
+    } else {
+      // Add new entry with state: true
+      openChats.push({ userId: otherUserId, state: true });
+    }
+
+    // Update user's openChats array
+    await db.collection('users').updateOne(
+      { _id: userId },
+      { $set: { openChats: openChats } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error opening private chat:', error);
+    res.status(500).json({ error: 'Failed to open private chat' });
   }
 });
 

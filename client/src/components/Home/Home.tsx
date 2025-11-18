@@ -1094,6 +1094,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
       }
     }
     
+    // Mark this chat as open in the backend
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${import.meta.env.VITE_API_URL}/rooms/open-private-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ otherUserId: selectedUser.userId })
+      });
+    } catch (error) {
+      console.error('Error marking chat as open:', error);
+    }
+    
     setShowUserModal(false);
     setSidebarOpen(false);
     setUserSearchText('');
@@ -1190,7 +1205,43 @@ function Home({ user, socket, onLogout }: HomeProps) {
     return chat?.unreadCount || 0;
   };
 
-  const selectPrivateChat = (chat: PrivateChat) => {
+  const closePrivateChat = async (chat: PrivateChat, e?: React.MouseEvent) => {
+    // Prevent click from bubbling to parent (chat selection)
+    if (e) {
+      e.stopPropagation();
+    }
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${import.meta.env.VITE_API_URL}/rooms/close-private-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ otherUserId: chat.otherUser.userId })
+      });
+      
+      // If this is the currently selected chat, clear the selection
+      if (selectedPrivateChat?.otherUser.userId === chat.otherUser.userId) {
+        setSelectedPrivateChat(null);
+        setChatType('room');
+        setMessages([]);
+        
+        // Select first room if available
+        if (rooms.length > 0) {
+          selectRoom(rooms[0]);
+        }
+      }
+      
+      // Reload private chats to update the list
+      loadPrivateChats();
+    } catch (error) {
+      console.error('Error closing private chat:', error);
+    }
+  };
+
+  const selectPrivateChat = async (chat: PrivateChat) => {
     if (selectedRoom && socket) {
       socket.emit('leave_room', {
         roomId: selectedRoom.roomId,
@@ -1228,6 +1279,21 @@ function Home({ user, socket, onLogout }: HomeProps) {
         userId: user.userId,
         otherUserId: chat.otherUser.userId
       });
+    }
+    
+    // Mark this chat as open in the backend
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${import.meta.env.VITE_API_URL}/rooms/open-private-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ otherUserId: chat.otherUser.userId })
+      });
+    } catch (error) {
+      console.error('Error marking chat as open:', error);
     }
     
     // Focus input after a short delay to ensure chat is ready
@@ -2092,7 +2158,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
                 privateChats.map(chat => (
                   <div
                     key={chat.chatId}
-                    className={`room-item ${selectedPrivateChat?.chatId === chat.chatId ? 'active' : ''}`}
+                    className={`room-item private-chat-item ${selectedPrivateChat?.chatId === chat.chatId ? 'active' : ''}`}
                     onClick={() => {
                       selectPrivateChat(chat);
                       setSidebarOpen(false);
@@ -2114,6 +2180,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           )}
                         </div>
                       </div>
+                      <button
+                        className="close-chat-button"
+                        onClick={(e) => closePrivateChat(chat, e)}
+                        title="Close chat"
+                        aria-label="Close chat"
+                      >
+                        ×
+                      </button>
                     </div>
                     {chat.unreadCount > 0 && (
                       <span className="room-badge unread">{chat.unreadCount}</span>
