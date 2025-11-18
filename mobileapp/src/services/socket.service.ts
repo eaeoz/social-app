@@ -238,6 +238,20 @@ class SocketService {
     this.socket?.off('chat_read_status', callback);
     this.socket?.off('messages_marked_read', callback);
   }
+
+  // Listen for chat state changes (opened/closed)
+  onChatStateChange(callback: (data: any) => void): void {
+    this.socket?.on('chat_closed', callback);
+    this.socket?.on('chat_opened', callback);
+    this.socket?.on('private_chat_updated', callback);
+  }
+
+  // Remove chat state change listeners
+  offChatStateChange(callback?: (data: any) => void): void {
+    this.socket?.off('chat_closed', callback);
+    this.socket?.off('chat_opened', callback);
+    this.socket?.off('private_chat_updated', callback);
+  }
 }
 
 export const socketService = new SocketService();

@@ -53,11 +53,20 @@ export default function ChatsScreen() {
       loadChats();
     };
 
+    // Listen for chat state changes (when chats are opened/closed from other devices)
+    const handleChatStateChange = (data: any) => {
+      console.log('💬 Chat state changed:', data);
+      // Reload chats to reflect the changes
+      loadChats();
+    };
+
     socketService.onPrivateMessage(handlePrivateMessage);
+    socketService.onChatStateChange(handleChatStateChange);
 
     // Cleanup socket listeners on unmount
     return () => {
       socketService.off('private_message', handlePrivateMessage);
+      socketService.offChatStateChange(handleChatStateChange);
     };
   }, []);
 
@@ -113,18 +122,31 @@ export default function ChatsScreen() {
         return selectedChats.has(chatKey);
       });
       
-      // Close selected chats (set openChats to false)
+      // Immediately update UI - remove deleted chats from local state for instant feedback
+      const remainingChats = chatsList.filter((chat: any) => {
+        const chatKey = chat.otherUser?.userId || chat._id || '';
+        return !selectedChats.has(chatKey);
+      });
+      setPrivateChats(remainingChats);
+      
+      // Exit selection mode immediately
+      exitSelectionMode();
+      
+      // Then close selected chats on backend (in background)
       for (const chat of chatsToDelete) {
         const otherUserId = chat?.otherUser?.userId;
         if (otherUserId) {
           // Close the chat (set openChats to false)
-          await apiService.closePrivateChat(otherUserId);
+          apiService.closePrivateChat(otherUserId).catch(err => {
+            console.error('Error closing chat:', err);
+          });
         }
       }
       
-      // Exit selection mode and reload
-      exitSelectionMode();
-      loadChats();
+      // Refresh from server after a short delay to ensure consistency
+      setTimeout(() => {
+        loadChats();
+      }, 500);
     } catch (error) {
       console.error('Error deleting selected chats:', error);
     }
