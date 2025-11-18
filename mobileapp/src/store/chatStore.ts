@@ -10,7 +10,7 @@ interface ChatState {
   unreadCounts: { [key: string]: number };
   
   setRooms: (rooms: Room[]) => void;
-  setPrivateChats: (chats: PrivateChat[]) => void;
+  setPrivateChats: (chats: PrivateChat[] | ((prev: PrivateChat[]) => PrivateChat[])) => void;
   setCurrentRoom: (roomId: string | null) => void;
   setCurrentChat: (chatId: string | null) => void;
   addMessage: (roomOrChatId: string, message: Message) => void;
@@ -31,7 +31,9 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setRooms: (rooms) => set({ rooms }),
 
-  setPrivateChats: (privateChats) => set({ privateChats }),
+  setPrivateChats: (chats) => set((state) => ({
+    privateChats: typeof chats === 'function' ? chats(state.privateChats) : chats
+  })),
 
   setCurrentRoom: (currentRoomId) => set({ currentRoomId, currentChatId: null }),
 

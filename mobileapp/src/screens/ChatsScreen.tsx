@@ -50,8 +50,42 @@ export default function ChatsScreen() {
     // Listen for incoming private messages to update chat list in real-time
     const handlePrivateMessage = (message: any) => {
       console.log('📨 ChatsScreen received new private message:', message);
-      // Reload chats to update unread counts and last message
-      loadChats();
+      
+      // Use functional update to access latest state without dependency
+      setPrivateChats(prevChats => {
+        const chatsArray = Array.isArray(prevChats) ? prevChats : [];
+        const senderId = message.senderId || message.sender?._id;
+        
+        // Find existing chat with this user
+        const existingChatIndex = chatsArray.findIndex((chat: any) => 
+          chat.otherUser?.userId === senderId || chat.otherUser?._id === senderId
+        );
+        
+        if (existingChatIndex >= 0) {
+          // Update existing chat
+          const updatedChats = [...chatsArray];
+          const existingChat = updatedChats[existingChatIndex];
+          
+          updatedChats[existingChatIndex] = {
+            ...existingChat,
+            lastMessage: message.content || message.text,
+            lastMessageAt: message.timestamp || new Date().toISOString(),
+            unreadCount: (existingChat.unreadCount || 0) + 1,
+          };
+          
+          // Move updated chat to top
+          const [movedChat] = updatedChats.splice(existingChatIndex, 1);
+          updatedChats.unshift(movedChat);
+          
+          console.log('✅ Updated existing chat in list');
+          return updatedChats;
+        } else {
+          // New chat - reload from server to get complete chat object
+          console.log('🆕 New chat detected - reloading from server');
+          loadChats();
+          return chatsArray;
+        }
+      });
     };
 
     // Listen for chat state changes (when chats are opened/closed from other devices)
@@ -61,13 +95,30 @@ export default function ChatsScreen() {
       loadChats();
     };
 
+    // Listen for messages being marked as read
+    const handleChatReadStatus = (data: any) => {
+      console.log('✅ Chat read status updated:', data);
+      // Use functional update to access latest state without dependency
+      setPrivateChats(prevChats => {
+        const chatsArray = Array.isArray(prevChats) ? prevChats : [];
+        return chatsArray.map((chat: any) => {
+          if (chat._id === data.chatId || chat.otherUser?.userId === data.userId) {
+            return { ...chat, unreadCount: 0 };
+          }
+          return chat;
+        });
+      });
+    };
+
     socketService.onPrivateMessage(handlePrivateMessage);
     socketService.onChatStateChange(handleChatStateChange);
+    socketService.onChatReadStatus(handleChatReadStatus);
 
     // Cleanup socket listeners on unmount
     return () => {
       socketService.off('private_message', handlePrivateMessage);
       socketService.offChatStateChange(handleChatStateChange);
+      socketService.offChatReadStatus(handleChatReadStatus);
     };
   }, []);
 
@@ -125,7 +176,7 @@ export default function ChatsScreen() {
         return selectedChats.has(chatKey);
       });
       
-      console.log('🗑️ Selected chat keys:', Array.from(selectedChats));
+      console.log('�️ Selected chat keys:', Array.from(selectedChats));
       console.log('🗑️ Chats to delete:', chatsToDelete.map(c => ({
         chatId: c._id,
         username: c.otherUser?.username,
