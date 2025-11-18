@@ -404,6 +404,7 @@ import reportRoutes from './routes/reportRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
+import soundRoutes from './routes/soundRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings, getSiteSettings } from './utils/initializeSiteSettings.js';
@@ -442,6 +443,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/sounds', soundRoutes);
 
 // Serve static API documentation from public folder
 const publicPath = path.join(__dirname, 'public');

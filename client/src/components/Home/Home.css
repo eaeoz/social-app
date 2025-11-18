@@ -367,6 +367,9 @@
 /* Profile Modal Styles */
 .profile-modal {
   max-width: 450px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-modal-body {
@@ -374,6 +377,10 @@
   flex-direction: column;
   gap: 20px;
   padding: 20px 25px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .profile-picture-section {
@@ -630,6 +637,68 @@
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.3px;
+}
+
+.sound-setting-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sound-setting-row .setting-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 2px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.sound-setting-row .setting-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.sound-setting-row .setting-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.play-sound-button {
+  width: 45px;
+  height: 42px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.play-sound-button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.play-sound-button:active:not(:disabled) {
+  transform: translateY(0) scale(1);
+}
+
+.play-sound-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  box-shadow: none;
 }
 
 .update-profile-button {
