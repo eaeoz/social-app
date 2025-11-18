@@ -260,7 +260,19 @@ export default function ChatsScreen() {
   const renderChat = ({ item }: { item: any }) => {
     // Safely extract values with defaults
     const otherUser = item?.otherUser || {};
-    const displayName = otherUser?.displayName || otherUser?.username || 'Unknown User';
+    
+    // Debug log to see what data we're receiving
+    if (otherUser?.username) {
+      console.log('👤 User data:', {
+        username: otherUser.username,
+        nickname: otherUser.nickname,
+        displayName: otherUser.displayName,
+        gender: otherUser.gender,
+        age: otherUser.age
+      });
+    }
+    
+    const displayName = otherUser?.nickName || otherUser?.nickname || otherUser?.displayName || otherUser?.username || 'Unknown User';
     const username = otherUser?.username || '';
     const profilePicture = otherUser?.profilePicture;
     const isOnline = otherUser?.isOnline || false;
@@ -274,8 +286,9 @@ export default function ChatsScreen() {
     
     // Determine username color based on gender
     const getUsernameColor = () => {
-      if (gender === 'male') return '#3B82F6'; // Blue
-      if (gender === 'female') return '#EF4444'; // Red
+      const genderLower = gender?.toLowerCase();
+      if (genderLower === 'male') return '#3B82F6'; // Blue
+      if (genderLower === 'female') return '#EF4444'; // Red
       return theme.colors.onSurface; // Default color
     };
     
