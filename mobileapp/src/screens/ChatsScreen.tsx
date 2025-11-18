@@ -16,6 +16,7 @@ export default function ChatsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const loadChats = async () => {
     try {
@@ -116,11 +117,21 @@ export default function ChatsScreen() {
 
   const handleDeleteSelected = async () => {
     try {
+      setDeleting(true);
+      
       // Get selected chats data using chatKey (otherUser.userId)
       const chatsToDelete = chatsList.filter((chat: any) => {
         const chatKey = chat.otherUser?.userId || chat._id || '';
         return selectedChats.has(chatKey);
       });
+      
+      console.log('🗑️ Selected chat keys:', Array.from(selectedChats));
+      console.log('🗑️ Chats to delete:', chatsToDelete.map(c => ({
+        chatId: c._id,
+        username: c.otherUser?.username,
+        userId: c.otherUser?.userId,
+        chatKey: c.otherUser?.userId || c._id
+      })));
       
       // Immediately update UI - remove deleted chats from local state for instant feedback
       const remainingChats = chatsList.filter((chat: any) => {
@@ -132,23 +143,32 @@ export default function ChatsScreen() {
       // Exit selection mode immediately
       exitSelectionMode();
       
-      // Then close selected chats on backend (in background)
+      // Process deletions SEQUENTIALLY to avoid race conditions on the backend
+      // The backend reads/writes openChats array, so parallel updates cause overwrites
       for (const chat of chatsToDelete) {
         const otherUserId = chat?.otherUser?.userId;
         if (otherUserId) {
-          // Close the chat (set openChats to false)
-          apiService.closePrivateChat(otherUserId).catch(err => {
-            console.error('Error closing chat:', err);
-          });
+          try {
+            console.log(`🗑️ Closing chat ${chatsToDelete.indexOf(chat) + 1}/${chatsToDelete.length} with user:`, otherUserId);
+            await apiService.closePrivateChat(otherUserId);
+            console.log('✅ Successfully closed chat with user:', otherUserId);
+            // Add small delay between requests to ensure backend processes them properly
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error('❌ Error closing chat with user:', otherUserId, err);
+          }
         }
       }
       
-      // Refresh from server after a short delay to ensure consistency
-      setTimeout(() => {
-        loadChats();
-      }, 500);
+      // Refresh from server to ensure consistency
+      console.log('🔄 Refreshing chat list after deletion...');
+      await loadChats();
     } catch (error) {
       console.error('Error deleting selected chats:', error);
+      // On error, reload to show correct state
+      loadChats();
+    } finally {
+      setDeleting(false);
     }
   };
 
