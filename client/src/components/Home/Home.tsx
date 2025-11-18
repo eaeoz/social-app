@@ -567,7 +567,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         if (reason === 'io server disconnect') {
           // Server forcibly disconnected - don't auto-reconnect
-          setConnectionError('You have been disconnected by the server.');
+          setConnectionError('Disconnected from server.');
         } else {
           // Transport error or client disconnect - attempt reconnection
           setConnectionError('Connection lost. Reconnecting...');
