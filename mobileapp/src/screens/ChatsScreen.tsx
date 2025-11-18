@@ -20,6 +20,16 @@ export default function ChatsScreen() {
       const chatsData = await apiService.getPrivateChats();
       // Ensure we always have an array
       const chatsArray = Array.isArray(chatsData) ? chatsData : [];
+      
+      console.log('💬 Chats loaded:', {
+        totalChats: chatsArray.length,
+        chatsWithUnread: chatsArray.filter((c: any) => c.unreadCount > 0).length,
+        unreadBreakdown: chatsArray.map((c: any) => ({
+          user: c.otherUser?.username,
+          unreadCount: c.unreadCount
+        }))
+      });
+      
       setPrivateChats(chatsArray);
     } catch (error) {
       console.error('Error loading chats:', error);
@@ -33,6 +43,20 @@ export default function ChatsScreen() {
   useEffect(() => {
     // Load chats when component mounts
     loadChats();
+
+    // Listen for incoming private messages to update chat list in real-time
+    const handlePrivateMessage = (message: any) => {
+      console.log('📨 ChatsScreen received new private message:', message);
+      // Reload chats to update unread counts and last message
+      loadChats();
+    };
+
+    socketService.onPrivateMessage(handlePrivateMessage);
+
+    // Cleanup socket listeners on unmount
+    return () => {
+      socketService.off('private_message', handlePrivateMessage);
+    };
   }, []);
 
   // Reload chats when user focuses on this tab
@@ -87,7 +111,26 @@ export default function ChatsScreen() {
   };
 
   const renderChat = ({ item }: { item: any }) => {
-    const otherUser = item.otherUser;
+    // Safely extract values with defaults
+    const otherUser = item?.otherUser || {};
+    const displayName = otherUser?.displayName || otherUser?.username || 'Unknown User';
+    const username = otherUser?.username || '';
+    const profilePicture = otherUser?.profilePicture;
+    const isOnline = otherUser?.isOnline || false;
+    const lastMessageAt = item?.lastMessageAt;
+    const unreadCount = item?.unreadCount || 0;
+    
+    // Safely extract last message text
+    let lastMessageText = '';
+    if (item?.lastMessage) {
+      if (typeof item.lastMessage === 'string') {
+        lastMessageText = item.lastMessage;
+      } else if (typeof item.lastMessage === 'object' && item.lastMessage.content) {
+        lastMessageText = String(item.lastMessage.content);
+      } else {
+        lastMessageText = 'New message';
+      }
+    }
     
     return (
       <Card
@@ -96,15 +139,15 @@ export default function ChatsScreen() {
       >
         <Card.Content style={styles.chatContent}>
           <View style={styles.avatarContainer}>
-            {otherUser?.profilePicture ? (
-              <Avatar.Image size={48} source={{ uri: otherUser.profilePicture }} />
+            {profilePicture ? (
+              <Avatar.Image size={48} source={{ uri: profilePicture }} />
             ) : (
               <Avatar.Text 
                 size={48} 
-                label={otherUser?.username.substring(0, 2).toUpperCase() || '??'} 
+                label={username ? username.substring(0, 2).toUpperCase() : '??'} 
               />
             )}
-            {otherUser?.isOnline && (
+            {isOnline && (
               <View style={[styles.onlineIndicator, { borderColor: theme.colors.surface }]} />
             )}
           </View>
@@ -112,30 +155,30 @@ export default function ChatsScreen() {
           <View style={styles.chatInfo}>
             <View style={styles.chatHeader}>
               <Text variant="titleMedium" numberOfLines={1}>
-                {otherUser?.displayName || otherUser?.username || 'Unknown User'}
+                {displayName}
               </Text>
-              {item.lastMessageAt && (
+              {lastMessageAt && (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {formatTime(item.lastMessageAt)}
+                  {formatTime(lastMessageAt)}
                 </Text>
               )}
             </View>
             
-            {item.lastMessage && (
+            {lastMessageText && (
               <View style={styles.lastMessageRow}>
                 <Text 
                   variant="bodyMedium" 
                   numberOfLines={1}
                   style={{ 
-                    color: item.unreadCount ? theme.colors.onSurface : theme.colors.onSurfaceVariant,
-                    fontWeight: item.unreadCount ? 'bold' : 'normal',
+                    color: unreadCount > 0 ? theme.colors.onSurface : theme.colors.onSurfaceVariant,
+                    fontWeight: unreadCount > 0 ? 'bold' : 'normal',
                     flex: 1,
                   }}
                 >
-                  {typeof item.lastMessage === 'string' ? item.lastMessage : item.lastMessage.content}
+                  {lastMessageText}
                 </Text>
-                {item.unreadCount && item.unreadCount > 0 && (
-                  <Badge style={styles.badge}>{item.unreadCount}</Badge>
+                {unreadCount > 0 && (
+                  <Badge style={styles.badge}>{unreadCount}</Badge>
                 )}
               </View>
             )}

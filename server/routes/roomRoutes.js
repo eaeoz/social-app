@@ -305,7 +305,14 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
 
         // Check if this chat should be visible based on openChats state
         const openChatEntry = openChats.find(oc => oc && oc.userId === otherUserId.toString());
-        const shouldBeVisible = openChatEntry?.state === true;
+        
+        // Chat visibility logic:
+        // - Hide ONLY if explicitly closed (state === false)
+        // - Show if: state === true OR state is undefined/null (not yet set) OR has unread messages
+        const isExplicitlyClosed = openChatEntry?.state === false;
+        
+        // If user explicitly closed this chat, don't show it
+        if (isExplicitlyClosed) return null;
 
         // Get other user's info
         const otherUser = await db.collection('users').findOne(
@@ -328,9 +335,6 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
           senderId: otherUserId,
           isRead: false
         });
-
-        // Show chats if: 1) they have unread messages OR 2) they are in openChats with state=true
-        if (unreadCount === 0 && !shouldBeVisible) return null;
 
         // Get last message
         const lastMessage = await db.collection('messages')

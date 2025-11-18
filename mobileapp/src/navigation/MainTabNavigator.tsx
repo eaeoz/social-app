@@ -15,9 +15,20 @@ export default function MainTabNavigator() {
   // Calculate total unread messages count
   const totalUnreadCount = useMemo(() => {
     if (!Array.isArray(privateChats)) return 0;
-    return privateChats.reduce((total, chat) => {
-      return total + (chat.unreadCount || 0);
+    const count = privateChats.reduce((total, chat) => {
+      const unread = chat.unreadCount || 0;
+      return total + unread;
     }, 0);
+    console.log('📊 Badge count calculation:', {
+      totalChats: privateChats.length,
+      totalUnread: count,
+      chatsWithUnread: privateChats.filter(c => c.unreadCount > 0).length,
+      breakdown: privateChats.map(c => ({
+        user: c.otherUser?.username,
+        unread: c.unreadCount || 0
+      }))
+    });
+    return count;
   }, [privateChats]);
 
   return (
