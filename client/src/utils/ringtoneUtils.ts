@@ -18,22 +18,40 @@ class RingtoneManager {
     setInterval(() => this.fetchSoundSettings(), 30000);
   }
 
-  // Fetch sound settings from the database
+  // Fetch user's personal sound settings
   private async fetchSoundSettings() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/site`);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('⚠️ No access token found, using default ringtones');
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/sounds/user-sounds`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       if (response.ok) {
         const data = await response.json();
-        if (data.settings) {
-          if (data.settings.voiceCallSound) {
-            this.voiceCallSound = data.settings.voiceCallSound;
-            console.log('📞 Loaded voice call sound setting:', this.voiceCallSound);
+        if (data.sounds) {
+          // Use user's personal sound preferences with defaults as fallback
+          const newVoiceSound = data.sounds.voiceCallSound || 'default';
+          const newVideoSound = data.sounds.videoCallSound || 'default';
+
+          if (this.voiceCallSound !== newVoiceSound) {
+            this.voiceCallSound = newVoiceSound;
+            console.log('📞 Updated voice call sound setting:', this.voiceCallSound);
           }
-          if (data.settings.videoCallSound) {
-            this.videoCallSound = data.settings.videoCallSound;
-            console.log('🎥 Loaded video call sound setting:', this.videoCallSound);
+
+          if (this.videoCallSound !== newVideoSound) {
+            this.videoCallSound = newVideoSound;
+            console.log('🎥 Updated video call sound setting:', this.videoCallSound);
           }
         }
+      } else {
+        console.log('⚠️ Failed to fetch user ringtones, using defaults');
       }
     } catch (error) {
       console.error('Failed to fetch sound settings:', error);

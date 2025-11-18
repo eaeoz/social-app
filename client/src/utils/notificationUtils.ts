@@ -6,32 +6,49 @@ let isBlinking = false;
 let originalFavicon: string | null = null;
 let unreadCount = 0;
 
-// Sound settings from database
+// Sound settings from user's personal preferences
 let messageNotificationSound = 'stwime_up';
 let senderNotificationSound = 'pop';
 let cachedNotificationAudio: HTMLAudioElement | null = null;
 let cachedSendAudio: HTMLAudioElement | null = null;
 
-// Fetch sound settings from the database
+// Fetch user's personal sound settings
 const fetchSoundSettings = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/site`);
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.log('⚠️ No access token found, using default sounds');
+      return;
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/sounds/user-sounds`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
     if (response.ok) {
       const data = await response.json();
-      if (data.settings) {
-        if (data.settings.messageNotificationSound) {
-          messageNotificationSound = data.settings.messageNotificationSound;
-          console.log('🔔 Loaded receiver notification sound:', messageNotificationSound);
-          // Clear cache so new sound will be loaded next time
+      if (data.sounds) {
+        // Use user's personal sound preferences with defaults as fallback
+        const newMessageSound = data.sounds.messageNotificationSound || 'stwime_up';
+        const newSenderSound = data.sounds.senderNotificationSound || 'pop';
+
+        // Only update and clear cache if the sound has changed
+        if (messageNotificationSound !== newMessageSound) {
+          messageNotificationSound = newMessageSound;
           cachedNotificationAudio = null;
+          console.log('🔔 Updated receiver notification sound:', messageNotificationSound);
         }
-        if (data.settings.senderNotificationSound) {
-          senderNotificationSound = data.settings.senderNotificationSound;
-          console.log('📤 Loaded sender notification sound:', senderNotificationSound);
-          // Clear cache so new sound will be loaded next time
+
+        if (senderNotificationSound !== newSenderSound) {
+          senderNotificationSound = newSenderSound;
           cachedSendAudio = null;
+          console.log('📤 Updated sender notification sound:', senderNotificationSound);
         }
       }
+    } else {
+      console.log('⚠️ Failed to fetch user sounds, using defaults');
     }
   } catch (error) {
     console.error('Failed to fetch sound settings:', error);

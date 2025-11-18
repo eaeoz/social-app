@@ -158,6 +158,16 @@ export async function register(req, res) {
 
     const db = getDatabase();
     const usersCollection = db.collection('users');
+    const siteSettingsCollection = db.collection('siteSettings');
+
+    // Get default sound settings from admin panel
+    const siteSettings = await siteSettingsCollection.findOne({ settingType: 'global' });
+    const defaultSounds = {
+      messageNotificationSound: siteSettings?.messageNotificationSound || 'stwime_up',
+      voiceCallSound: siteSettings?.voiceCallSound || 'default',
+      videoCallSound: siteSettings?.videoCallSound || 'default',
+      senderSound: siteSettings?.senderNotificationSound || 'pop'
+    };
 
     // Check if user already exists
     const existingUser = await usersCollection.findOne({
@@ -197,7 +207,8 @@ export async function register(req, res) {
       emailVerificationExpires,
       createdAt: new Date(),
       updatedAt: new Date(),
-      lastSeen: new Date()
+      lastSeen: new Date(),
+      sounds: defaultSounds // Set default sounds from admin panel
     };
 
     const result = await usersCollection.insertOne(newUser);

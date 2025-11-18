@@ -143,9 +143,16 @@ function Home({ user, socket, onLogout }: HomeProps) {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [soundSettings, setSoundSettings] = useState({
+    messageNotificationSound: 'stwime_up',
+    senderNotificationSound: 'pop',
+    voiceCallSound: 'default',
+    videoCallSound: 'default'
+  });
   const [reportedUserId, setReportedUserId] = useState<string | null>(null);
   const reconnectAttemptRef = useRef(0);
   const maxReconnectAttempts = 5;
+  const soundPreviewRef = useRef<HTMLAudioElement | null>(null);
   const [maxMessageLength, setMaxMessageLength] = useState(30);
   const [rateLimit, setRateLimit] = useState(10);
   const [showRateLimitWarning, setShowRateLimitWarning] = useState(false);
@@ -348,6 +355,35 @@ function Home({ user, socket, onLogout }: HomeProps) {
     }
   };
 
+  // Load user's sound settings
+  const loadUserSounds = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/sounds/user-sounds`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Merge with defaults to ensure all fields have values
+        const defaultSounds = {
+          messageNotificationSound: 'stwime_up',
+          senderNotificationSound: 'pop',
+          voiceCallSound: 'default',
+          videoCallSound: 'default'
+        };
+        const mergedSounds = { ...defaultSounds, ...data.sounds };
+        setSoundSettings(mergedSounds);
+        console.log('✅ Sound settings loaded:', mergedSounds);
+      }
+    } catch (error) {
+      console.error('Failed to load user sounds:', error);
+    }
+  };
+
+
   // Add keyboard shortcut listener for Alt+M to toggle user modal and Escape to close it
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -406,6 +442,64 @@ function Home({ user, socket, onLogout }: HomeProps) {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showUserModal, sidebarOpen, showProfileModal, showAbout, showPrivacyPolicy, showTermsConditions, showContact]);
+
+  // Load sound settings when profile modal opens or on initial mount
+  useEffect(() => {
+    // Load sounds initially
+    loadUserSounds();
+  }, []);
+
+  // Reload sound settings when profile modal opens to ensure fresh data
+  useEffect(() => {
+    if (showProfileModal) {
+      loadUserSounds();
+    } else {
+      // Stop any playing sound when modal closes
+      if (soundPreviewRef.current) {
+        soundPreviewRef.current.pause();
+        soundPreviewRef.current.currentTime = 0;
+        soundPreviewRef.current = null;
+      }
+    }
+  }, [showProfileModal]);
+
+  // Play sound preview
+  const playSoundPreview = (soundPath: string) => {
+    // Stop any currently playing sound
+    if (soundPreviewRef.current) {
+      soundPreviewRef.current.pause();
+      soundPreviewRef.current.currentTime = 0;
+    }
+
+    // Create and play new audio
+    const audio = new Audio(soundPath);
+    audio.volume = 1.0; // Maximum volume for preview
+    soundPreviewRef.current = audio;
+    
+    // Add load event to ensure audio is ready
+    audio.addEventListener('loadeddata', () => {
+      console.log('Audio loaded:', soundPath);
+    });
+    
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error:', e);
+      console.error('Failed to load:', soundPath);
+    });
+    
+    audio.play().then(() => {
+      console.log('Playing sound:', soundPath);
+    }).catch(err => {
+      console.error('Could not play sound:', err);
+      alert(`Failed to play sound. Please check if the file exists: ${soundPath}`);
+    });
+
+    // Clear reference when sound ends
+    audio.onended = () => {
+      if (soundPreviewRef.current === audio) {
+        soundPreviewRef.current = null;
+      }
+    };
+  };
 
   // Auto-focus search input when modal opens, reset selected index, and reload users
   useEffect(() => {
@@ -1929,6 +2023,26 @@ function Home({ user, socket, onLogout }: HomeProps) {
         
         localStorage.setItem('user', JSON.stringify(user));
 
+        // Save sound settings separately
+        try {
+          const soundResponse = await fetch(`${import.meta.env.VITE_API_URL}/sounds/update-user-sounds`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ sounds: soundSettings })
+          });
+
+          if (soundResponse.ok) {
+            console.log('✅ Sound settings updated successfully');
+          } else {
+            console.error('❌ Failed to update sound settings');
+          }
+        } catch (soundError) {
+          console.error('Error updating sound settings:', soundError);
+        }
+
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         setShowProfileModal(false);
@@ -2945,6 +3059,153 @@ function Home({ user, socket, onLogout }: HomeProps) {
                       <span className="gender-label">Female</span>
                     </button>
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="messageNotificationSound">🔔 Message Notification Sound (Receiver)</label>
+                  <div className="sound-setting-row">
+                    <select
+                      id="messageNotificationSound"
+                      value={soundSettings.messageNotificationSound}
+                      onChange={(e) => setSoundSettings(prev => ({ ...prev, messageNotificationSound: e.target.value }))}
+                      disabled={isUpdatingProfile}
+                      className="setting-input"
+                    >
+                      <option value="stwime_up">Stwime Up (Default)</option>
+                      <option value="alixtwix">Alixtwix</option>
+                      <option value="bright-bell">Bright Bell</option>
+                      <option value="chime">Chime</option>
+                      <option value="formula">Formula</option>
+                      <option value="iphone">iPhone</option>
+                      <option value="none">None (Silent)</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="play-sound-button"
+                      onClick={() => {
+                        if (soundSettings.messageNotificationSound !== 'none') {
+                          playSoundPreview(`/sounds/notifications/${soundSettings.messageNotificationSound}.mp3`);
+                        }
+                      }}
+                      disabled={isUpdatingProfile || soundSettings.messageNotificationSound === 'none'}
+                      title="Test sound"
+                    >
+                      ▶️
+                    </button>
+                  </div>
+                  <p className="field-hint">
+                    Sound played when receiving new messages from others
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="senderNotificationSound">📤 Sender Notification Sound</label>
+                  <div className="sound-setting-row">
+                    <select
+                      id="senderNotificationSound"
+                      value={soundSettings.senderNotificationSound}
+                      onChange={(e) => setSoundSettings(prev => ({ ...prev, senderNotificationSound: e.target.value }))}
+                      disabled={isUpdatingProfile}
+                      className="setting-input"
+                    >
+                      <option value="pop">Pop (Default)</option>
+                      <option value="click">Click</option>
+                      <option value="swoosh">Swoosh</option>
+                      <option value="ding">Ding</option>
+                      <option value="tap">Tap</option>
+                      <option value="none">None (Silent)</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="play-sound-button"
+                      onClick={() => {
+                        if (soundSettings.senderNotificationSound !== 'none') {
+                          playSoundPreview(`/sounds/sender/${soundSettings.senderNotificationSound}.mp3`);
+                        }
+                      }}
+                      disabled={isUpdatingProfile || soundSettings.senderNotificationSound === 'none'}
+                      title="Test sound"
+                    >
+                      ▶️
+                    </button>
+                  </div>
+                  <p className="field-hint">
+                    Sound played when YOU send a message (confirmation sound)
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="voiceCallSound">📞 Voice Call Sound</label>
+                  <div className="sound-setting-row">
+                    <select
+                      id="voiceCallSound"
+                      value={soundSettings.voiceCallSound}
+                      onChange={(e) => setSoundSettings(prev => ({ ...prev, voiceCallSound: e.target.value }))}
+                      disabled={isUpdatingProfile}
+                      className="setting-input"
+                    >
+                      <option value="default">Default Ringtone</option>
+                      <option value="ringtone1">Ringtone 1</option>
+                      <option value="ringtone2">Ringtone 2</option>
+                      <option value="ringtone3">Ringtone 3</option>
+                      <option value="ringtone4">Ringtone 4</option>
+                      <option value="ringtone5">Ringtone 5</option>
+                      <option value="none">None (Silent)</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="play-sound-button"
+                      onClick={() => {
+                        if (soundSettings.voiceCallSound !== 'none') {
+                          playSoundPreview(`/sounds/ringtones/${soundSettings.voiceCallSound}.mp3`);
+                        }
+                      }}
+                      disabled={isUpdatingProfile || soundSettings.voiceCallSound === 'none'}
+                      title="Test sound"
+                    >
+                      ▶️
+                    </button>
+                  </div>
+                  <p className="field-hint">
+                    Ringtone for incoming voice calls
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="videoCallSound">🎥 Video Call Sound</label>
+                  <div className="sound-setting-row">
+                    <select
+                      id="videoCallSound"
+                      value={soundSettings.videoCallSound}
+                      onChange={(e) => setSoundSettings(prev => ({ ...prev, videoCallSound: e.target.value }))}
+                      disabled={isUpdatingProfile}
+                      className="setting-input"
+                    >
+                      <option value="default">Default Ringtone</option>
+                      <option value="ringtone1">Ringtone 1</option>
+                      <option value="ringtone2">Ringtone 2</option>
+                      <option value="ringtone3">Ringtone 3</option>
+                      <option value="ringtone4">Ringtone 4</option>
+                      <option value="ringtone5">Ringtone 5</option>
+                      <option value="none">None (Silent)</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="play-sound-button"
+                      onClick={() => {
+                        if (soundSettings.videoCallSound !== 'none') {
+                          playSoundPreview(`/sounds/ringtones/${soundSettings.videoCallSound}.mp3`);
+                        }
+                      }}
+                      disabled={isUpdatingProfile || soundSettings.videoCallSound === 'none'}
+                      title="Test sound"
+                    >
+                      ▶️
+                    </button>
+                  </div>
+                  <p className="field-hint">
+                    Ringtone for incoming video calls
+                  </p>
                 </div>
 
                 <button
