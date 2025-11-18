@@ -136,8 +136,8 @@ class ApiService {
     return response.data;
   }
 
-  async closePrivateChat(chatId: string): Promise<void> {
-    await this.api.post('/rooms/close-private-chat', { chatId });
+  async closePrivateChat(otherUserId: string): Promise<void> {
+    await this.api.post('/rooms/close-private-chat', { otherUserId });
   }
 
   // User endpoints

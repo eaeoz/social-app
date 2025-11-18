@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Text, Card, Badge, ActivityIndicator, Avatar } from 'react-native-paper';
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { Text, Card, Badge, ActivityIndicator, Avatar, Appbar, Checkbox } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useChatStore } from '../store';
@@ -14,6 +14,8 @@ export default function ChatsScreen() {
   const { privateChats, setPrivateChats } = useChatStore();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
 
   const loadChats = async () => {
     try {
@@ -73,7 +75,59 @@ export default function ChatsScreen() {
   };
 
   const handleChatPress = (chat: PrivateChat) => {
-    navigation.navigate('PrivateChat', { chat });
+    if (selectionMode) {
+      const chatKey = chat.otherUser?.userId || chat._id || '';
+      toggleChatSelection(chatKey);
+    } else {
+      navigation.navigate('PrivateChat', { chat });
+    }
+  };
+
+  const handleChatLongPress = (chatId: string) => {
+    setSelectionMode(true);
+    toggleChatSelection(chatId);
+  };
+
+  const toggleChatSelection = (chatId: string) => {
+    setSelectedChats(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(chatId)) {
+        newSet.delete(chatId);
+      } else {
+        newSet.add(chatId);
+      }
+      return newSet;
+    });
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedChats(new Set());
+  };
+
+  const handleDeleteSelected = async () => {
+    try {
+      // Get selected chats data using chatKey (otherUser.userId)
+      const chatsToDelete = chatsList.filter((chat: any) => {
+        const chatKey = chat.otherUser?.userId || chat._id || '';
+        return selectedChats.has(chatKey);
+      });
+      
+      // Close selected chats (set openChats to false)
+      for (const chat of chatsToDelete) {
+        const otherUserId = chat?.otherUser?.userId;
+        if (otherUserId) {
+          // Close the chat (set openChats to false)
+          await apiService.closePrivateChat(otherUserId);
+        }
+      }
+      
+      // Exit selection mode and reload
+      exitSelectionMode();
+      loadChats();
+    } catch (error) {
+      console.error('Error deleting selected chats:', error);
+    }
   };
 
   const formatTime = (date: any) => {
@@ -119,6 +173,18 @@ export default function ChatsScreen() {
     const isOnline = otherUser?.isOnline || false;
     const lastMessageAt = item?.lastMessageAt;
     const unreadCount = item?.unreadCount || 0;
+    const age = otherUser?.age;
+    const gender = otherUser?.gender;
+    // Use otherUser.userId as unique key since _id might not be unique
+    const chatKey = otherUser?.userId || item._id || '';
+    const isSelected = selectedChats.has(chatKey);
+    
+    // Determine username color based on gender
+    const getUsernameColor = () => {
+      if (gender === 'male') return '#3B82F6'; // Blue
+      if (gender === 'female') return '#EF4444'; // Red
+      return theme.colors.onSurface; // Default color
+    };
     
     // Safely extract last message text
     let lastMessageText = '';
@@ -136,8 +202,16 @@ export default function ChatsScreen() {
       <Card
         style={[styles.chatCard, { backgroundColor: theme.colors.surface }]}
         onPress={() => handleChatPress(item)}
+        onLongPress={() => handleChatLongPress(chatKey)}
       >
         <Card.Content style={styles.chatContent}>
+          {selectionMode && (
+            <Checkbox
+              status={isSelected ? 'checked' : 'unchecked'}
+              onPress={() => toggleChatSelection(chatKey)}
+            />
+          )}
+          
           <View style={styles.avatarContainer}>
             {profilePicture ? (
               <Avatar.Image size={48} source={{ uri: profilePicture }} />
@@ -154,9 +228,23 @@ export default function ChatsScreen() {
           
           <View style={styles.chatInfo}>
             <View style={styles.chatHeader}>
-              <Text variant="titleMedium" numberOfLines={1}>
-                {displayName}
-              </Text>
+              <View style={styles.usernameContainer}>
+                <Text 
+                  variant="titleMedium" 
+                  numberOfLines={1}
+                  style={{ color: getUsernameColor() }}
+                >
+                  {displayName}
+                </Text>
+                {age && (
+                  <Text 
+                    variant="bodySmall" 
+                    style={{ color: getUsernameColor(), marginLeft: 4 }}
+                  >
+                    ({age})
+                  </Text>
+                )}
+              </View>
               {lastMessageAt && (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                   {formatTime(lastMessageAt)}
@@ -177,7 +265,7 @@ export default function ChatsScreen() {
                 >
                   {lastMessageText}
                 </Text>
-                {unreadCount > 0 && (
+                {unreadCount > 0 && !selectionMode && (
                   <Badge style={styles.badge}>{unreadCount}</Badge>
                 )}
               </View>
@@ -202,6 +290,15 @@ export default function ChatsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {selectionMode && (
+        <Appbar.Header>
+          <Appbar.BackAction onPress={exitSelectionMode} />
+          <Appbar.Content title={`${selectedChats.size} selected`} />
+          {selectedChats.size > 0 && (
+            <Appbar.Action icon="delete" onPress={handleDeleteSelected} />
+          )}
+        </Appbar.Header>
+      )}
       <FlatList
         data={chatsList}
         renderItem={renderChat}
@@ -265,6 +362,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
+  },
+  usernameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   lastMessageRow: {
     flexDirection: 'row',
