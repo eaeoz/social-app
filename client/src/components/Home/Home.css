@@ -826,6 +826,38 @@
   transition: all 0.3s ease;
 }
 
+.new-chat-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+  animation: new-badge-pulse 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes new-badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(239, 68, 68, 0.7), 0 0 15px rgba(239, 68, 68, 0.3);
+  }
+}
+
 .new-chat-button:hover .new-chat-hint {
   transform: translateY(-50%) scale(1.1);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
@@ -1406,8 +1438,39 @@
   font-weight: bold;
   font-size: 0.9rem;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+}
+
+.private-chat-avatar-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+  animation: badge-pulse 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(239, 68, 68, 0.7), 0 0 15px rgba(239, 68, 68, 0.3);
+  }
 }
 
 .private-chat-avatar img {
@@ -1475,15 +1538,21 @@
   margin-left: 4px;
   flex-shrink: 0;
   transition: all 0.2s ease;
-  opacity: 0;
+  opacity: 0.5;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.private-chat-item:hover .close-chat-button {
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .close-chat-button {
+    opacity: 0;
+  }
+  
+  .private-chat-item:hover .close-chat-button {
+    opacity: 1;
+  }
 }
 
 .close-chat-button:hover {

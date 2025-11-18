@@ -2047,6 +2047,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
             >
               <span className="chat-icon">💬</span>
               <span className="new-chat-hint">Alt+M</span>
+              {privateChats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 && (
+                <span className="new-chat-badge">{privateChats.reduce((total, chat) => total + chat.unreadCount, 0)}</span>
+              )}
             </button>
           </div>
         </div>
@@ -2172,6 +2175,9 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           ) : (
                             chat.otherUser.nickName.charAt(0).toUpperCase()
                           )}
+                          {chat.unreadCount > 0 && (
+                            <span className="private-chat-avatar-badge">{chat.unreadCount > 9 ? '9+' : chat.unreadCount}</span>
+                          )}
                         </div>
                         <div className="private-chat-details">
                           <div className="private-chat-name">
@@ -2196,9 +2202,6 @@ function Home({ user, socket, onLogout }: HomeProps) {
                         ×
                       </button>
                     </div>
-                    {chat.unreadCount > 0 && (
-                      <span className="room-badge unread">{chat.unreadCount}</span>
-                    )}
                   </div>
                 ))
               )}
