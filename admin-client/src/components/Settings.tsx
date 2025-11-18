@@ -21,6 +21,7 @@ interface SiteSettings {
   senderNotificationSound: string;
   voiceCallSound: string;
   videoCallSound: string;
+  messageRetentionDays: number;
 }
 
 function Settings() {
@@ -43,7 +44,8 @@ function Settings() {
     messageNotificationSound: 'stwime_up',
     senderNotificationSound: 'pop',
     voiceCallSound: 'default',
-    videoCallSound: 'default'
+    videoCallSound: 'default',
+    messageRetentionDays: 1
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -290,7 +292,7 @@ function Settings() {
         <div className="setting-card">
           <div className="setting-header">
             <h3>Message Settings</h3>
-            <p>Configure messaging limits</p>
+            <p>Configure messaging limits and retention</p>
           </div>
           
           <div className="setting-item">
@@ -325,6 +327,26 @@ function Settings() {
               min="5"
               max="100"
             />
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label>💬 Closed Chat Message Retention</label>
+              <span className="setting-description">
+                How long to keep messages from closed private chats before auto-deletion
+              </span>
+            </div>
+            <select
+              className="setting-input"
+              value={settings.messageRetentionDays || 0}
+              onChange={(e) => setSettings({...settings, messageRetentionDays: parseInt(e.target.value)})}
+            >
+              <option value="0">Immediately</option>
+              <option value="1">1 Day</option>
+              <option value="7">1 Week</option>
+              <option value="30">1 Month</option>
+              <option value="365">1 Year</option>
+            </select>
           </div>
         </div>
 

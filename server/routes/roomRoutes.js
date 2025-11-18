@@ -288,6 +288,39 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
     // Ensure openChats is an array
     const openChats = Array.isArray(currentUser?.openChats) ? currentUser.openChats : [];
 
+    // Get site settings for message retention period (with error handling)
+    let retentionDays = 1; // Default to 1 day
+    try {
+      const siteSettings = await getSiteSettings();
+      retentionDays = siteSettings.messageRetentionDays || 1;
+    } catch (error) {
+      console.error('⚠️ Error getting site settings for retention period, using default (1 day):', error);
+    }
+    
+    const retentionMs = retentionDays * 24 * 60 * 60 * 1000;
+    const retentionDate = new Date(Date.now() - retentionMs);
+
+    // Clean up old messages from closed chats
+    const closedChatUserIds = openChats
+      .filter(oc => oc && oc.state === false)
+      .map(oc => oc.userId);
+
+    if (closedChatUserIds.length > 0) {
+      // Delete old messages from closed chats based on retention setting
+      const deletedResult = await db.collection('messages').deleteMany({
+        isPrivate: true,
+        $or: [
+          { senderId: userId, receiverId: { $in: closedChatUserIds.map(id => new ObjectId(id)) } },
+          { receiverId: userId, senderId: { $in: closedChatUserIds.map(id => new ObjectId(id)) } }
+        ],
+        timestamp: { $lt: retentionDate }
+      });
+      
+      if (deletedResult.deletedCount > 0) {
+        console.log(`🗑️ Deleted ${deletedResult.deletedCount} old messages (>${retentionDays} days) from closed chats for user ${userId}`);
+      }
+    }
+
     // Find all private chats for this user
     const privateChats = await db.collection('privatechats')
       .find({
@@ -310,6 +343,9 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
         // - Hide ONLY if explicitly closed (state === false)
         // - Show if: state === true OR state is undefined/null (not yet set) OR has unread messages
         const isExplicitlyClosed = openChatEntry?.state === false;
+        
+        // Check if user is in openChats array (chatted today indicator)
+        const isInOpenChats = openChatEntry !== undefined;
         
         // If user explicitly closed this chat, don't show it
         if (isExplicitlyClosed) return null;
@@ -364,7 +400,8 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
           },
           unreadCount,
           lastMessage: lastMessage ? lastMessage.content : null,
-          lastMessageAt: chat.lastMessageAt
+          lastMessageAt: chat.lastMessageAt,
+          chattedToday: isInOpenChats // Indicate if user is in openChats array
         };
       })
     );
@@ -388,6 +425,31 @@ router.post('/close-private-chat', authenticateToken, async (req, res) => {
 
     if (!otherUserId) {
       return res.status(400).json({ error: 'Other user ID is required' });
+    }
+
+    // Get site settings to check if we should delete immediately
+    let deleteImmediately = false;
+    try {
+      const siteSettings = await getSiteSettings();
+      deleteImmediately = siteSettings.messageRetentionDays === 0;
+    } catch (error) {
+      console.error('⚠️ Error getting site settings, will not delete immediately:', error);
+    }
+
+    // If set to delete immediately (0 days), delete all messages now
+    if (deleteImmediately) {
+      const otherUserObjectId = new ObjectId(otherUserId);
+      const deletedResult = await db.collection('messages').deleteMany({
+        isPrivate: true,
+        $or: [
+          { senderId: userId, receiverId: otherUserObjectId },
+          { receiverId: userId, senderId: otherUserObjectId }
+        ]
+      });
+      
+      if (deletedResult.deletedCount > 0) {
+        console.log(`🗑️ Immediately deleted ${deletedResult.deletedCount} messages from closed chat for user ${userId}`);
+      }
     }
 
     // Get current user's openChats array

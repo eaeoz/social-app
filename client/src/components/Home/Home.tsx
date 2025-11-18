@@ -2174,7 +2174,14 @@ function Home({ user, socket, onLogout }: HomeProps) {
                           )}
                         </div>
                         <div className="private-chat-details">
-                          <div className="private-chat-name">{chat.otherUser.nickName}</div>
+                          <div className="private-chat-name">
+                            <span className={`chat-username ${chat.otherUser.gender === 'Male' ? 'male-color' : chat.otherUser.gender === 'Female' ? 'female-color' : ''}`}>
+                              {chat.otherUser.nickName}
+                            </span>
+                            {chat.otherUser.age && (
+                              <span className="chat-user-age"> ({chat.otherUser.age})</span>
+                            )}
+                          </div>
                           {chat.lastMessage && (
                             <div className="private-chat-preview">{chat.lastMessage}</div>
                           )}

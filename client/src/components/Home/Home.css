@@ -1435,6 +1435,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.chat-username.male-color {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.chat-username.female-color {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.chat-user-age {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.85rem;
 }
 
 .private-chat-preview {

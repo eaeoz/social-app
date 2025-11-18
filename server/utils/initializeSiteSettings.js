@@ -117,7 +117,8 @@ export async function getSiteSettings() {
       messageNotificationSound: settings.messageNotificationSound || 'stwime_up', // Default: stwime_up
       senderNotificationSound: settings.senderNotificationSound || 'pop', // Default: pop
       voiceCallSound: settings.voiceCallSound || 'default', // Default: default
-      videoCallSound: settings.videoCallSound || 'default' // Default: default
+      videoCallSound: settings.videoCallSound || 'default', // Default: default
+      messageRetentionDays: settings.messageRetentionDays !== undefined ? settings.messageRetentionDays : 0 // Default: 0 (immediately)
     };
     
     console.log('🔍 Processed settings result:', JSON.stringify(result, null, 2));

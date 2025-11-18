@@ -307,6 +307,18 @@ export default function ChatsScreen() {
                 >
                   {lastMessageText}
                 </Text>
+                {item?.chattedToday && !selectionMode && (
+                  <Text 
+                    variant="bodySmall" 
+                    style={{ 
+                      color: theme.colors.primary,
+                      fontStyle: 'italic',
+                      marginRight: 4
+                    }}
+                  >
+                    📅
+                  </Text>
+                )}
                 {unreadCount > 0 && !selectionMode && (
                   <Badge style={styles.badge}>{unreadCount}</Badge>
                 )}
