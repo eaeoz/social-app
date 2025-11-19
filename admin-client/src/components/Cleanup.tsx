@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import './Cleanup.css';
 
 interface User {
@@ -35,6 +35,18 @@ interface BackupStats {
   organizedFolderCount: number;
 }
 
+interface SupabaseStats {
+  messagesCount: number;
+  privatechatsCount: number;
+  estimatedMessagesSize: number;
+  estimatedChatsSize: number;
+  totalSize: number;
+  messagesKB: string;
+  chatsKB: string;
+  totalKB: string;
+  totalMB: string;
+}
+
 function Cleanup() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -47,11 +59,14 @@ function Cleanup() {
   const [storageLoading, setStorageLoading] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({});
   const [backupStats, setBackupStats] = useState<BackupStats | null>(null);
+  const [supabaseStats, setSupabaseStats] = useState<SupabaseStats | null>(null);
+  const [supabaseLoading, setSupabaseLoading] = useState(false);
 
   useEffect(() => {
     fetchStorageStats();
     fetchSiteSettings();
     fetchBackupStats();
+    fetchSupabaseStats();
   }, []);
 
   useEffect(() => {
@@ -122,6 +137,29 @@ function Cleanup() {
       }
     } catch (error) {
       console.error('Error fetching backup stats:', error);
+    }
+  };
+
+  const fetchSupabaseStats = async () => {
+    setSupabaseLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/cleanup/supabase-stats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSupabaseStats(data.stats);
+      } else {
+        console.error('Failed to fetch Supabase stats:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching Supabase stats:', error);
+    } finally {
+      setSupabaseLoading(false);
     }
   };
 
@@ -222,6 +260,204 @@ function Cleanup() {
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(''), 15000);
+    }
+  };
+
+  const handleCleanSupabaseTables = async () => {
+    if (!confirm('🧹 Clean Supabase Tables\n\n⚠️ WARNING: This will permanently delete ALL messages and privatechats from Supabase database tables!\n\nThis action CANNOT be undone!\n\nAre you sure?')) {
+      return;
+    }
+
+    if (!confirm('🚨 FINAL WARNING\n\nClick OK to permanently delete all data from Supabase tables.\nThis is your last chance to cancel!')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/supabase-tables`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Supabase tables cleaned successfully!\n\n🗑️ Deleted:\n  • ${data.deleted?.messages || 'all'} messages\n  • ${data.deleted?.privatechats || 'all'} private chats`);
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to clean Supabase tables: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error cleaning Supabase tables:', error);
+      setMessage('❌ Error cleaning Supabase tables');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 10000);
+    }
+  };
+
+  const handleExportFromSupabase = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/export-from-supabase`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        
+        // 1. Download JSON file
+        const jsonContent = JSON.stringify(data, null, 2);
+        const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
+        const jsonUrl = URL.createObjectURL(jsonBlob);
+        const jsonLink = document.createElement('a');
+        jsonLink.href = jsonUrl;
+        jsonLink.download = `supabase_export_${timestamp}.json`;
+        document.body.appendChild(jsonLink);
+        jsonLink.click();
+        document.body.removeChild(jsonLink);
+        URL.revokeObjectURL(jsonUrl);
+        
+        // 2. Create Excel file using HTML table format (opens in Excel)
+        let htmlContent = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8">
+            <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+            <x:Name>Export Data</x:Name>
+            <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
+            </x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+            <style>
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid black; padding: 8px; text-align: left; }
+              th { background-color: #4CAF50; color: white; font-weight: bold; }
+              .section-title { background-color: #2196F3; color: white; font-size: 16px; font-weight: bold; padding: 10px; }
+              .stats-header { background-color: #FF9800; color: white; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <!-- Messages Section -->
+            <h2 class="section-title">Messages</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Content</th>
+                  <th>Sender ID</th>
+                  <th>Receiver ID</th>
+                  <th>Is Private</th>
+                  <th>Timestamp</th>
+                  <th>Room ID</th>
+                </tr>
+              </thead>
+              <tbody>`;
+        
+        data.messages?.forEach((msg: any) => {
+          const content = (msg.content || '').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+          htmlContent += `
+                <tr>
+                  <td>${msg._id || ''}</td>
+                  <td>${content}</td>
+                  <td>${msg.senderId || ''}</td>
+                  <td>${msg.receiverId || ''}</td>
+                  <td>${msg.is_private || false}</td>
+                  <td>${msg.created_at || ''}</td>
+                  <td>${msg.roomId || ''}</td>
+                </tr>`;
+        });
+        
+        htmlContent += `
+              </tbody>
+            </table>
+            <br><br>
+            
+            <!-- Private Chats Section -->
+            <h2 class="section-title">Private Chats</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>User1 ID</th>
+                  <th>User2 ID</th>
+                  <th>Created At</th>
+                  <th>Is Active</th>
+                  <th>Last Message At</th>
+                </tr>
+              </thead>
+              <tbody>`;
+        
+        data.privatechats?.forEach((chat: any) => {
+          htmlContent += `
+                <tr>
+                  <td>${chat._id || ''}</td>
+                  <td>${chat.user1Id || ''}</td>
+                  <td>${chat.user2Id || ''}</td>
+                  <td>${chat.created_at || ''}</td>
+                  <td>${chat.is_active || false}</td>
+                  <td>${chat.lastMessageAt || ''}</td>
+                </tr>`;
+        });
+        
+        htmlContent += `
+              </tbody>
+            </table>
+            <br><br>
+            
+            <!-- Statistics Section -->
+            <h2 class="section-title">Statistics</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th class="stats-header">Metric</th>
+                  <th class="stats-header">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Total Messages</td><td>${data.stats?.totalMessages || 0}</td></tr>
+                <tr><td>Private Messages</td><td>${data.stats?.privateMessages || 0}</td></tr>
+                <tr><td>Public Messages</td><td>${data.stats?.publicMessages || 0}</td></tr>
+                <tr><td>Total Chats</td><td>${data.stats?.totalChats || 0}</td></tr>
+                <tr><td>Active Chats</td><td>${data.stats?.activeChats || 0}</td></tr>
+                <tr><td>Export Date</td><td>${data.exportDate || ''}</td></tr>
+              </tbody>
+            </table>
+          </body>
+          </html>`;
+        
+        const excelBlob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+        const excelUrl = URL.createObjectURL(excelBlob);
+        const excelLink = document.createElement('a');
+        excelLink.href = excelUrl;
+        excelLink.download = `supabase_export_${timestamp}.xls`;
+        document.body.appendChild(excelLink);
+        excelLink.click();
+        document.body.removeChild(excelLink);
+        URL.revokeObjectURL(excelUrl);
+        
+        // Show success message
+        setMessage(`✅ Export successful!\n\n📥 Downloaded 2 files:\n  • JSON (complete data)\n  • Excel (${data.stats?.totalMessages || 0} messages, ${data.stats?.totalChats || 0} chats)\n\nFiles saved to your downloads folder.`);
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to export from Supabase: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error exporting from Supabase:', error);
+      setMessage('❌ Error exporting from Supabase');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 10000);
     }
   };
 
@@ -712,6 +948,93 @@ function Cleanup() {
           </div>
         </div>
       ) : null}
+
+      <div className="storage-stats-section supabase-download-section">
+        <h3>☁️ Supabase Cloud Storage</h3>
+        
+        {supabaseLoading ? (
+          <div className="supabase-stats-loading">
+            <p>⏳ Loading Supabase statistics...</p>
+          </div>
+        ) : supabaseStats ? (
+          <div className="storage-content">
+            <div className="storage-chart">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={[
+                    { 
+                      name: 'Messages', 
+                      count: supabaseStats.messagesCount,
+                      size: supabaseStats.estimatedMessagesSize / 1024 // in KB
+                    },
+                    { 
+                      name: 'Private Chats', 
+                      count: supabaseStats.privatechatsCount,
+                      size: supabaseStats.estimatedChatsSize / 1024 // in KB
+                    }
+                  ]}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis 
+                    label={{ value: 'Row Count', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: any, name: string) => {
+                      if (name === 'count') {
+                        return [value.toLocaleString(), 'Rows'];
+                      }
+                      return [value.toFixed(2) + ' KB', 'Size'];
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="count" fill="#3b82f6" name="Row Count" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="storage-details">
+              <div className="storage-stat">
+                <span className="stat-label">☁️ Messages:</span>
+                <span className="stat-value">{supabaseStats.messagesCount.toLocaleString()} rows (~{supabaseStats.messagesKB} KB)</span>
+              </div>
+              <div className="storage-stat">
+                <span className="stat-label">☁️ Private Chats:</span>
+                <span className="stat-value">{supabaseStats.privatechatsCount.toLocaleString()} rows (~{supabaseStats.chatsKB} KB)</span>
+              </div>
+              <div className="storage-stat">
+                <span className="stat-label">☁️ Total Cloud Size:</span>
+                <span className="stat-value">~{supabaseStats.totalKB} KB ({supabaseStats.totalMB} MB)</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        
+        <div className="supabase-download-content">
+          <p className="info-text">
+            Download all backed up files from Supabase cloud storage. This will download both JSON and Excel formats containing all messages and private chats that have been backed up.
+          </p>
+          
+          <div className="supabase-buttons-row">
+            <button
+              className="cleanup-btn supabase-export-large"
+              onClick={handleExportFromSupabase}
+              disabled={loading}
+              title="Downloads all backed up files from Supabase (messages + privatechats)"
+            >
+              {loading ? '⏳ Processing...' : '📥 Download All Backed Up Files from Supabase'}
+            </button>
+            <button
+              className="cleanup-btn delete-all-backups"
+              onClick={handleCleanSupabaseTables}
+              disabled={loading}
+              title="Delete all messages and privatechats from Supabase tables"
+            >
+              {loading ? '⏳ Processing...' : '🧹 Clean Supabase Tables'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="storage-stats-section automated-cleanup-section">
         <h3>🤖 Automated Backup & Cleanup</h3>
