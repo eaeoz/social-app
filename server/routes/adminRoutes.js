@@ -1797,6 +1797,31 @@ router.post('/cleanup/manual-backup-cleanup', authenticateToken, requireAdmin, a
   }
 });
 
+// Backup to Supabase - backup messages and privatechats to Supabase
+router.post('/cleanup/backup-to-supabase', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('☁️ Supabase backup requested by admin');
+    
+    const { backupToSupabase } = await import('../utils/supabaseBackup.js');
+    const result = await backupToSupabase();
+    
+    if (result.success) {
+      res.json({
+        message: 'Backup to Supabase completed successfully',
+        results: result.results,
+        filesUsed: result.filesUsed
+      });
+    } else {
+      res.status(500).json({ 
+        error: result.error || 'Backup to Supabase failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Supabase backup error:', error);
+    res.status(500).json({ error: 'Failed to backup to Supabase' });
+  }
+});
+
 // Manual article check - manually trigger blog data sync
 router.post('/articles/manual-check', authenticateToken, requireAdmin, async (req, res) => {
   try {

@@ -176,6 +176,55 @@ function Cleanup() {
     }
   };
 
+  const handleBackupToSupabase = async () => {
+    if (!confirm('☁️ Backup to Supabase\n\nThis will:\n• Upload the latest messages backup to Supabase\n• Upload the latest privatechats backup to Supabase\n• Use upsert to avoid duplicates\n\nContinue?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/cleanup/backup-to-supabase`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Build success message
+        let successMsg = `✅ Backup to Supabase completed successfully!\n\n`;
+        successMsg += `📤 Uploaded from:\n`;
+        successMsg += `  • ${data.filesUsed?.messages || 'N/A'}\n`;
+        successMsg += `  • ${data.filesUsed?.privatechats || 'N/A'}\n\n`;
+        successMsg += `📊 Results:\n`;
+        successMsg += `  • Messages: ${data.results?.messages?.inserted || 0} records\n`;
+        successMsg += `  • Private Chats: ${data.results?.privatechats?.inserted || 0} records`;
+        
+        if (data.results?.messages?.errors?.length > 0 || data.results?.privatechats?.errors?.length > 0) {
+          successMsg += `\n\n⚠️ Some errors occurred during backup`;
+        }
+        
+        setMessage(successMsg);
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to backup to Supabase: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error backing up to Supabase:', error);
+      setMessage('❌ Error backing up to Supabase');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 15000);
+    }
+  };
+
   const handleDeleteOrganizedBackups = async () => {
     if (!confirm('🗑️ Delete Organized Backup Folders\n\nThis will delete all organized backup folders (folders starting with "organized_") while keeping the original backup JSON files.\n\nContinue?')) {
       return;
@@ -704,6 +753,16 @@ function Cleanup() {
               >
                 {loading ? '⏳ Processing...' : '🧹 Manual Backup & Cleanup'}
               </button>
+              {backupStats && parseFloat(backupStats.totalSizeKB) > 0 && (
+                <button
+                  className="cleanup-btn supabase-backup"
+                  onClick={handleBackupToSupabase}
+                  disabled={loading}
+                  title="Upload latest backups to Supabase cloud storage"
+                >
+                  {loading ? '⏳ Processing...' : '☁️ Backup to Supabase'}
+                </button>
+              )}
               {backupStats && backupStats.organizedFolderCount > 0 && (
                 <button
                   className="cleanup-btn delete-organized"
