@@ -129,17 +129,23 @@ function generateSitemap(articles) {
   // Combine static pages with article pages
   const allPages = [...staticPages, ...articlePages];
 
+  // Generate sitemap with proper formatting (no whitespace in URLs)
+  const urlEntries = allPages.map(page => {
+    const fullUrl = `${SITE_URL}${page.path}`;
+    return `  <url>
+    <loc>${fullUrl}</loc>
+    <lastmod>${page.lastmod || date}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`;
+  }).join('\n');
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${allPages.map(page => `  <url>
-    <loc>${SITE_URL}${page.path}</loc>
-    <lastmod>${page.lastmod || date}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`).join('\n')}
+${urlEntries}
 </urlset>`;
 
   const outputPath = join(__dirname, '..', 'public', 'sitemap.xml');
