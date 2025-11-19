@@ -7,6 +7,10 @@ import { Helmet } from 'react-helmet-async';
 import { Query } from 'appwrite';
 import '../styles/Home.css';
 
+// Check if we should use backend API instead of Appwrite
+const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === '1';
+const API_URL = import.meta.env.VITE_API_URL || 'https://social-app-5hge.onrender.com/api';
+
 export default function Home() {
   const [allArticles, setAllArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
@@ -44,20 +48,56 @@ export default function Home() {
       setLoading(true);
       setError(null);
 
-      const queries = [
-        Query.orderDesc('$createdAt'),
-        Query.limit(100)
-      ];
+      if (USE_BACKEND) {
+        // Fetch from backend server (cached data from Appwrite)
+        console.log('📡 Fetching articles from backend API (cached)...');
+        const response = await fetch(`${API_URL}/blog`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch articles from backend');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.articles) {
+          // Map backend response to match Article type
+          const articles = data.articles.map((article: any) => ({
+            $id: article.id,
+            articleId: article.id,
+            title: article.title,
+            author: article.author,
+            date: article.date,
+            tags: typeof article.tags === 'string' ? article.tags : JSON.stringify(article.tags),
+            logo: article.logo,
+            excerpt: article.excerpt,
+            content: article.content
+          })) as Article[];
+          
+          setAllArticles(articles);
+          setFilteredArticles(articles);
+          console.log(`✅ Fetched ${articles.length} articles from backend`);
+        } else {
+          throw new Error('Invalid response from backend');
+        }
+      } else {
+        // Fetch directly from Appwrite
+        console.log('📡 Fetching articles directly from Appwrite...');
+        const queries = [
+          Query.orderDesc('$createdAt'),
+          Query.limit(100)
+        ];
 
-      const response = await databases.listDocuments(
-        config.databaseId,
-        config.articlesCollectionId,
-        queries
-      );
+        const response = await databases.listDocuments(
+          config.databaseId,
+          config.articlesCollectionId,
+          queries
+        );
 
-      const articles = response.documents as unknown as Article[];
-      setAllArticles(articles);
-      setFilteredArticles(articles);
+        const articles = response.documents as unknown as Article[];
+        setAllArticles(articles);
+        setFilteredArticles(articles);
+        console.log(`✅ Fetched ${articles.length} articles from Appwrite`);
+      }
     } catch (err) {
       console.error('Error fetching articles:', err);
       setError('Failed to load articles. Please try again later.');

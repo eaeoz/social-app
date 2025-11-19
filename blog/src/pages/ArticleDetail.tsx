@@ -9,6 +9,10 @@ import ReactMarkdown from 'react-markdown';
 import { Query } from 'appwrite';
 import '../styles/ArticleDetail.css';
 
+// Check if we should use backend API instead of Appwrite
+const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === '1';
+const API_URL = import.meta.env.VITE_API_URL || 'https://social-app-5hge.onrender.com/api';
+
 // Convert title to SEO-friendly slug
 function slugify(text: string): string {
   return text
@@ -83,38 +87,84 @@ export default function ArticleDetail() {
       setLoading(true);
       setError(null);
 
-      // Fetch all articles and find by matching generated slug
-      const response = await databases.listDocuments(
-        config.databaseId,
-        config.articlesCollectionId,
-        [Query.limit(100)] // Fetch articles to search
-      );
-
-      // Find article where generated slug matches
-      const matchedArticle = response.documents.find((doc: any) => {
-        const generatedSlug = generateSlugFromArticle(doc);
-        return generatedSlug === slug || doc.slug === slug;
-      });
-
-      if (matchedArticle) {
-        setArticle(matchedArticle as unknown as Article);
+      if (USE_BACKEND) {
+        // Fetch from backend server (cached data from Appwrite)
+        console.log('📡 Fetching articles from backend API (cached)...');
+        const response = await fetch(`${API_URL}/blog`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch articles from backend');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.articles) {
+          // Map backend response and find matching article by slug
+          const articles = data.articles.map((article: any) => ({
+            $id: article.id,
+            articleId: article.id,
+            title: article.title,
+            author: article.author,
+            date: article.date,
+            tags: typeof article.tags === 'string' ? article.tags : JSON.stringify(article.tags),
+            logo: article.logo,
+            excerpt: article.excerpt,
+            content: article.content,
+            slug: article.slug
+          }));
+          
+          // Find article where generated slug matches
+          const matchedArticle = articles.find((doc: any) => {
+            const generatedSlug = generateSlugFromArticle(doc);
+            return generatedSlug === slug || doc.slug === slug;
+          });
+          
+          if (matchedArticle) {
+            setArticle(matchedArticle as unknown as Article);
+            console.log(`✅ Found article from backend: ${matchedArticle.title}`);
+          } else {
+            throw new Error('Article not found');
+          }
+        } else {
+          throw new Error('Invalid response from backend');
+        }
       } else {
-        // If no match found in first 100, try searching more
-        const moreResponse = await databases.listDocuments(
+        // Fetch directly from Appwrite
+        console.log('📡 Fetching article directly from Appwrite...');
+        const response = await databases.listDocuments(
           config.databaseId,
           config.articlesCollectionId,
-          [Query.limit(1000)]
+          [Query.limit(100)] // Fetch articles to search
         );
-        
-        const foundArticle = moreResponse.documents.find((doc: any) => {
+
+        // Find article where generated slug matches
+        const matchedArticle = response.documents.find((doc: any) => {
           const generatedSlug = generateSlugFromArticle(doc);
           return generatedSlug === slug || doc.slug === slug;
         });
-        
-        if (foundArticle) {
-          setArticle(foundArticle as unknown as Article);
+
+        if (matchedArticle) {
+          setArticle(matchedArticle as unknown as Article);
+          console.log(`✅ Found article from Appwrite: ${matchedArticle.title}`);
         } else {
-          throw new Error('Article not found');
+          // If no match found in first 100, try searching more
+          const moreResponse = await databases.listDocuments(
+            config.databaseId,
+            config.articlesCollectionId,
+            [Query.limit(1000)]
+          );
+          
+          const foundArticle = moreResponse.documents.find((doc: any) => {
+            const generatedSlug = generateSlugFromArticle(doc);
+            return generatedSlug === slug || doc.slug === slug;
+          });
+          
+          if (foundArticle) {
+            setArticle(foundArticle as unknown as Article);
+            console.log(`✅ Found article from Appwrite (extended search): ${foundArticle.title}`);
+          } else {
+            throw new Error('Article not found');
+          }
         }
       }
     } catch (err) {
