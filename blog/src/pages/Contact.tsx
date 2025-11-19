@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send } from 'lucide-react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import '../styles/Contact.css';
 
 export default function Contact() {
@@ -15,6 +16,7 @@ export default function Contact() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +24,22 @@ export default function Contact() {
     setError(null);
 
     try {
+      // Execute reCAPTCHA
+      if (!executeRecaptcha) {
+        setError('reCAPTCHA not loaded. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      const recaptchaToken = await executeRecaptcha('contact_form');
+
       const response = await fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          recaptchaToken
+        })
       });
 
       const data = await response.json();
@@ -93,9 +107,9 @@ export default function Contact() {
             
             <motion.div
               className="modal-content"
-              initial={{ opacity: 0, scale: 0.9, y: 50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 50 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.3 }}
             >
               <div className="modal-header">

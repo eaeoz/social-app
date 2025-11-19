@@ -1,8 +1,8 @@
 import { Handler } from '@netlify/functions';
 import nodemailer from 'nodemailer';
 
-const handler: Handler = async (event) => {
-  // Only allow POST requests
+export const handler: Handler = async (event) => {
+  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -11,7 +11,32 @@ const handler: Handler = async (event) => {
   }
 
   try {
-    const { name, email, subject, message } = JSON.parse(event.body || '{}');
+    const { name, email, subject, message, recaptchaToken } = JSON.parse(event.body || '{}');
+
+    // Verify reCAPTCHA token
+    if (recaptchaToken) {
+      const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
+      
+      if (recaptchaSecretKey) {
+        const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `secret=${recaptchaSecretKey}&response=${recaptchaToken}`
+        });
+
+        const recaptchaData = await recaptchaResponse.json();
+
+        // Check if reCAPTCHA verification failed or score is too low
+        if (!recaptchaData.success || (recaptchaData.score && recaptchaData.score < 0.5)) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({ 
+              error: 'reCAPTCHA verification failed. Please try again.' 
+            })
+          };
+        }
+      }
+    }
 
     // Validate input
     if (!name || !email || !subject || !message) {
@@ -78,5 +103,3 @@ const handler: Handler = async (event) => {
     };
   }
 };
-
-export { handler };
