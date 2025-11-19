@@ -20,9 +20,12 @@ Add these variables to your `blog/.env` file:
 
 ```env
 # Backend API Configuration
+# IMPORTANT: Must use VITE_ prefix for Vite to expose to client-side!
 VITE_USE_BACKEND=1
 VITE_API_URL=https://social-app-5hge.onrender.com/api
 ```
+
+**⚠️ IMPORTANT:** The variable MUST be named `VITE_USE_BACKEND` (with `VITE_` prefix), not just `USE_BACKEND`. Vite only exposes environment variables that start with `VITE_` to the client-side code!
 
 ### Options
 
@@ -116,7 +119,8 @@ if (USE_BACKEND) {
 Edit `blog/.env`:
 
 ```env
-USE_BACKEND=1
+# IMPORTANT: Use VITE_ prefix!
+VITE_USE_BACKEND=1
 VITE_API_URL=https://social-app-5hge.onrender.com/api
 ```
 
@@ -147,10 +151,12 @@ Make sure your backend server is deployed and running:
 
 When deploying to Netlify, add environment variables in Netlify dashboard:
 
-1. Go to: **Site Settings** → **Environment Variables**
+1. Go to: **Site Settings** → **Environment Variables** → **Add a variable**
 2. Add:
-   - `VITE_USE_BACKEND` = `1`
-   - `VITE_API_URL` = `https://social-app-5hge.onrender.com/api`
+   - Key: `VITE_USE_BACKEND` → Value: `1`
+   - Key: `VITE_API_URL` → Value: `https://social-app-5hge.onrender.com/api` (optional, uses fallback if not set)
+3. **Important:** After adding variables, you MUST trigger a new deploy for changes to take effect!
+   - Go to **Deploys** → **Trigger deploy** → **Deploy site**
 
 ## Comparison: Backend API vs Direct Appwrite
 

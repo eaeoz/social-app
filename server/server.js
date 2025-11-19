@@ -33,18 +33,22 @@ const allowedOrigins = [
   'http://localhost:5174', // Admin dashboard
   'http://localhost:5175',
   'http://localhost:3000',
+  'http://localhost:3001', // Blog local dev
   'http://localhost:4000',
   'http://localhost:8888',
   'https://localhost:5173', // HTTPS local development
   'https://localhost:5174', // HTTPS Admin dashboard
   'https://localhost:5175', // HTTPS Admin dashboard
   'https://localhost:3000', // HTTPS Admin dashboard
+  'https://localhost:3001', // HTTPS Blog
   'https://localhost:4000', // HTTPS API
   'https://localhost:8888', // HTTPS Admin dashboard (netflify dev)
   'https://netcify.netlify.app',
   'https://netcifyadmin.netlify.app', // Admin dashboard production
+  'https://sedat.netlify.app', // Blog production
   process.env.CLIENT_URL,
-  process.env.ADMIN_URL
+  process.env.ADMIN_URL,
+  process.env.BLOG_URL
 ].filter(Boolean);
 
 console.log('🌐 CORS Configuration:');
