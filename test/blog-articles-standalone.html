@@ -1150,14 +1150,31 @@
       const grid = document.getElementById('articlesGrid');
       grid.innerHTML = '';
 
-      if (filteredArticles.length === 0) {
+      // Only show empty state if there are truly NO articles at all in the database
+      if (articles.length === 0) {
         document.getElementById('articlesView').style.display = 'none';
         document.getElementById('emptyState').style.display = 'block';
         return;
       }
 
+      // We have articles, so always show the search view
       document.getElementById('articlesView').style.display = 'block';
       document.getElementById('emptyState').style.display = 'none';
+
+      // If no search results, show a message in the grid
+      if (filteredArticles.length === 0) {
+        grid.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+            <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+            <h3 style="font-size: 20px; margin-bottom: 10px;">No matching articles</h3>
+            <p style="font-size: 14px;">Try different search terms or clear the search to see all articles.</p>
+          </div>
+        `;
+        document.getElementById('pageInfo').textContent = 'No results';
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+        return;
+      }
 
       const start = (currentPage - 1) * ITEMS_PER_PAGE;
       const end = start + ITEMS_PER_PAGE;
@@ -1219,8 +1236,10 @@
     }
 
     function filterArticles() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      if (query.length < 3) {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      
+      // Always filter - no minimum character requirement
+      if (!query || query.length === 0) {
         filteredArticles = [...articles];
       } else {
         filteredArticles = articles.filter(article => 
