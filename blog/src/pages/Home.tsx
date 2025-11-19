@@ -24,15 +24,11 @@ export default function Home() {
       setLoading(true);
       setError(null);
 
+      // Always fetch all articles first
       const queries = [
-        Query.equal('published', true),
         Query.orderDesc('$createdAt'),
         Query.limit(100)
       ];
-
-      if (searchQuery) {
-        queries.push(Query.search('title', searchQuery));
-      }
 
       const response = await databases.listDocuments(
         config.databaseId,
@@ -40,7 +36,18 @@ export default function Home() {
         queries
       );
 
-      setArticles(response.documents as unknown as Article[]);
+      let filteredArticles = response.documents as unknown as Article[];
+
+      // If we have a search query, filter client-side
+      if (searchQuery) {
+        filteredArticles = filteredArticles.filter(article =>
+          article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          article.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          article.content.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+
+      setArticles(filteredArticles);
     } catch (err) {
       console.error('Error fetching articles:', err);
       setError('Failed to load articles. Please try again later.');

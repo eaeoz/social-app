@@ -26,6 +26,16 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
     return `${minutes} min read`;
   };
 
+  const parseTags = (tagsString: string): string[] => {
+    try {
+      return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    } catch {
+      return [];
+    }
+  };
+
+  const tags = parseTags(article.tags);
+
   return (
     <motion.div
       className="article-card"
@@ -35,22 +45,16 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
       whileHover={{ y: -5 }}
     >
       <Link to={`/article/${article.$id}`} className="article-link">
-        {article.imageUrl && (
+        {article.logo && (
           <div className="article-image">
-            <img src={article.imageUrl} alt={article.title} loading="lazy" />
+            <img src={article.logo} alt={article.title} loading="lazy" />
           </div>
         )}
         
         <div className="article-content">
-          {article.category && (
-            <span className="article-category">{article.category}</span>
-          )}
-          
           <h2 className="article-title">{article.title}</h2>
           
-          {article.excerpt && (
-            <p className="article-excerpt">{article.excerpt}</p>
-          )}
+          <p className="article-excerpt">{article.excerpt}</p>
           
           <div className="article-meta">
             <div className="meta-item">
@@ -59,7 +63,7 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
             </div>
             <div className="meta-item">
               <Calendar size={16} />
-              <span>{formatDate(article.$createdAt)}</span>
+              <span>{article.date}</span>
             </div>
             <div className="meta-item">
               <Clock size={16} />
@@ -67,9 +71,9 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
             </div>
           </div>
 
-          {article.tags && article.tags.length > 0 && (
+          {tags.length > 0 && (
             <div className="article-tags">
-              {article.tags.slice(0, 3).map((tag, idx) => (
+              {tags.slice(0, 3).map((tag, idx) => (
                 <span key={idx} className="tag">{tag}</span>
               ))}
             </div>

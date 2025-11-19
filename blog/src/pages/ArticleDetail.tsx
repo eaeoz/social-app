@@ -39,20 +39,19 @@ export default function ArticleDetail() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   const calculateReadTime = (content: string) => {
     const wordsPerMinute = 200;
     const words = content.split(/\s+/).length;
     const minutes = Math.ceil(words / wordsPerMinute);
     return `${minutes} min read`;
+  };
+
+  const parseTags = (tagsString: string): string[] => {
+    try {
+      return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    } catch {
+      return [];
+    }
   };
 
   if (loading) {
@@ -80,14 +79,16 @@ export default function ArticleDetail() {
     );
   }
 
+  const tags = parseTags(article.tags);
+
   return (
     <>
       <Helmet>
         <title>{article.title} - {import.meta.env.VITE_SITE_NAME || "Sedat's Blog"}</title>
-        <meta name="description" content={article.excerpt || article.content.substring(0, 160)} />
+        <meta name="description" content={article.excerpt} />
         <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={article.excerpt || article.content.substring(0, 160)} />
-        {article.imageUrl && <meta property="og:image" content={article.imageUrl} />}
+        <meta property="og:description" content={article.excerpt} />
+        {article.logo && <meta property="og:image" content={article.logo} />}
       </Helmet>
 
       <motion.div
@@ -102,17 +103,13 @@ export default function ArticleDetail() {
         </Link>
 
         <article className="article-detail">
-          {article.imageUrl && (
+          {article.logo && (
             <div className="article-header-image">
-              <img src={article.imageUrl} alt={article.title} />
+              <img src={article.logo} alt={article.title} />
             </div>
           )}
 
           <div className="article-header">
-            {article.category && (
-              <span className="article-category">{article.category}</span>
-            )}
-            
             <h1 className="article-title">{article.title}</h1>
 
             <div className="article-meta">
@@ -122,7 +119,7 @@ export default function ArticleDetail() {
               </div>
               <div className="meta-item">
                 <Calendar size={18} />
-                <span>{formatDate(article.$createdAt)}</span>
+                <span>{article.date}</span>
               </div>
               <div className="meta-item">
                 <Clock size={18} />
@@ -136,11 +133,11 @@ export default function ArticleDetail() {
             dangerouslySetInnerHTML={{ __html: article.content.replace(/\n/g, '<br />') }}
           />
 
-          {article.tags && article.tags.length > 0 && (
+          {tags.length > 0 && (
             <div className="article-tags">
               <h3>Tags</h3>
               <div className="tags-list">
-                {article.tags.map((tag, idx) => (
+                {tags.map((tag, idx) => (
                   <span key={idx} className="tag">{tag}</span>
                 ))}
               </div>

@@ -116,21 +116,20 @@ npm run preview
 
 1. Create a database in Appwrite
 2. Create an "articles" collection with the following attributes:
-   - `title` (string, required)
-   - `content` (string, required)
-   - `excerpt` (string, optional)
-   - `author` (string, required)
-   - `authorEmail` (email, optional)
-   - `category` (string, optional)
-   - `tags` (string[], optional)
-   - `imageUrl` (url, optional)
-   - `published` (boolean, required, default: false)
-   - `views` (integer, optional)
-   - `slug` (string, optional)
+   - `articleId` (string, required, size: 50)
+   - `title` (string, required, size: 255)
+   - `author` (string, required, size: 100)
+   - `date` (string, required, size: 50) - Format: "Month DD, YYYY" or any date format
+   - `tags` (string, required, size: 500) - Comma-separated tags
+   - `logo` (string, optional, size: 10) - Image URL for article
+   - `excerpt` (string, required, size: 500) - Short description
+   - `content` (string, required, size: 50000) - Full article content
 
 3. Set permissions:
    - Read access: Any
    - Write access: Restricted (admin only)
+
+**Note:** The system automatically parses comma-separated tags and displays them nicely on the frontend.
 
 ## Deployment to Netlify
 

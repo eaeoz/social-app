@@ -2,17 +2,14 @@ export interface Article {
   $id: string;
   $createdAt: string;
   $updatedAt: string;
+  articleId: string;
   title: string;
   content: string;
-  excerpt?: string;
+  excerpt: string;
   author: string;
-  authorEmail?: string;
-  category?: string;
-  tags?: string[];
-  imageUrl?: string;
-  published: boolean;
-  views?: number;
-  slug?: string;
+  date: string;
+  tags: string;
+  logo?: string;
 }
 
 export interface ArticleListResponse {
