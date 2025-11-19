@@ -24,12 +24,19 @@ function slugify(text: string): string {
 // Parse tags and create tag slug
 function parseAndSlugifyTags(tagsString: string): string {
   try {
-    const tags = tagsString.split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0)
-      .slice(0, 3); // Use max 3 tags for URL
+    let tags: string[];
     
-    return tags.map(tag => slugify(tag)).join('-');
+    // Try parsing as JSON array first
+    if (tagsString.startsWith('[')) {
+      const parsed = JSON.parse(tagsString);
+      tags = Array.isArray(parsed) ? parsed : [];
+    } else {
+      // Fallback to comma-separated
+      tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    }
+    
+    // Use max 3 tags for URL
+    return tags.slice(0, 3).map(tag => slugify(tag)).join('-');
   } catch {
     return '';
   }
@@ -38,6 +45,12 @@ function parseAndSlugifyTags(tagsString: string): string {
 export default function ArticleCard({ article, index }: ArticleCardProps) {
   const parseTags = (tagsString: string): string[] => {
     try {
+      // Try parsing as JSON array first
+      if (tagsString.startsWith('[')) {
+        const parsed = JSON.parse(tagsString);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      // Fallback to comma-separated
       return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
     } catch {
       return [];

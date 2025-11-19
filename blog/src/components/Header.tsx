@@ -40,10 +40,10 @@ export default function Header() {
           </motion.span>
         </Link>
 
-        <nav className={`nav ${isMenuOpen ? 'nav-open' : ''}`}>
-          <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
-          <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
-          <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+        <nav className="nav">
+          <Link to="/">Home</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
         </nav>
 
         {/* Theme Switcher */}

@@ -172,29 +172,19 @@
     padding: 1rem;
   }
 
+  /* Hide desktop nav completely on mobile */
   .nav {
-    display: none;
+    display: none !important;
   }
 
+  /* Show hamburger menu button */
   .menu-toggle {
     display: block;
   }
 
+  /* Show mobile menu when open */
   .mobile-menu {
     display: block;
-  }
-
-  .nav.nav-open {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--card-bg);
-    padding: 1rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 }
 
