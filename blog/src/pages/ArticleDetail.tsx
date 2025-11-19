@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { Query } from 'appwrite';
 import '../styles/ArticleDetail.css';
 
 export default function ArticleDetail() {
@@ -20,18 +21,55 @@ export default function ArticleDetail() {
     }
   }, [id]);
 
-  const fetchArticle = async (articleId: string) => {
+  const fetchArticle = async (slugOrId: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await databases.getDocument(
-        config.databaseId,
-        config.articlesCollectionId,
-        articleId
-      );
+      // First, try to fetch by document ID (for backward compatibility)
+      // Extract potential ID from slug (last 8 chars after last dash)
+      let articleId = slugOrId;
+      
+      // If it contains a dash, it might be a slug with ID at the end
+      if (slugOrId.includes('-')) {
+        const parts = slugOrId.split('-');
+        const potentialId = parts[parts.length - 1];
+        
+        // Check if the last part looks like an Appwrite ID (alphanumeric, 8+ chars)
+        if (potentialId.length >= 8 && /^[a-z0-9]+$/i.test(potentialId)) {
+          articleId = potentialId;
+        }
+      }
 
-      setArticle(response as unknown as Article);
+      try {
+        // Try direct ID fetch first
+        const response = await databases.getDocument(
+          config.databaseId,
+          config.articlesCollectionId,
+          articleId
+        );
+        setArticle(response as unknown as Article);
+        return;
+      } catch (directFetchError) {
+        // If direct fetch fails, try searching by slug field
+        try {
+          const searchResponse = await databases.listDocuments(
+            config.databaseId,
+            config.articlesCollectionId,
+            [Query.equal('slug', slugOrId), Query.limit(1)]
+          );
+          
+          if (searchResponse.documents.length > 0) {
+            setArticle(searchResponse.documents[0] as unknown as Article);
+            return;
+          }
+        } catch (slugSearchError) {
+          // If slug search also fails, continue to error
+        }
+        
+        // If both methods fail, show error
+        throw new Error('Article not found');
+      }
     } catch (err) {
       console.error('Error fetching article:', err);
       setError('Article not found or failed to load.');
@@ -82,6 +120,9 @@ export default function ArticleDetail() {
         <meta name="description" content={article.excerpt} />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.excerpt} />
+        <meta property="og:type" content="article" />
+        <meta name="author" content={article.author} />
+        <meta name="keywords" content={tags.join(', ')} />
       </Helmet>
 
       <motion.div

@@ -10,6 +10,7 @@ export interface Article {
   date: string;
   tags: string;
   logo?: string;
+  slug?: string;
 }
 
 export interface ArticleListResponse {

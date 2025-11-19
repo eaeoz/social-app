@@ -8,6 +8,19 @@ interface ArticleCardProps {
   index: number;
 }
 
+// Convert title to SEO-friendly slug
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
+
 export default function ArticleCard({ article, index }: ArticleCardProps) {
   const parseTags = (tagsString: string): string[] => {
     try {
@@ -15,6 +28,24 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
     } catch {
       return [];
     }
+  };
+
+  // Generate SEO-friendly URL
+  const getArticleUrl = () => {
+    // Use existing slug if available
+    if (article.slug) {
+      return `/article/${article.slug}`;
+    }
+    
+    // Otherwise create slug from title + ID for uniqueness
+    if (article.title) {
+      const titleSlug = slugify(article.title);
+      const shortId = article.$id.substring(0, 8);
+      return `/article/${titleSlug}-${shortId}`;
+    }
+    
+    // Fallback to just ID
+    return `/article/${article.$id}`;
   };
 
   const tags = parseTags(article.tags);
@@ -27,7 +58,7 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
       transition={{ duration: 0.5, delay: index * 0.05 }}
       whileHover={{ y: -8 }}
     >
-      <Link to={`/article/${article.$id}`} className="article-card-link">
+      <Link to={getArticleUrl()} className="article-card-link">
         <div className="blog-article-header">
           <div className="blog-article-logo">{article.logo || '📝'}</div>
           <div className="blog-article-meta">

@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run generate-sitemap && tsc && vite build",
     "preview": "vite preview",
     "generate-sitemap": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
     "appwrite": "^14.0.1",
+    "dotenv": "^16.6.1",
     "framer-motion": "^11.3.28",
     "lucide-react": "^0.446.0",
     "react": "^18.3.1",
