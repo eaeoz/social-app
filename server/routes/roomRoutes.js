@@ -429,16 +429,19 @@ router.post('/close-private-chat', authenticateToken, async (req, res) => {
 
     // Get site settings to check if we should delete immediately
     let deleteImmediately = false;
+    let retentionDays = 1;
     try {
       const siteSettings = await getSiteSettings();
       deleteImmediately = siteSettings.messageRetentionDays === 0;
+      retentionDays = siteSettings.messageRetentionDays || 1;
     } catch (error) {
       console.error('⚠️ Error getting site settings, will not delete immediately:', error);
     }
 
+    const otherUserObjectId = new ObjectId(otherUserId);
+
     // If set to delete immediately (0 days), delete all messages now
     if (deleteImmediately) {
-      const otherUserObjectId = new ObjectId(otherUserId);
       const deletedResult = await db.collection('messages').deleteMany({
         isPrivate: true,
         $or: [
@@ -464,18 +467,23 @@ router.post('/close-private-chat', authenticateToken, async (req, res) => {
     // Find existing entry for this user
     const existingIndex = openChats.findIndex(oc => oc && oc.userId === otherUserId);
 
+    // Always set state to false when closing chat
+    // The scheduled cleanup will remove it later
     if (existingIndex >= 0) {
-      // Update existing entry to state: false
       openChats[existingIndex].state = false;
     } else {
-      // Add new entry with state: false
       openChats.push({ userId: otherUserId, state: false });
     }
 
     // Update user's openChats array
     await db.collection('users').updateOne(
       { _id: userId },
-      { $set: { openChats: openChats } }
+      { 
+        $set: { 
+          openChats: openChats,
+          openChatsUpdatedAt: new Date()
+        } 
+      }
     );
 
     res.json({ success: true });
