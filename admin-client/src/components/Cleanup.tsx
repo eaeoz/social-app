@@ -250,6 +250,9 @@ function Cleanup() {
         }
         
         setMessage(successMsg);
+        
+        // Refresh Supabase stats to update the chart
+        await fetchSupabaseStats();
       } else {
         const error = await response.json();
         setMessage(`❌ Failed to backup to Supabase: ${error.error || 'Unknown error'}`);
@@ -288,6 +291,9 @@ function Cleanup() {
       if (response.ok) {
         const data = await response.json();
         setMessage(`✅ Supabase tables cleaned successfully!\n\n🗑️ Deleted:\n  • ${data.deleted?.messages || 'all'} messages\n  • ${data.deleted?.privatechats || 'all'} private chats`);
+        
+        // Refresh Supabase stats to update the chart
+        await fetchSupabaseStats();
       } else {
         const error = await response.json();
         setMessage(`❌ Failed to clean Supabase tables: ${error.error || 'Unknown error'}`);
