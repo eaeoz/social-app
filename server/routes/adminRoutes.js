@@ -2000,6 +2000,29 @@ router.get('/custom-schedules', authenticateToken, requireAdmin, async (req, res
   }
 });
 
+// Get available script files from customSchedules folder
+router.get('/custom-schedules/available-scripts', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const customSchedulesDir = path.join(__dirname, '..', 'customSchedules');
+    
+    // Read all files in the customSchedules directory
+    const files = await fs.promises.readdir(customSchedulesDir);
+    
+    // Filter for .js files only and exclude test files
+    const scriptFiles = files
+      .filter(file => file.endsWith('.js'))
+      .filter(file => !file.startsWith('test-'))
+      .sort();
+    
+    console.log(`📂 Found ${scriptFiles.length} available scripts in customSchedules folder`);
+    
+    res.json({ scripts: scriptFiles });
+  } catch (error) {
+    console.error('Get available scripts error:', error);
+    res.status(500).json({ error: 'Failed to fetch available scripts' });
+  }
+});
+
 // Create new custom schedule
 router.post('/custom-schedules', authenticateToken, requireAdmin, async (req, res) => {
   try {
