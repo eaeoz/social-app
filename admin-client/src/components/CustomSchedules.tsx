@@ -18,6 +18,7 @@ function CustomSchedules() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<CustomSchedule | null>(null);
   const [message, setMessage] = useState('');
+  const [availableScripts, setAvailableScripts] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +28,7 @@ function CustomSchedules() {
 
   useEffect(() => {
     fetchSchedules();
+    fetchAvailableScripts();
   }, []);
 
   const fetchSchedules = async () => {
@@ -44,6 +46,22 @@ function CustomSchedules() {
       console.error('Error fetching custom schedules:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAvailableScripts = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/custom-schedules/available-scripts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableScripts(data.scripts || []);
+      }
+    } catch (error) {
+      console.error('Error fetching available scripts:', error);
     }
   };
 
@@ -228,17 +246,25 @@ function CustomSchedules() {
               <div className="setting-info">
                 <label>Script Path</label>
                 <span className="setting-description">
-                  Script filename in server/customSchedules/ folder (e.g., exampleScript.js)
+                  Select a script from server/customSchedules/ folder
                 </span>
               </div>
-              <input
-                type="text"
+              <select
                 className="setting-input"
                 value={formData.scriptPath}
                 onChange={(e) => setFormData({...formData, scriptPath: e.target.value})}
                 required
-                placeholder="exampleScript.js"
-              />
+              >
+                {availableScripts.length === 0 ? (
+                  <option value="">No scripts found</option>
+                ) : (
+                  availableScripts.map(script => (
+                    <option key={script} value={script}>
+                      {script}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
 
             <div className="setting-item">

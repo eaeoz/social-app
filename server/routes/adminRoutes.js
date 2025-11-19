@@ -1797,6 +1797,107 @@ router.post('/cleanup/manual-backup-cleanup', authenticateToken, requireAdmin, a
   }
 });
 
+// Backup to Supabase - backup messages and privatechats to Supabase
+router.post('/cleanup/backup-to-supabase', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('☁️ Supabase backup requested by admin');
+    
+    const { backupToSupabase } = await import('../utils/supabaseBackup.js');
+    const result = await backupToSupabase();
+    
+    if (result.success) {
+      res.json({
+        message: 'Backup to Supabase completed successfully',
+        results: result.results,
+        filesUsed: result.filesUsed
+      });
+    } else {
+      res.status(500).json({ 
+        error: result.error || 'Backup to Supabase failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Supabase backup error:', error);
+    res.status(500).json({ error: 'Failed to backup to Supabase' });
+  }
+});
+
+// Get Supabase statistics - get row counts and estimated sizes
+router.get('/cleanup/supabase-stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('📊 Supabase stats requested by admin');
+    
+    const { getSupabaseStats } = await import('../utils/supabaseStats.js');
+    const result = await getSupabaseStats();
+    
+    console.log('📊 Supabase stats result:', result);
+    
+    if (result.success) {
+      res.json({
+        message: 'Supabase stats fetched successfully',
+        stats: result.stats
+      });
+    } else {
+      console.error('❌ Supabase stats failed:', result.error);
+      res.status(500).json({ 
+        error: result.error || 'Failed to get Supabase stats' 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Supabase stats exception:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to get Supabase stats',
+      details: error.message 
+    });
+  }
+});
+
+// Export from Supabase - download merged data from Supabase
+router.get('/cleanup/export-from-supabase', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('📥 Supabase export requested by admin');
+    
+    const { exportFromSupabase } = await import('../utils/supabaseExport.js');
+    const result = await exportFromSupabase();
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(500).json({ 
+        error: result.error || 'Export from Supabase failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Supabase export error:', error);
+    res.status(500).json({ error: 'Failed to export from Supabase' });
+  }
+});
+
+// Clean Supabase tables - delete all messages and privatechats from Supabase
+router.delete('/cleanup/supabase-tables', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('🧹 Supabase tables cleanup requested by admin');
+    
+    const { cleanSupabaseTables } = await import('../utils/supabaseClean.js');
+    const result = await cleanSupabaseTables();
+    
+    if (result.success) {
+      res.json({
+        message: 'Supabase tables cleaned successfully',
+        deleted: result.deleted
+      });
+    } else {
+      res.status(500).json({ 
+        error: result.error || 'Failed to clean Supabase tables' 
+      });
+    }
+  } catch (error) {
+    console.error('Supabase cleanup error:', error);
+    res.status(500).json({ error: 'Failed to clean Supabase tables' });
+  }
+});
+
 // Manual article check - manually trigger blog data sync
 router.post('/articles/manual-check', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -1997,6 +2098,29 @@ router.get('/custom-schedules', authenticateToken, requireAdmin, async (req, res
   } catch (error) {
     console.error('Get custom schedules error:', error);
     res.status(500).json({ error: 'Failed to fetch custom schedules' });
+  }
+});
+
+// Get available script files from customSchedules folder
+router.get('/custom-schedules/available-scripts', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const customSchedulesDir = path.join(__dirname, '..', 'customSchedules');
+    
+    // Read all files in the customSchedules directory
+    const files = await fs.promises.readdir(customSchedulesDir);
+    
+    // Filter for .js files only and exclude test files
+    const scriptFiles = files
+      .filter(file => file.endsWith('.js'))
+      .filter(file => !file.startsWith('test-'))
+      .sort();
+    
+    console.log(`📂 Found ${scriptFiles.length} available scripts in customSchedules folder`);
+    
+    res.json({ scripts: scriptFiles });
+  } catch (error) {
+    console.error('Get available scripts error:', error);
+    res.status(500).json({ error: 'Failed to fetch available scripts' });
   }
 });
 

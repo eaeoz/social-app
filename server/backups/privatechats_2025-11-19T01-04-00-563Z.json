@@ -1,0 +1,239 @@
+[
+  {
+    "_id": "69184da88137cad32338009d",
+    "participants": [
+      "6911f671be2c55e447204507",
+      "69167034eb9166c856394b3e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-15T09:53:44.857Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "69184f6be5f8343aeb0ff572",
+    "participants": [
+      "69142da78c47d56c5ea79c26",
+      "69167034eb9166c856394b3e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-15T10:01:15.192Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "69184fbbe5f8343aeb0ff579",
+    "participants": [
+      "69142da78c47d56c5ea79c26",
+      "6911f671be2c55e447204507"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-15T10:02:35.108Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z",
+    "lastMessageAt": "2025-11-18T21:02:30.607Z",
+    "lastMessageId": "691cdee647215eee20b39e8c"
+  },
+  {
+    "_id": "691858d77f06c3e7df65a824",
+    "participants": [
+      "691438a2fc32b0b05345c5ac",
+      "69167034eb9166c856394b3e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-15T10:41:27.255Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "6918e3708a4fc622023d01a9",
+    "participants": [
+      "69142da78c47d56c5ea79c26",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-15T20:32:48.725Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z",
+    "lastMessageAt": "2025-11-18T22:15:01.345Z",
+    "lastMessageId": "691cefe547215eee20b39e8f"
+  },
+  {
+    "_id": "6919f33bbfb97db5a89e5c9b",
+    "participants": [
+      "6911f671be2c55e447204507",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-16T15:52:27.001Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z",
+    "lastMessageAt": "2025-11-18T22:14:38.195Z",
+    "lastMessageId": "691cefce47215eee20b39e8d"
+  },
+  {
+    "_id": "691a4e3e897d5403dc968512",
+    "participants": [
+      "69142da78c47d56c5ea79c26",
+      "691a3d59897d5403dc96850e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-16T22:20:46.045Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z",
+    "lastMessageAt": "2025-11-18T17:14:22.225Z",
+    "lastMessageId": "691ca96e72ed96e75f86cd79"
+  },
+  {
+    "_id": "691a510a897d5403dc968518",
+    "participants": [
+      "6911f671be2c55e447204507",
+      "691a3d59897d5403dc96850e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-16T22:32:42.076Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z",
+    "lastMessageAt": "2025-11-18T17:46:10.693Z",
+    "lastMessageId": "691cb0e212cbdaf8d82303da"
+  },
+  {
+    "_id": "691a65cd0efee6be9d35a15a",
+    "participants": [
+      "691397c9e0fd1846a1e5788e",
+      "691a3d59897d5403dc96850e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T00:01:17.467Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "691a66e70efee6be9d35a167",
+    "participants": [
+      "691a66e70efee6be9d35a166",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T00:05:59.838Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "691a67030efee6be9d35a16c",
+    "participants": [
+      "691a67030efee6be9d35a16b",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T00:06:27.252Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "691a675a0efee6be9d35a170",
+    "participants": [
+      "6919bc31365d9328eb17d8e6",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T00:07:54.366Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "691a67700efee6be9d35a178",
+    "participants": [
+      "691a67700efee6be9d35a177",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T00:08:16.351Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "691a79700efee6be9d35a189",
+    "participants": [
+      "691a3d59897d5403dc96850e",
+      "6919bc31365d9328eb17d8e6"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T01:25:04.177Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z"
+  },
+  {
+    "_id": "691b31306d50777a8fef69a8",
+    "participants": [
+      "691a345b897d5403dc96850b",
+      "691a3d59897d5403dc96850e"
+    ],
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-17T14:29:04.799Z",
+    "updatedAt": "2025-11-17T17:51:22.899Z",
+    "lastMessageAt": "2025-11-18T18:01:50.983Z",
+    "lastMessageId": "691cb48e4f72e768bbdf1a1b"
+  },
+  {
+    "_id": "691c6ca14022dee03ecb8219",
+    "participants": [
+      "691a345b897d5403dc96850b",
+      "6911f671be2c55e447204507"
+    ],
+    "lastMessageId": "691d026d414f3e438d3ff313",
+    "lastMessageAt": "2025-11-18T23:34:05.920Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-18T12:54:57.999Z"
+  },
+  {
+    "_id": "691c6d495db210f315534341",
+    "participants": [
+      "6911f671be2c55e447204507",
+      "6919bc31365d9328eb17d8e6"
+    ],
+    "lastMessageId": "691c6e035db210f31553434c",
+    "lastMessageAt": "2025-11-18T13:00:51.490Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-18T12:57:45.754Z"
+  },
+  {
+    "_id": "691c6d885db210f315534348",
+    "participants": [
+      "6919bc31365d9328eb17d8e6",
+      "691a345b897d5403dc96850b"
+    ],
+    "lastMessageId": "691c706faf2c62d2b8d25b6d",
+    "lastMessageAt": "2025-11-18T13:11:12.057Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-18T12:58:48.556Z"
+  },
+  {
+    "_id": "691c705eaf2c62d2b8d25b6c",
+    "participants": [
+      "691a345b897d5403dc96850b",
+      "691397c9e0fd1846a1e5788e"
+    ],
+    "lastMessageId": "691d0349414f3e438d3ff31d",
+    "lastMessageAt": "2025-11-18T23:37:45.998Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-18T13:10:54.377Z"
+  },
+  {
+    "_id": "691d051c15ea5cd147c77c38",
+    "participants": [
+      "69142da78c47d56c5ea79c26",
+      "691a345b897d5403dc96850b"
+    ],
+    "lastMessageId": "691d051c15ea5cd147c77c37",
+    "lastMessageAt": "2025-11-18T23:45:32.457Z",
+    "isActive": true,
+    "unreadCount": {},
+    "createdAt": "2025-11-18T23:45:32.457Z"
+  }
+]
