@@ -9,6 +9,56 @@ import ReactMarkdown from 'react-markdown';
 import { Query } from 'appwrite';
 import '../styles/ArticleDetail.css';
 
+// Convert title to SEO-friendly slug
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
+// Parse tags and create tag slug
+function parseAndSlugifyTags(tagsString: string): string {
+  try {
+    const tags = tagsString.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0)
+      .slice(0, 3);
+    
+    return tags.map(tag => slugify(tag)).join('-');
+  } catch {
+    return '';
+  }
+}
+
+// Generate slug from article (same logic as ArticleCard)
+function generateSlugFromArticle(article: any): string {
+  if (article.slug) {
+    return article.slug;
+  }
+  
+  const tagSlug = parseAndSlugifyTags(article.tags || '');
+  const titleSlug = slugify(article.title || 'article');
+  
+  let slug: string;
+  if (tagSlug) {
+    slug = `${tagSlug}-${titleSlug}`;
+  } else {
+    slug = titleSlug;
+  }
+  
+  if (slug.length > 80) {
+    slug = slug.substring(0, 80).replace(/-[^-]*$/, '');
+  }
+  
+  return slug;
+}
+
 export default function ArticleDetail() {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<Article | null>(null);
@@ -21,54 +71,44 @@ export default function ArticleDetail() {
     }
   }, [id]);
 
-  const fetchArticle = async (slugOrId: string) => {
+  const fetchArticle = async (slug: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      // First, try to fetch by document ID (for backward compatibility)
-      // Extract potential ID from slug (last 8 chars after last dash)
-      let articleId = slugOrId;
-      
-      // If it contains a dash, it might be a slug with ID at the end
-      if (slugOrId.includes('-')) {
-        const parts = slugOrId.split('-');
-        const potentialId = parts[parts.length - 1];
-        
-        // Check if the last part looks like an Appwrite ID (alphanumeric, 8+ chars)
-        if (potentialId.length >= 8 && /^[a-z0-9]+$/i.test(potentialId)) {
-          articleId = potentialId;
-        }
-      }
+      // Fetch all articles and find by matching generated slug
+      const response = await databases.listDocuments(
+        config.databaseId,
+        config.articlesCollectionId,
+        [Query.limit(100)] // Fetch articles to search
+      );
 
-      try {
-        // Try direct ID fetch first
-        const response = await databases.getDocument(
+      // Find article where generated slug matches
+      const matchedArticle = response.documents.find((doc: any) => {
+        const generatedSlug = generateSlugFromArticle(doc);
+        return generatedSlug === slug || doc.slug === slug;
+      });
+
+      if (matchedArticle) {
+        setArticle(matchedArticle as unknown as Article);
+      } else {
+        // If no match found in first 100, try searching more
+        const moreResponse = await databases.listDocuments(
           config.databaseId,
           config.articlesCollectionId,
-          articleId
+          [Query.limit(1000)]
         );
-        setArticle(response as unknown as Article);
-        return;
-      } catch (directFetchError) {
-        // If direct fetch fails, try searching by slug field
-        try {
-          const searchResponse = await databases.listDocuments(
-            config.databaseId,
-            config.articlesCollectionId,
-            [Query.equal('slug', slugOrId), Query.limit(1)]
-          );
-          
-          if (searchResponse.documents.length > 0) {
-            setArticle(searchResponse.documents[0] as unknown as Article);
-            return;
-          }
-        } catch (slugSearchError) {
-          // If slug search also fails, continue to error
-        }
         
-        // If both methods fail, show error
-        throw new Error('Article not found');
+        const foundArticle = moreResponse.documents.find((doc: any) => {
+          const generatedSlug = generateSlugFromArticle(doc);
+          return generatedSlug === slug || doc.slug === slug;
+        });
+        
+        if (foundArticle) {
+          setArticle(foundArticle as unknown as Article);
+        } else {
+          throw new Error('Article not found');
+        }
       }
     } catch (err) {
       console.error('Error fetching article:', err);

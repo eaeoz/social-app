@@ -34,6 +34,20 @@ function slugify(text) {
     .replace(/-+$/, '');            // Trim - from end of text
 }
 
+// Parse tags and create tag slug
+function parseAndSlugifyTags(tagsString) {
+  try {
+    const tags = tagsString.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0)
+      .slice(0, 3); // Use max 3 tags for URL
+    
+    return tags.map(tag => slugify(tag)).join('-');
+  } catch {
+    return '';
+  }
+}
+
 async function fetchArticles() {
   try {
     // Initialize Appwrite client
@@ -65,19 +79,29 @@ async function fetchArticles() {
 function generateSitemap(articles) {
   const date = new Date().toISOString();
 
-  // Create article URLs with SEO-friendly structure using title
+  // Create article URLs with SEO-friendly structure using tags and title
   const articlePages = articles.map(article => {
-    // Use existing slug if available, otherwise create from title
     let slug;
+    
     if (article.slug) {
+      // Use custom slug if available
       slug = article.slug;
-    } else if (article.title) {
-      // Create SEO-friendly slug from title + id for uniqueness
-      const titleSlug = slugify(article.title);
-      slug = `${titleSlug}-${article.$id.substring(0, 8)}`;
     } else {
-      // Fallback to just ID
-      slug = article.$id;
+      // Create SEO slug from tags + title
+      const tagSlug = parseAndSlugifyTags(article.tags || '');
+      const titleSlug = slugify(article.title || 'article');
+      
+      // Combine: tags-title (e.g., react-javascript-my-article-title)
+      if (tagSlug) {
+        slug = `${tagSlug}-${titleSlug}`;
+      } else {
+        slug = titleSlug;
+      }
+      
+      // Limit total length to keep URLs reasonable
+      if (slug.length > 80) {
+        slug = slug.substring(0, 80).replace(/-[^-]*$/, ''); // Cut at word boundary
+      }
     }
     
     const lastmod = article.$updatedAt || article.$createdAt || date;
@@ -85,9 +109,11 @@ function generateSitemap(articles) {
     return {
       path: `/article/${slug}`,
       lastmod: new Date(lastmod).toISOString(),
-      priority: '0.9', // High priority for content
+      priority: '0.9',
       changefreq: 'weekly',
-      title: article.title || 'Article'
+      title: article.title || 'Article',
+      tags: article.tags || '',
+      id: article.$id
     };
   });
 
@@ -115,9 +141,12 @@ ${allPages.map(page => `  <url>
   console.log(`   - Static pages: ${staticPages.length}`);
   console.log(`   - Article pages: ${articlePages.length}`);
   if (articlePages.length > 0) {
-    console.log('\n📝 Article URLs:');
+    console.log('\n📝 Article URLs (Tags + Title format):');
     articlePages.forEach(article => {
-      console.log(`   - ${article.path} (${article.title})`);
+      const tagsPart = article.tags ? `[${article.tags}]` : '[no tags]';
+      console.log(`   - ${article.path}`);
+      console.log(`     Title: "${article.title}" ${tagsPart}`);
+      console.log(`     ID: ${article.id}`);
     });
   }
   console.log(`\n📁 Location: public/sitemap.xml`);
@@ -126,6 +155,7 @@ ${allPages.map(page => `  <url>
 async function main() {
   console.log('🚀 Starting sitemap generation...');
   console.log(`🌐 Site URL: ${SITE_URL}`);
+  console.log('📌 Using SEO format: /article/{tags}-{title}');
   
   const articles = await fetchArticles();
   generateSitemap(articles);

@@ -21,6 +21,20 @@ function slugify(text: string): string {
     .replace(/-+$/, '');            // Trim - from end of text
 }
 
+// Parse tags and create tag slug
+function parseAndSlugifyTags(tagsString: string): string {
+  try {
+    const tags = tagsString.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0)
+      .slice(0, 3); // Use max 3 tags for URL
+    
+    return tags.map(tag => slugify(tag)).join('-');
+  } catch {
+    return '';
+  }
+}
+
 export default function ArticleCard({ article, index }: ArticleCardProps) {
   const parseTags = (tagsString: string): string[] => {
     try {
@@ -30,22 +44,32 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
     }
   };
 
-  // Generate SEO-friendly URL
+  // Generate SEO-friendly URL with tags and title
   const getArticleUrl = () => {
     // Use existing slug if available
     if (article.slug) {
       return `/article/${article.slug}`;
     }
     
-    // Otherwise create slug from title + ID for uniqueness
-    if (article.title) {
-      const titleSlug = slugify(article.title);
-      const shortId = article.$id.substring(0, 8);
-      return `/article/${titleSlug}-${shortId}`;
+    // Create SEO slug from tags + title
+    const tagSlug = parseAndSlugifyTags(article.tags || '');
+    const titleSlug = slugify(article.title || 'article');
+    
+    let slug: string;
+    
+    // Combine: tags-title (e.g., react-javascript-my-article-title)
+    if (tagSlug) {
+      slug = `${tagSlug}-${titleSlug}`;
+    } else {
+      slug = titleSlug;
     }
     
-    // Fallback to just ID
-    return `/article/${article.$id}`;
+    // Limit total length to keep URLs reasonable
+    if (slug.length > 80) {
+      slug = slug.substring(0, 80).replace(/-[^-]*$/, ''); // Cut at word boundary
+    }
+    
+    return `/article/${slug}`;
   };
 
   const tags = parseTags(article.tags);
