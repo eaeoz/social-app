@@ -728,16 +728,32 @@
 
       document.getElementById('articleCount').textContent = `${articles.length} article${articles.length !== 1 ? 's' : ''}`;
 
-      if (articlesToRender.length === 0) {
+      // Only show empty state if there are truly no articles at all
+      if (articles.length === 0) {
         document.getElementById('articlesTable').style.display = 'none';
         document.getElementById('emptyState').style.display = 'block';
         document.getElementById('searchSection').style.display = 'none';
         return;
       }
 
-      document.getElementById('articlesTable').style.display = 'block';
-      document.getElementById('emptyState').style.display = 'none';
+      // We have articles, so always show search and hide empty state
       document.getElementById('searchSection').style.display = 'block';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('articlesTable').style.display = 'block';
+      
+      if (articlesToRender.length === 0) {
+        // No search results - show the table with a message
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+              <div style="font-size: 48px; margin-bottom: 10px;">🔍</div>
+              <strong>No articles match your search</strong><br>
+              <span style="font-size: 13px;">Try different keywords or clear the search to see all articles.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
 
       articlesToRender.forEach(article => {
         const row = document.createElement('tr');
@@ -763,9 +779,11 @@
     }
 
     function filterArticles() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      if (query.length < 3) {
-        renderArticles();
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      
+      // If query is empty, show all articles
+      if (!query || query.length === 0) {
+        renderArticles(null);
         return;
       }
 
@@ -958,6 +976,10 @@
       document.getElementById('loadingState').style.display = 'block';
       document.getElementById('articlesTable').style.display = 'none';
       document.getElementById('emptyState').style.display = 'none';
+      // Keep search section visible if articles exist
+      if (articles.length > 0) {
+        document.getElementById('searchSection').style.display = 'block';
+      }
     }
 
     function hideLoading() {
