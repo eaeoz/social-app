@@ -1,21 +1,26 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Menu, X, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Header.css';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-      setIsMenuOpen(false);
-    }
+  // Initialize theme from localStorage or default to dark
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' || 'dark';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
+  // Toggle theme
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
   };
 
   return (
@@ -41,18 +46,29 @@ export default function Header() {
           <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
         </nav>
 
-        <form className="search-form" onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Search articles..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-          <button type="submit" className="search-button" aria-label="Search">
-            <Search size={20} />
+        {/* Theme Switcher */}
+        <div className="theme-switcher">
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            <div className="toggle-track">
+              <motion.div
+                className="toggle-slider"
+                animate={{ x: theme === 'dark' ? 0 : 28 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              >
+                {theme === 'dark' ? (
+                  <Moon size={16} className="toggle-icon" />
+                ) : (
+                  <Sun size={16} className="toggle-icon" />
+                )}
+              </motion.div>
+            </div>
           </button>
-        </form>
+        </div>
 
         <button
           className="menu-toggle"
@@ -72,18 +88,11 @@ export default function Header() {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <form className="mobile-search" onSubmit={handleSearch}>
-              <input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-              <button type="submit" className="search-button" aria-label="Search">
-                <Search size={20} />
-              </button>
-            </form>
+            <nav className="mobile-nav">
+              <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
+              <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
+              <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>
