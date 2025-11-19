@@ -1,7 +1,7 @@
-import { Handler } from '@netlify/functions';
-import nodemailer from 'nodemailer';
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
-export const handler: Handler = async (event) => {
+exports.handler = async (event) => {
   // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
@@ -12,6 +12,14 @@ export const handler: Handler = async (event) => {
 
   try {
     const { name, email, subject, message, recaptchaToken } = JSON.parse(event.body || '{}');
+
+    // Debug: Log SMTP config (remove in production)
+    console.log('SMTP Config:', {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      user: process.env.SMTP_USER ? 'set' : 'not set',
+      pass: process.env.SMTP_PASS ? 'set' : 'not set'
+    });
 
     // Verify reCAPTCHA token
     if (recaptchaToken) {

@@ -5,15 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:netlify": "netlify dev",
     "build": "npm run generate-sitemap && tsc && vite build",
     "preview": "vite preview",
     "generate-sitemap": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
+    "@netlify/functions": "^5.1.0",
+    "@types/nodemailer": "^7.0.4",
     "appwrite": "^14.0.1",
     "dotenv": "^16.6.1",
     "framer-motion": "^11.3.28",
     "lucide-react": "^0.446.0",
+    "nodemailer": "^7.0.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-google-recaptcha-v3": "^1.11.0",
@@ -25,6 +29,7 @@
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "netlify-cli": "^23.11.1",
     "typescript": "^5.5.4",
     "vite": "^5.4.2"
   }
