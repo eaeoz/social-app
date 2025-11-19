@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { databases, config } from '../config/appwrite';
 import { Article } from '../types/article';
 import { Helmet } from 'react-helmet-async';
-import { Calendar, User, Clock, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import '../styles/ArticleDetail.css';
 
 export default function ArticleDetail() {
@@ -37,13 +38,6 @@ export default function ArticleDetail() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateReadTime = (content: string) => {
-    const wordsPerMinute = 200;
-    const words = content.split(/\s+/).length;
-    const minutes = Math.ceil(words / wordsPerMinute);
-    return `${minutes} min read`;
   };
 
   const parseTags = (tagsString: string): string[] => {
@@ -88,62 +82,45 @@ export default function ArticleDetail() {
         <meta name="description" content={article.excerpt} />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.excerpt} />
-        {article.logo && <meta property="og:image" content={article.logo} />}
       </Helmet>
 
       <motion.div
-        className="article-detail-container"
+        className="blog-article-view"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Link to="/" className="back-link">
-          <ArrowLeft size={20} />
-          Back to Home
+        <Link to="/" className="blog-article-close" title="Back to Home">
+          ×
         </Link>
-
-        <article className="article-detail">
-          {article.logo && (
-            <div className="article-header-image">
-              <img src={article.logo} alt={article.title} />
-            </div>
-          )}
-
-          <div className="article-header">
-            <h1 className="article-title">{article.title}</h1>
-
-            <div className="article-meta">
-              <div className="meta-item">
-                <User size={18} />
-                <span>{article.author}</span>
-              </div>
-              <div className="meta-item">
-                <Calendar size={18} />
-                <span>{article.date}</span>
-              </div>
-              <div className="meta-item">
-                <Clock size={18} />
-                <span>{calculateReadTime(article.content)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            className="article-body"
-            dangerouslySetInnerHTML={{ __html: article.content.replace(/\n/g, '<br />') }}
-          />
-
-          {tags.length > 0 && (
-            <div className="article-tags">
-              <h3>Tags</h3>
-              <div className="tags-list">
+        
+        <div className="blog-article-content">
+          <div className="blog-article-header-full">
+            <div className="blog-article-logo-large">{article.logo || '📝'}</div>
+            
+            {tags.length > 0 && (
+              <div className="blog-article-tags-full">
                 {tags.map((tag, idx) => (
-                  <span key={idx} className="tag">{tag}</span>
+                  <span key={idx} className="blog-tag">{tag}</span>
                 ))}
               </div>
+            )}
+            
+            <h1 className="blog-article-title-full">{article.title}</h1>
+            
+            <div className="blog-article-meta-full">
+              <time className="blog-article-date">{article.date}</time>
+              <span className="blog-meta-separator">•</span>
+              <span className="blog-article-author">By {article.author}</span>
             </div>
-          )}
-        </article>
+          </div>
+          
+          <div className="blog-article-body markdown-content">
+            <ReactMarkdown>
+              {article.content}
+            </ReactMarkdown>
+          </div>
+        </div>
       </motion.div>
     </>
   );

@@ -10,13 +10,14 @@
     "generate-sitemap": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.0",
     "appwrite": "^14.0.1",
     "framer-motion": "^11.3.28",
     "lucide-react": "^0.446.0",
-    "react-helmet-async": "^2.0.5"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-helmet-async": "^2.0.5",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",
