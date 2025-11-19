@@ -83,6 +83,11 @@
   box-shadow: 0 4px 12px var(--shadow);
 }
 
+/* Light theme specific styling for contact button */
+:root[data-theme="light"] .open-contact-btn {
+  color: #ffffff;
+}
+
 @media (max-width: 768px) {
   .static-page-container {
     padding: 1rem;
