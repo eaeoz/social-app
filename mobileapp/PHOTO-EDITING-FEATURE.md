@@ -15,10 +15,11 @@ Added photo editing functionality to the mobile app's Edit Profile screen, allow
 - **Preview**: Selected image is displayed immediately before upload
 
 ### 3. Upload Process
-- Automatic upload after image selection
+- Photo preview after selection (no immediate upload)
+- Upload happens when user clicks "Save Changes" button
 - Loading indicator during upload
 - Success/Error feedback messages
-- Profile picture updates immediately upon successful upload
+- Profile picture updates after successful save
 
 ### 4. User Interface
 - Camera icon button overlay on profile picture
@@ -72,10 +73,14 @@ The feature uses the existing `/auth/update-profile` endpoint which:
 6. User selects/captures image
 7. Image editor appears (crop to square, adjust if needed)
 8. User confirms selection
-9. Image uploads automatically
-10. Success message appears
-11. Profile picture updates immediately
-12. Updated picture syncs to store and displays throughout app
+9. Selected photo previews in the avatar (no upload yet)
+10. Button changes to "✓ Photo Selected"
+11. Hint appears: "📷 New photo selected. Press 'Save Changes' to upload."
+12. User can make other profile changes (name, age, gender)
+13. User clicks "Save Changes" button
+14. All changes including photo upload together
+15. Success message appears
+16. Profile updates throughout the app
 
 ## Security Features
 - Permission validation before camera/gallery access
@@ -156,27 +161,29 @@ The feature uses the existing `/auth/update-profile` endpoint which:
 ## Code Example
 
 ```typescript
-// Example of how the photo change is triggered
-const handleChangePhoto = () => {
-  Alert.alert(
-    'Change Profile Picture',
-    'Choose an option',
-    [
-      {
-        text: 'Take Photo',
-        onPress: takePhoto,
-      },
-      {
-        text: 'Choose from Gallery',
-        onPress: pickImage,
-      },
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-    ],
-    { cancelable: true }
-  );
+// Example of how the photo is saved with other profile changes
+const handleSave = async () => {
+  // ... validation logic ...
+  
+  const formData = new FormData();
+  formData.append('nickName', nickName.trim());
+  formData.append('age', age.toString());
+  formData.append('gender', gender);
+
+  // Add profile picture if a new one was selected
+  if (selectedImage) {
+    const uriParts = selectedImage.split('.');
+    const fileType = uriParts[uriParts.length - 1];
+    
+    formData.append('profilePicture', {
+      uri: selectedImage,
+      name: `profile.${fileType}`,
+      type: `image/${fileType}`,
+    } as any);
+  }
+
+  const response = await apiService.updateProfileWithForm(formData);
+  // ... update user in store ...
 };
 ```
 

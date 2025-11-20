@@ -18,7 +18,6 @@ export default function EditProfileScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -48,7 +47,8 @@ export default function EditProfileScreen() {
       if (!result.canceled && result.assets && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         setSelectedImage(imageUri);
-        await uploadImage(imageUri);
+        setError('');
+        setSuccess('');
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -77,60 +77,12 @@ export default function EditProfileScreen() {
       if (!result.canceled && result.assets && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         setSelectedImage(imageUri);
-        await uploadImage(imageUri);
+        setError('');
+        setSuccess('');
       }
     } catch (error) {
       console.error('Error taking photo:', error);
       Alert.alert('Error', 'Failed to take photo. Please try again.');
-    }
-  };
-
-  const uploadImage = async (imageUri: string) => {
-    setIsUploadingImage(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      // Create form data with the image
-      const formData = new FormData();
-      
-      // Get file extension from URI
-      const uriParts = imageUri.split('.');
-      const fileType = uriParts[uriParts.length - 1];
-      
-      // Append the image file
-      formData.append('profilePicture', {
-        uri: imageUri,
-        name: `profile.${fileType}`,
-        type: `image/${fileType}`,
-      } as any);
-
-      // Also include current profile data
-      formData.append('nickName', nickName.trim());
-      formData.append('age', age.toString());
-      formData.append('gender', gender);
-
-      const response = await apiService.updateProfileWithForm(formData);
-
-      // Update user in store
-      if (user) {
-        setUser({
-          ...user,
-          profilePicture: response.user.profilePicture,
-          nickName: response.user.nickName,
-          age: response.user.age,
-          gender: response.user.gender,
-        });
-      }
-
-      setSuccess('Profile picture updated successfully!');
-      setSelectedImage(null);
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      setError(err.response?.data?.error || 'Failed to upload profile picture');
-      setSelectedImage(null);
-    } finally {
-      setIsUploadingImage(false);
     }
   };
 
@@ -182,6 +134,18 @@ export default function EditProfileScreen() {
       formData.append('age', age.toString());
       formData.append('gender', gender);
 
+      // Add profile picture if a new one was selected
+      if (selectedImage) {
+        const uriParts = selectedImage.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        
+        formData.append('profilePicture', {
+          uri: selectedImage,
+          name: `profile.${fileType}`,
+          type: `image/${fileType}`,
+        } as any);
+      }
+
       const response = await apiService.updateProfileWithForm(formData);
 
       // Update user in store - merge with existing user to keep accessToken
@@ -191,10 +155,12 @@ export default function EditProfileScreen() {
           nickName: response.user.nickName,
           age: response.user.age,
           gender: response.user.gender,
+          profilePicture: response.user.profilePicture || user.profilePicture,
         });
       }
       
-      setSuccess('Profile updated successfully!');
+      setSuccess(selectedImage ? 'Profile and photo updated successfully!' : 'Profile updated successfully!');
+      setSelectedImage(null);
       
       // Navigate back after a short delay
       setTimeout(() => {
@@ -242,7 +208,7 @@ export default function EditProfileScreen() {
               <TouchableOpacity 
                 style={[styles.cameraButton, { backgroundColor: theme.colors.primary }]}
                 onPress={handleChangePhoto}
-                disabled={isUploadingImage}
+                disabled={isLoading}
               >
                 <IconButton
                   icon="camera"
@@ -258,13 +224,12 @@ export default function EditProfileScreen() {
             <Button
               mode="text"
               onPress={handleChangePhoto}
-              disabled={isUploadingImage}
-              loading={isUploadingImage}
+              disabled={isLoading}
               icon="camera"
               compact
               style={styles.changePhotoButton}
             >
-              {isUploadingImage ? 'Uploading...' : 'Change Photo'}
+              {selectedImage ? '✓ Photo Selected' : 'Change Photo'}
             </Button>
           </Card.Content>
         </Card>
@@ -379,6 +344,12 @@ export default function EditProfileScreen() {
               editable={false}
               right={<TextInput.Icon icon="lock" />}
             />
+
+            {selectedImage && (
+              <Text variant="bodySmall" style={[styles.photoHint, { color: theme.colors.primary }]}>
+                📷 New photo selected. Press "Save Changes" to upload.
+              </Text>
+            )}
 
             <Text variant="bodySmall" style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
               * Required field. Email cannot be changed.
@@ -542,6 +513,11 @@ const styles = StyleSheet.create({
   },
   genderChip: {
     flex: 1,
+  },
+  photoHint: {
+    marginTop: 8,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   hint: {
     marginTop: 4,
