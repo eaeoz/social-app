@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button, Avatar, Card, useTheme, Chip } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, TouchableOpacity } from 'react-native';
+import { Text, TextInput, Button, Avatar, Card, useTheme, Chip, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../store';
 import { apiService } from '../services';
 
@@ -16,6 +17,96 @@ export default function EditProfileScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Sorry, we need camera roll permissions to change your profile picture.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images' as any,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setSelectedImage(imageUri);
+        setError('');
+        setSuccess('');
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Sorry, we need camera permissions to take a photo.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setSelectedImage(imageUri);
+        setError('');
+        setSuccess('');
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const handleChangePhoto = () => {
+    Alert.alert(
+      'Change Profile Picture',
+      'Choose an option',
+      [
+        {
+          text: 'Take Photo',
+          onPress: takePhoto,
+        },
+        {
+          text: 'Choose from Gallery',
+          onPress: pickImage,
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const handleSave = async () => {
     if (!nickName.trim()) {
@@ -43,6 +134,18 @@ export default function EditProfileScreen() {
       formData.append('age', age.toString());
       formData.append('gender', gender);
 
+      // Add profile picture if a new one was selected
+      if (selectedImage) {
+        const uriParts = selectedImage.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        
+        formData.append('profilePicture', {
+          uri: selectedImage,
+          name: `profile.${fileType}`,
+          type: `image/${fileType}`,
+        } as any);
+      }
+
       const response = await apiService.updateProfileWithForm(formData);
 
       // Update user in store - merge with existing user to keep accessToken
@@ -52,10 +155,12 @@ export default function EditProfileScreen() {
           nickName: response.user.nickName,
           age: response.user.age,
           gender: response.user.gender,
+          profilePicture: response.user.profilePicture || user.profilePicture,
         });
       }
       
-      setSuccess('Profile updated successfully!');
+      setSuccess(selectedImage ? 'Profile and photo updated successfully!' : 'Profile updated successfully!');
+      setSelectedImage(null);
       
       // Navigate back after a short delay
       setTimeout(() => {
@@ -88,17 +193,44 @@ export default function EditProfileScreen() {
         {/* Profile Picture Section */}
         <Card style={styles.card}>
           <Card.Content style={styles.avatarSection}>
-            {user.profilePicture ? (
-              <Avatar.Image size={100} source={{ uri: user.profilePicture }} />
-            ) : (
-              <Avatar.Text 
-                size={100} 
-                label={(user.username || user.nickName || 'U').substring(0, 2).toUpperCase()} 
-              />
-            )}
+            <View style={styles.avatarContainer}>
+              {selectedImage || user.profilePicture ? (
+                <Avatar.Image 
+                  size={100} 
+                  source={{ uri: selectedImage || user.profilePicture }} 
+                />
+              ) : (
+                <Avatar.Text 
+                  size={100} 
+                  label={(user.username || user.nickName || 'U').substring(0, 2).toUpperCase()} 
+                />
+              )}
+              <TouchableOpacity 
+                style={[styles.cameraButton, { backgroundColor: theme.colors.primary }]}
+                onPress={handleChangePhoto}
+                disabled={isLoading}
+              >
+                <IconButton
+                  icon="camera"
+                  iconColor="#FFFFFF"
+                  size={20}
+                  style={styles.cameraIcon}
+                />
+              </TouchableOpacity>
+            </View>
             <Text variant="bodyMedium" style={[styles.avatarHint, { color: theme.colors.onSurfaceVariant }]}>
               @{user.username}
             </Text>
+            <Button
+              mode="text"
+              onPress={handleChangePhoto}
+              disabled={isLoading}
+              icon="camera"
+              compact
+              style={styles.changePhotoButton}
+            >
+              {selectedImage ? '✓ Photo Selected' : 'Change Photo'}
+            </Button>
           </Card.Content>
         </Card>
 
@@ -213,6 +345,12 @@ export default function EditProfileScreen() {
               right={<TextInput.Icon icon="lock" />}
             />
 
+            {selectedImage && (
+              <Text variant="bodySmall" style={[styles.photoHint, { color: theme.colors.primary }]}>
+                📷 New photo selected. Press "Save Changes" to upload.
+              </Text>
+            )}
+
             <Text variant="bodySmall" style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
               * Required field. Email cannot be changed.
             </Text>
@@ -288,6 +426,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
   },
+  avatarContainer: {
+    position: 'relative',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  cameraIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  changePhotoButton: {
+    marginTop: 8,
+  },
   avatarHint: {
     marginTop: 12,
   },
@@ -350,6 +513,11 @@ const styles = StyleSheet.create({
   },
   genderChip: {
     flex: 1,
+  },
+  photoHint: {
+    marginTop: 8,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   hint: {
     marginTop: 4,
