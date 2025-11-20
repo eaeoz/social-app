@@ -1,8 +1,7 @@
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { config } from 'dotenv';
-import { Client, Databases, Query } from 'appwrite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -11,6 +10,7 @@ const __dirname = dirname(__filename);
 config({ path: join(__dirname, '..', '.env') });
 
 const SITE_URL = process.env.VITE_SITE_URL || 'https://sedat.netlify.app';
+const BLOG_ARTICLES_PATH = join(__dirname, '../../server/data/blogArticles.json');
 
 // Static pages
 const staticPages = [
@@ -27,11 +27,11 @@ function slugify(text) {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 // Parse tags and create tag slug
@@ -40,14 +40,16 @@ function parseAndSlugifyTags(tagsString) {
     let tags;
     
     // Try parsing as JSON array first
-    if (tagsString.startsWith('[')) {
+    if (typeof tagsString === 'string' && tagsString.startsWith('[')) {
       const parsed = JSON.parse(tagsString);
       tags = Array.isArray(parsed) ? parsed : [];
-    } else {
+    } else if (Array.isArray(tagsString)) {
+      tags = tagsString;
+    } else if (typeof tagsString === 'string') {
       // Fallback to comma-separated
-      tags = tagsString.split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
+      tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    } else {
+      return '';
     }
     
     // Use max 3 tags for URL
@@ -57,122 +59,110 @@ function parseAndSlugifyTags(tagsString) {
   }
 }
 
-async function fetchArticles() {
+// Generate slug from article using only title
+function generateSlugFromArticle(article) {
+  if (article.slug) {
+    return article.slug;
+  }
+  
+  return slugify(article.title || 'article');
+}
+
+// Load blog articles from local JSON file
+function loadBlogArticles() {
   try {
-    // Initialize Appwrite client
-    const client = new Client()
-      .setEndpoint(process.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1')
-      .setProject(process.env.VITE_APPWRITE_PROJECT_ID || '');
-
-    const databases = new Databases(client);
-
-    // Fetch all articles
-    const response = await databases.listDocuments(
-      process.env.VITE_APPWRITE_DATABASE_ID || '',
-      process.env.VITE_APPWRITE_ARTICLES_COLLECTION_ID || '',
-      [
-        Query.orderDesc('$createdAt'),
-        Query.limit(1000) // Get all articles
-      ]
-    );
-
-    console.log(`✅ Fetched ${response.documents.length} articles from Appwrite`);
-    return response.documents;
+    const articlesData = readFileSync(BLOG_ARTICLES_PATH, 'utf8');
+    const articles = JSON.parse(articlesData);
+    console.log(`✅ Loaded ${articles.length} articles from local file`);
+    return articles;
   } catch (error) {
-    console.error('⚠️ Error fetching articles from Appwrite:', error.message);
+    console.warn('⚠️ Could not load blog articles:', error.message);
     console.log('📝 Generating sitemap with static pages only...');
     return [];
   }
 }
 
 function generateSitemap(articles) {
-  const date = new Date().toISOString();
+  const today = new Date().toISOString().split('T')[0];
 
   // Create article URLs with SEO-friendly structure using tags and title
   const articlePages = articles.map(article => {
-    let slug;
-    
-    if (article.slug) {
-      // Use custom slug if available
-      slug = article.slug;
-    } else {
-      // Create SEO slug from tags + title
-      const tagSlug = parseAndSlugifyTags(article.tags || '');
-      const titleSlug = slugify(article.title || 'article');
-      
-      // Combine: tags-title (e.g., react-javascript-my-article-title)
-      if (tagSlug) {
-        slug = `${tagSlug}-${titleSlug}`;
-      } else {
-        slug = titleSlug;
-      }
-      
-      // Limit total length to keep URLs reasonable
-      if (slug.length > 80) {
-        slug = slug.substring(0, 80).replace(/-[^-]*$/, ''); // Cut at word boundary
-      }
-    }
-    
-    const lastmod = article.$updatedAt || article.$createdAt || date;
+    const slug = generateSlugFromArticle(article);
+    const articleDate = article.date || today;
     
     return {
       path: `/article/${slug}`,
-      lastmod: new Date(lastmod).toISOString(),
-      priority: '0.9',
-      changefreq: 'weekly',
-      title: article.title || 'Article',
-      tags: article.tags || '',
-      id: article.$id
+      lastmod: articleDate,
+      priority: '0.8',
+      changefreq: 'monthly'
     };
   });
 
-  // Combine static pages with article pages
-  const allPages = [...staticPages, ...articlePages];
-
-  // Generate sitemap with proper formatting (no whitespace in URLs)
-  const urlEntries = allPages.map(page => {
-    const fullUrl = `${SITE_URL}${page.path}`;
-    return `  <url>
-    <loc>${fullUrl}</loc>
-    <lastmod>${page.lastmod || date}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`;
-  }).join('\n');
-
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${urlEntries}
-</urlset>`;
-
-  const outputPath = join(__dirname, '..', 'public', 'sitemap.xml');
-  writeFileSync(outputPath, sitemap);
+  // Generate sitemap XML
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+  xml += '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n';
+  xml += '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9\n';
+  xml += '        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n';
   
-  console.log('✅ Sitemap generated successfully!');
-  console.log(`📊 Total URLs: ${allPages.length}`);
-  console.log(`   - Static pages: ${staticPages.length}`);
-  console.log(`   - Article pages: ${articlePages.length}`);
+  // Add section comments for better organization
+  const sections = {
+    '/': 'Homepage',
+    '/about': 'Information Pages'
+  };
+  
+  let currentSection = null;
+  
+  // Add static pages with section comments
+  staticPages.forEach(page => {
+    // Add section comment if it's a new section
+    if (sections[page.path] && sections[page.path] !== currentSection) {
+      xml += `  \n  <!-- ${sections[page.path]} -->\n`;
+      currentSection = sections[page.path];
+    }
+    
+    xml += '  <url>\n';
+    xml += `    <loc>${SITE_URL}${page.path}</loc>\n`;
+    xml += `    <lastmod>${today}</lastmod>\n`;
+    xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+    xml += `    <priority>${page.priority}</priority>\n`;
+    xml += '  </url>\n';
+  });
+  
+  // Add blog articles section
   if (articlePages.length > 0) {
-    console.log('\n📝 Article URLs (Tags + Title format):');
+    xml += '  \n  <!-- Blog Articles -->\n';
+    
     articlePages.forEach(article => {
-      const tagsPart = article.tags ? `[${article.tags}]` : '[no tags]';
-      console.log(`   - ${article.path}`);
-      console.log(`     Title: "${article.title}" ${tagsPart}`);
-      console.log(`     ID: ${article.id}`);
+      xml += '  <url>\n';
+      xml += `    <loc>${SITE_URL}${article.path}</loc>\n`;
+      xml += `    <lastmod>${article.lastmod}</lastmod>\n`;
+      xml += `    <changefreq>${article.changefreq}</changefreq>\n`;
+      xml += `    <priority>${article.priority}</priority>\n`;
+      xml += '  </url>\n';
     });
   }
-  console.log(`\n📁 Location: public/sitemap.xml`);
+  
+  xml += '\n</urlset>\n';
+
+  const outputPath = join(__dirname, '..', 'public', 'sitemap.xml');
+  writeFileSync(outputPath, xml);
+  
+  console.log('✅ Sitemap generated successfully!');
+  console.log(`📊 Total URLs: ${staticPages.length + articlePages.length}`);
+  console.log(`   - Static pages: ${staticPages.length}`);
+  console.log(`   - Blog articles: ${articlePages.length}`);
+  console.log(`🌐 Site URL: ${SITE_URL}`);
+  console.log(`📅 Last modified: ${today}`);
+  console.log(`📁 Location: public/sitemap.xml`);
 }
 
-async function main() {
+function main() {
   console.log('🚀 Starting sitemap generation...');
   console.log(`🌐 Site URL: ${SITE_URL}`);
-  console.log('📌 Using SEO format: /article/{tags}-{title}');
+  console.log('📌 Using SEO format: /article/{title-slug}');
   
-  const articles = await fetchArticles();
+  const articles = loadBlogArticles();
   generateSitemap(articles);
 }
 

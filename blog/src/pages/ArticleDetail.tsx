@@ -47,27 +47,13 @@ function parseAndSlugifyTags(tagsString: string): string {
   }
 }
 
-// Generate slug from article (same logic as ArticleCard)
+// Generate slug from article using only title (matches sitemap generation)
 function generateSlugFromArticle(article: any): string {
   if (article.slug) {
     return article.slug;
   }
   
-  const tagSlug = parseAndSlugifyTags(article.tags || '');
-  const titleSlug = slugify(article.title || 'article');
-  
-  let slug: string;
-  if (tagSlug) {
-    slug = `${tagSlug}-${titleSlug}`;
-  } else {
-    slug = titleSlug;
-  }
-  
-  if (slug.length > 80) {
-    slug = slug.substring(0, 80).replace(/-[^-]*$/, '');
-  }
-  
-  return slug;
+  return slugify(article.title || 'article');
 }
 
 export default function ArticleDetail() {
