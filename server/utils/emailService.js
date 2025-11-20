@@ -1,19 +1,28 @@
 import nodemailer from 'nodemailer';
 
-// SMTP credentials from environment variables
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.yandex.com';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
-const FRONTEND_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-
 // Create reusable transporter
 let transporter = null;
 
 function getTransporter() {
   if (!transporter) {
+    // Read environment variables INSIDE the function (lazy loading)
+    // This ensures they're read AFTER dotenv.config() has run
+    const SMTP_USER = process.env.SMTP_USER;
+    const SMTP_PASS = process.env.SMTP_PASS;
+    const SMTP_HOST = process.env.SMTP_HOST || 'smtp.yandex.com';
+    const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
+    const FRONTEND_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+    
+    console.log('📧 Initializing email transporter...');
+    console.log(`📧 SMTP_USER: ${SMTP_USER ? '✅ Set' : '❌ Not set'}`);
+    console.log(`📧 SMTP_PASS: ${SMTP_PASS ? '✅ Set (length: ' + SMTP_PASS.length + ')' : '❌ Not set'}`);
+    console.log(`📧 SMTP_HOST: ${SMTP_HOST}`);
+    console.log(`📧 SMTP_PORT: ${SMTP_PORT}`);
+    console.log(`📧 Frontend URL: ${FRONTEND_URL}`);
+    
     if (!SMTP_USER || !SMTP_PASS) {
-      console.error('❌ SMTP credentials not configured');
+      console.error('❌ SMTP credentials not configured - emails will NOT be sent!');
+      console.error('❌ Please set SMTP_USER and SMTP_PASS environment variables');
       return null;
     }
 
@@ -27,10 +36,15 @@ function getTransporter() {
       },
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      debug: true, // Enable debug output
+      logger: true // Log information
     });
 
-    console.log(`📧 Email transporter initialized: ${SMTP_HOST}:${SMTP_PORT}`);
+    console.log(`✅ Email transporter initialized: ${SMTP_HOST}:${SMTP_PORT}`);
+    
+    // Store SMTP config in transporter for later use
+    transporter.smtpConfig = { SMTP_USER, SMTP_PASS, SMTP_HOST, SMTP_PORT, FRONTEND_URL };
   }
 
   return transporter;
@@ -55,6 +69,9 @@ export async function sendVerificationEmail(email, username, verificationToken) 
     await mailer.verify();
     console.log('✅ SMTP connection verified');
 
+    // Get SMTP config from transporter
+    const { SMTP_USER, FRONTEND_URL } = mailer.smtpConfig;
+    
     // Create verification link
     const verificationLink = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
@@ -260,6 +277,9 @@ export async function sendPasswordResetEmail(email, username, resetToken) {
 
     // Verify transporter
     await mailer.verify();
+
+    // Get SMTP config from transporter
+    const { SMTP_USER, FRONTEND_URL } = mailer.smtpConfig;
 
     // Create reset link
     const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;

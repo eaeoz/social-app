@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import { Text, Button, Card, useTheme, HelperText } from 'react-native-paper';
+import { Text, Button, Card, useTheme, HelperText, TextInput, Dialog, Portal } from 'react-native-paper';
 import { apiService } from '../services';
 import { useAuthStore } from '../store';
+import { API_URL } from '../constants/config';
 
 interface EmailVerificationScreenProps {
   email: string;
@@ -15,13 +16,116 @@ export default function EmailVerificationScreen({ email }: EmailVerificationScre
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  const [maxAttempts, setMaxAttempts] = useState<number>(4);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Fetch remaining attempts on mount
+  useEffect(() => {
+    fetchRemainingAttempts();
+  }, []);
+
+  const fetchRemainingAttempts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/get-resend-attempts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          setRemainingAttempts(data.remainingAttempts);
+          setMaxAttempts(data.maxAttempts);
+        } catch (parseError) {
+          console.error('Failed to parse resend attempts response:', text);
+          // Set default values if parsing fails
+          setRemainingAttempts(4);
+          setMaxAttempts(4);
+        }
+      } else {
+        // Set default values if request fails
+        setRemainingAttempts(4);
+        setMaxAttempts(4);
+      }
+    } catch (err) {
+      console.error('Failed to fetch resend attempts:', err);
+      // Set default values on network error
+      setRemainingAttempts(4);
+      setMaxAttempts(4);
+    }
+  };
 
   const handleResendEmail = async () => {
+    if (!password.trim()) {
+      setError('Please enter your password');
+      return;
+    }
+
     setError('');
     setSuccess('');
-    
-    // Show helpful message - resend requires password which we don't have
-    setSuccess('📧 To resend the verification email, please go back to the login screen and try logging in again. You\'ll receive a new verification email automatically.');
+    setIsResending(true);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const text = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse response:', text);
+        throw new Error('Server returned invalid response');
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to resend email');
+      }
+
+      setSuccess(data.message || 'Verification email sent! Please check your inbox.');
+      if (data.remainingAttempts !== undefined) {
+        setRemainingAttempts(data.remainingAttempts);
+      }
+      if (data.maxAttempts !== undefined) {
+        setMaxAttempts(data.maxAttempts);
+      }
+      setShowPasswordDialog(false);
+      setPassword('');
+      
+      console.log('✅ Verification email resent successfully');
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend verification email');
+      console.error('❌ Resend email error:', err);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const openResendDialog = () => {
+    setError('');
+    setSuccess('');
+    setShowPasswordDialog(true);
+  };
+
+  const closeResendDialog = () => {
+    setShowPasswordDialog(false);
+    setPassword('');
+    setShowPassword(false);
   };
 
   const handleLogout = async () => {
@@ -126,17 +230,71 @@ export default function EmailVerificationScreen({ email }: EmailVerificationScre
               Back to Login
             </Button>
 
-            <Button
-              mode="outlined"
-              onPress={handleResendEmail}
-              style={styles.button}
-              icon="email-sync"
-            >
-              How to Resend Email
-            </Button>
+            {remainingAttempts !== null && remainingAttempts > 0 ? (
+              <Button
+                mode="outlined"
+                onPress={openResendDialog}
+                style={styles.button}
+                icon="email-sync"
+                disabled={isResending}
+              >
+                {isResending ? 'Sending...' : 'Resend Verification Email'}
+              </Button>
+            ) : remainingAttempts === 0 ? (
+              <Text variant="bodySmall" style={[styles.errorText, { marginTop: 8 }]}>
+                Maximum resend attempts reached. Please contact support.
+              </Text>
+            ) : null}
           </View>
         </View>
       </ScrollView>
+
+      {/* Password Dialog for Resend */}
+      <Portal>
+        <Dialog visible={showPasswordDialog} onDismiss={closeResendDialog}>
+          <Dialog.Title>Resend Verification Email</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium" style={{ marginBottom: 16 }}>
+              Enter your password to resend the verification email to:
+            </Text>
+            <Text variant="bodyMedium" style={{ fontWeight: 'bold', marginBottom: 16, color: theme.colors.primary }}>
+              {email}
+            </Text>
+            <TextInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              mode="outlined"
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {error ? (
+              <HelperText type="error" visible={true}>
+                {error}
+              </HelperText>
+            ) : null}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={closeResendDialog} disabled={isResending}>
+              Cancel
+            </Button>
+            <Button 
+              onPress={handleResendEmail} 
+              loading={isResending}
+              disabled={isResending || !password.trim()}
+            >
+              {isResending ? 'Sending...' : 'Send'}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
