@@ -1075,3 +1075,46 @@ export async function resetPassword(req, res) {
     res.status(500).json({ error: 'Failed to reset password' });
   }
 }
+
+// Get user statistics
+export async function getUserStatistics(req, res) {
+  try {
+    const userId = req.user.userId;
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Get user document to access openChats array
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { openChats: 1 } }
+    );
+
+    // Count total chats from openChats array
+    const totalChats = user?.openChats?.length || 0;
+
+    // Count total messages sent by user (both room and private messages)
+    const roomMessages = await db.collection('messages').countDocuments({
+      senderId: new ObjectId(userId)
+    });
+
+    const privateMessages = await db.collection('privatemessages').countDocuments({
+      senderId: new ObjectId(userId)
+    });
+
+    const totalMessages = roomMessages + privateMessages;
+
+    console.log(`📊 User statistics for ${userId}: ${totalChats} chats (from openChats array), ${totalMessages} messages`);
+
+    res.json({
+      success: true,
+      statistics: {
+        totalChats,
+        totalMessages
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user statistics error:', error);
+    res.status(500).json({ error: 'Failed to get user statistics' });
+  }
+}

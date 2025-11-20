@@ -115,6 +115,11 @@ class ApiService {
     await this.api.put('/auth/change-password', payload);
   }
 
+  async getUserStatistics(): Promise<{ totalChats: number; totalMessages: number }> {
+    const response = await this.api.get('/auth/statistics');
+    return response.data.statistics;
+  }
+
   // Room endpoints
   async getPublicRooms(): Promise<Room[]> {
     const response = await this.api.get('/rooms/public');

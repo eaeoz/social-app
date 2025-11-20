@@ -12,6 +12,24 @@ export default function ProfileScreen() {
   const navigation = useNavigation<RootNavigationProp>();
   const { user, logout } = useAuthStore();
   const { isDarkMode, setDarkMode } = useThemeStore();
+  const [statistics, setStatistics] = React.useState({ totalChats: 0, totalMessages: 0 });
+  const [loadingStats, setLoadingStats] = React.useState(true);
+
+  React.useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
+    try {
+      setLoadingStats(true);
+      const stats = await apiService.getUserStatistics();
+      setStatistics(stats);
+    } catch (error) {
+      console.error('Failed to load statistics:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -161,21 +179,19 @@ export default function ProfileScreen() {
           </Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text variant="headlineSmall">0</Text>
+              <Text variant="headlineSmall">
+                {loadingStats ? '...' : statistics.totalMessages}
+              </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Messages
+                Total Messages
               </Text>
             </View>
             <View style={styles.statItem}>
-              <Text variant="headlineSmall">0</Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Chats
+              <Text variant="headlineSmall">
+                {loadingStats ? '...' : statistics.totalChats}
               </Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text variant="headlineSmall">0</Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Rooms
+                Total Chats
               </Text>
             </View>
           </View>
