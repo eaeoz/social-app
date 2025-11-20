@@ -23,28 +23,7 @@ function slugify(text: string): string {
     .replace(/[^\w\-]+/g, '')
     .replace(/\-\-+/g, '-')
     .replace(/^-+/, '')
-    .replace(/-+$/, '');
-}
-
-// Parse tags and create tag slug
-function parseAndSlugifyTags(tagsString: string): string {
-  try {
-    let tags: string[];
-    
-    // Try parsing as JSON array first
-    if (tagsString.startsWith('[')) {
-      const parsed = JSON.parse(tagsString);
-      tags = Array.isArray(parsed) ? parsed : [];
-    } else {
-      // Fallback to comma-separated
-      tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-    }
-    
-    // Use max 3 tags for URL
-    return tags.slice(0, 3).map(tag => slugify(tag)).join('-');
-  } catch {
-    return '';
-  }
+  .replace(/-+$/, '');
 }
 
 // Generate slug from article using only title (matches sitemap generation)

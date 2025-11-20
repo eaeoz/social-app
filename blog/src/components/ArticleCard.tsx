@@ -18,28 +18,7 @@ function slugify(text: string): string {
     .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
     .replace(/\-\-+/g, '-')         // Replace multiple - with single -
     .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
-}
-
-// Parse tags and create tag slug
-function parseAndSlugifyTags(tagsString: string): string {
-  try {
-    let tags: string[];
-    
-    // Try parsing as JSON array first
-    if (tagsString.startsWith('[')) {
-      const parsed = JSON.parse(tagsString);
-      tags = Array.isArray(parsed) ? parsed : [];
-    } else {
-      // Fallback to comma-separated
-      tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-    }
-    
-    // Use max 3 tags for URL
-    return tags.slice(0, 3).map(tag => slugify(tag)).join('-');
-  } catch {
-    return '';
-  }
+  .replace(/-+$/, '');            // Trim - from end of text
 }
 
 export default function ArticleCard({ article, index }: ArticleCardProps) {
