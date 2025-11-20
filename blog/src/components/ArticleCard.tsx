@@ -57,32 +57,17 @@ export default function ArticleCard({ article, index }: ArticleCardProps) {
     }
   };
 
-  // Generate SEO-friendly URL with tags and title
+  // Generate SEO-friendly URL using only title (matches sitemap generation)
   const getArticleUrl = () => {
     // Use existing slug if available
     if (article.slug) {
       return `/article/${article.slug}`;
     }
     
-    // Create SEO slug from tags + title
-    const tagSlug = parseAndSlugifyTags(article.tags || '');
+    // Create SEO slug from title only
     const titleSlug = slugify(article.title || 'article');
     
-    let slug: string;
-    
-    // Combine: tags-title (e.g., react-javascript-my-article-title)
-    if (tagSlug) {
-      slug = `${tagSlug}-${titleSlug}`;
-    } else {
-      slug = titleSlug;
-    }
-    
-    // Limit total length to keep URLs reasonable
-    if (slug.length > 80) {
-      slug = slug.substring(0, 80).replace(/-[^-]*$/, ''); // Cut at word boundary
-    }
-    
-    return `/article/${slug}`;
+    return `/article/${titleSlug}`;
   };
 
   const tags = parseTags(article.tags);
