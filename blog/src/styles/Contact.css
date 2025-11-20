@@ -40,6 +40,19 @@
   font-size: 1.5rem;
 }
 
+.close-modal-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.esc-hint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 .close-modal {
   background: transparent;
   color: var(--text-secondary);
@@ -171,5 +184,10 @@
 
   .contact-form {
     padding: 1.5rem;
+  }
+
+  /* Hide ESC hint on mobile */
+  .esc-hint {
+    display: none;
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send } from 'lucide-react';
@@ -17,6 +17,23 @@ export default function Contact() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { executeRecaptcha } = useGoogleReCaptcha();
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isModalOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,13 +131,16 @@ export default function Contact() {
             >
               <div className="modal-header">
                 <h2>Send us a message</h2>
-                <button 
-                  className="close-modal"
-                  onClick={() => setIsModalOpen(false)}
-                  aria-label="Close modal"
-                >
-                  <X size={24} />
-                </button>
+                <div className="close-modal-wrapper">
+                  <span className="esc-hint">Press ESC to close</span>
+                  <button 
+                    className="close-modal"
+                    onClick={() => setIsModalOpen(false)}
+                    aria-label="Close modal"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
 
               <form onSubmit={handleSubmit} className="contact-form">
