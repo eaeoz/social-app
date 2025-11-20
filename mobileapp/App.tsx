@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { PaperProvider, Text, Button } from 'react-native-paper';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, View, ActivityIndicator, Animated, TouchableWithoutFeedback } from 'react-native';
+import { PaperProvider, Text } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore, useThemeStore, useChatStore } from './src/store';
@@ -16,11 +16,24 @@ export default function App() {
   
   // Auth screen toggle
   const [showLogin, setShowLogin] = useState(true);
+  
+  // Animation for theme toggle
+  const toggleAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadUser();
     loadTheme();
   }, []);
+
+  // Animate toggle switch
+  useEffect(() => {
+    Animated.spring(toggleAnimation, {
+      toValue: isDarkMode ? 1 : 0,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 100,
+    }).start();
+  }, [isDarkMode]);
 
   // Reset to login screen when user logs out
   useEffect(() => {
@@ -127,16 +140,34 @@ export default function App() {
                 <RegisterScreen onSwitchToLogin={() => setShowLogin(true)} />
               )}
               
-              {/* Theme Toggle Button - Fixed position */}
+              {/* Theme Toggle Switch - Fixed position */}
               <View style={styles.themeToggleContainer}>
-                <Button
-                  mode="outlined"
-                  onPress={() => setDarkMode(!isDarkMode)}
-                  icon={isDarkMode ? 'white-balance-sunny' : 'moon-waning-crescent'}
-                  compact
-                >
-                  {isDarkMode ? 'Light' : 'Dark'} Mode
-                </Button>
+                <TouchableWithoutFeedback onPress={() => setDarkMode(!isDarkMode)}>
+                  <Animated.View style={[
+                    styles.toggleSwitch,
+                    { 
+                      backgroundColor: isDarkMode ? '#4A5568' : '#E2E8F0',
+                      borderColor: isDarkMode ? '#4A5568' : '#CBD5E0',
+                    }
+                  ]}>
+                    <Animated.View style={[
+                      styles.toggleSlider,
+                      { 
+                        transform: [{
+                          translateX: toggleAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 28],
+                          })
+                        }],
+                        backgroundColor: isDarkMode ? '#FDB813' : '#F59E0B',
+                      }
+                    ]}>
+                      <Text style={styles.toggleIcon}>
+                        {isDarkMode ? '🌙' : '☀️'}
+                      </Text>
+                    </Animated.View>
+                  </Animated.View>
+                </TouchableWithoutFeedback>
               </View>
             </>
           )}
@@ -157,8 +188,31 @@ const styles = StyleSheet.create({
   },
   themeToggleContainer: {
     position: 'absolute',
-    top: 20,
-    right: 20,
+    top: 50,
+    alignSelf: 'center',
     zIndex: 1000,
+  },
+  toggleSwitch: {
+    width: 60,
+    height: 32,
+    borderRadius: 16,
+    padding: 2,
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  toggleSlider: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  toggleIcon: {
+    fontSize: 16,
   },
 });
