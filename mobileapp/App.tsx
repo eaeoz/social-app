@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   themeToggleContainer: {
     position: 'absolute',
-    top: 50,
+    bottom: 30,
     alignSelf: 'center',
     zIndex: 1000,
   },

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { Text, TextInput, Button, Card, useTheme, HelperText, RadioButton } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, Image, Alert, TouchableOpacity } from 'react-native';
+import { Text, TextInput, Button, Card, useTheme, HelperText, RadioButton, Avatar, ActivityIndicator } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import { apiService } from '../services';
 import { useAuthStore } from '../store';
+import { API_URL } from '../constants/config';
 
 interface RegisterScreenProps {
   onSwitchToLogin: () => void;
@@ -26,10 +28,77 @@ export default function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps)
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [profileImage, setProfileImage] = useState<{ uri: string; type: string; name: string } | null>(null);
+  const [allowUserPictures, setAllowUserPictures] = useState(true);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+
+  // Fetch site settings to check if user pictures are allowed
+  useEffect(() => {
+    const fetchSiteSettings = async () => {
+      try {
+        const response = await fetch(`${API_URL}/settings/site`);
+        if (response.ok) {
+          const data = await response.json();
+          setAllowUserPictures(data.settings.allowUserPictures !== false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch site settings:', err);
+        setAllowUserPictures(true); // Default to true if fetch fails
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    fetchSiteSettings();
+  }, []);
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
+  };
+
+  const pickImage = async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Sorry, we need camera roll permissions to upload profile pictures.');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        
+        // Validate file size (max 5MB)
+        if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+          setError('Image size must be less than 5MB');
+          return;
+        }
+
+        // Create image object
+        const image = {
+          uri: asset.uri,
+          type: 'image/jpeg',
+          name: `profile_${Date.now()}.jpg`,
+        };
+
+        setProfileImage(image);
+        setError('');
+        console.log('📷 Profile image selected:', image.name);
+      }
+    } catch (err) {
+      console.error('Error picking image:', err);
+      setError('Failed to select image. Please try again.');
+    }
   };
 
   const validateForm = (): boolean => {
@@ -87,14 +156,59 @@ export default function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps)
       console.log('👤 Username:', formData.username);
       console.log('📧 Email:', formData.email);
       
-      const userData = await apiService.register({
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        fullName: formData.fullName,
-        age: formData.age,
-        gender: formData.gender,
-      });
+      // If profile image exists, use FormData, otherwise use regular JSON
+      let userData;
+      
+      if (profileImage && allowUserPictures && parseInt(formData.age) >= 18) {
+        console.log('📷 Including profile picture in registration');
+        
+        // Create FormData for file upload
+        const formDataToSend = new FormData();
+        formDataToSend.append('username', formData.username);
+        formDataToSend.append('email', formData.email);
+        formDataToSend.append('password', formData.password);
+        formDataToSend.append('fullName', formData.fullName);
+        formDataToSend.append('age', formData.age);
+        formDataToSend.append('gender', formData.gender);
+        
+        // Append the profile picture
+        formDataToSend.append('profilePicture', {
+          uri: profileImage.uri,
+          type: profileImage.type,
+          name: profileImage.name,
+        } as any);
+
+        // Make direct axios call with FormData
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formDataToSend,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || errorData.message || 'Registration failed');
+        }
+
+        const data = await response.json();
+        userData = {
+          ...data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        };
+      } else {
+        // Regular registration without profile picture
+        userData = await apiService.register({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          age: formData.age,
+          gender: formData.gender,
+        });
+      }
       
       console.log('✅ Registration successful!', userData);
       
@@ -123,6 +237,8 @@ export default function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps)
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
@@ -252,6 +368,37 @@ export default function RegisterScreen({ onSwitchToLogin }: RegisterScreenProps)
                   ))}
                 </ScrollView>
               </View>
+
+              {/* Profile Picture Upload - Only show if allowed and user is 18+ */}
+              {!isLoadingSettings && allowUserPictures && parseInt(formData.age) >= 18 && (
+                <View style={styles.profilePictureContainer}>
+                  {profileImage ? (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: profileImage.uri }}
+                        style={styles.profilePreview}
+                      />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => setProfileImage(null)}
+                        disabled={isSubmitting}
+                      >
+                        <Text style={styles.removeImageText}>×</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.uploadPlaceholder}
+                      onPress={pickImage}
+                      disabled={isSubmitting}
+                    >
+                      <Text style={styles.uploadIcon}>📷</Text>
+                      <Text style={styles.uploadText}>Add Profile Photo</Text>
+                      <Text style={styles.uploadSubtext}>(Optional, 18+ only)</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
               {/* Gender Selection */}
               <View style={styles.radioContainer}>
@@ -404,5 +551,69 @@ const styles = StyleSheet.create({
   },
   safetyList: {
     paddingLeft: 4,
+  },
+  profilePictureContainer: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+  },
+  profilePreview: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#F44336',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  removeImageText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    lineHeight: 24,
+  },
+  uploadPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+  },
+  uploadIcon: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  uploadText: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  uploadSubtext: {
+    fontSize: 10,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 2,
   },
 });
