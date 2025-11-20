@@ -42,9 +42,9 @@ export default function App() {
     }
   }, [user, isLoading]);
 
-  // Connect socket when user is logged in
+  // Connect socket when user is logged in AND verified
   useEffect(() => {
-    if (user && user.userId && user.username) {
+    if (user && user.userId && user.username && user.isEmailVerified !== false) {
       console.log('🔌 Attempting Socket.IO connection...');
       console.log('👤 User ID:', user.userId);
       console.log('👤 Username:', user.username);
@@ -101,8 +101,11 @@ export default function App() {
           socketService.disconnect();
         }
       };
+    } else if (user && user.isEmailVerified === false) {
+      // User is unverified - this is expected, don't log warning
+      console.log('ℹ️ User email not verified - skipping Socket.IO connection');
     } else if (user) {
-      console.warn('⚠️ User object missing userId or username:', user);
+      console.warn('⚠️ User object missing required fields:', user);
     }
   }, [user]);
 

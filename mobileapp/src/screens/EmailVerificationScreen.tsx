@@ -17,21 +17,11 @@ export default function EmailVerificationScreen({ email }: EmailVerificationScre
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
 
   const handleResendEmail = async () => {
-    setIsResending(true);
     setError('');
     setSuccess('');
-
-    try {
-      // For resend, we need to ask for password
-      // For now, show message to check email
-      setSuccess('If you didn\'t receive the email, please check your spam folder or wait a few minutes before requesting a new one.');
-      
-    } catch (err: any) {
-      console.error('Resend email error:', err);
-      setError(err.response?.data?.message || 'Failed to resend verification email');
-    } finally {
-      setIsResending(false);
-    }
+    
+    // Show helpful message - resend requires password which we don't have
+    setSuccess('📧 To resend the verification email, please go back to the login screen and try logging in again. You\'ll receive a new verification email automatically.');
   };
 
   const handleLogout = async () => {
@@ -128,22 +118,21 @@ export default function EmailVerificationScreen({ email }: EmailVerificationScre
           {/* Action Buttons */}
           <View style={styles.buttonsContainer}>
             <Button
-              mode="outlined"
-              onPress={handleResendEmail}
-              loading={isResending}
-              disabled={isResending || remainingAttempts === 0}
+              mode="contained"
+              onPress={handleLogout}
               style={styles.button}
+              icon="login"
             >
-              Resend Verification Email
+              Back to Login
             </Button>
 
             <Button
-              mode="text"
-              onPress={handleLogout}
-              disabled={isResending}
+              mode="outlined"
+              onPress={handleResendEmail}
               style={styles.button}
+              icon="email-sync"
             >
-              Back to Login
+              How to Resend Email
             </Button>
           </View>
         </View>

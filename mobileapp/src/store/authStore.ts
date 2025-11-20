@@ -55,23 +55,33 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (userJson && accessToken && refreshToken) {
         const user = JSON.parse(userJson);
         
-        // Import apiService dynamically to avoid circular dependency
-        const { apiService } = await import('../services');
-        
-        // Verify token is still valid
-        const isValid = await apiService.verifyToken();
-        
-        if (isValid) {
+        // Skip token validation for unverified users (they have temporary tokens)
+        if (user.isEmailVerified === false && accessToken === 'temp') {
+          console.log('ℹ️ Unverified user - skipping token validation');
           set({ 
             user: { ...user, accessToken, refreshToken }, 
             isAuthenticated: true,
             isLoading: false 
           });
         } else {
-          // Token invalid - clear storage and logout
-          console.log('⚠️ Token expired or invalid - logging out');
-          await AsyncStorage.multiRemove(['user', 'accessToken', 'refreshToken']);
-          set({ user: null, isAuthenticated: false, isLoading: false });
+          // Import apiService dynamically to avoid circular dependency
+          const { apiService } = await import('../services');
+          
+          // Verify token is still valid
+          const isValid = await apiService.verifyToken();
+          
+          if (isValid) {
+            set({ 
+              user: { ...user, accessToken, refreshToken }, 
+              isAuthenticated: true,
+              isLoading: false 
+            });
+          } else {
+            // Token invalid - clear storage and logout
+            console.log('⚠️ Token expired or invalid - logging out');
+            await AsyncStorage.multiRemove(['user', 'accessToken', 'refreshToken']);
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          }
         }
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });

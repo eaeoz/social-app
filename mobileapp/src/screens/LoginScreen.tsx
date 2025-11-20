@@ -35,11 +35,9 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
       console.log('✅ Login successful!', userData);
       await login(userData);
     } catch (err: any) {
-      console.error('❌ Login error:', err);
-      
       // Check if this is an email verification error (403 with requiresEmailVerification)
       if (err.response?.status === 403 && err.response?.data?.requiresEmailVerification) {
-        console.log('📧 User needs to verify email');
+        console.log('📧 User needs to verify email - showing verification screen');
         
         // Create a temporary user object for the EmailVerificationScreen
         const unverifiedUser = {
@@ -55,6 +53,9 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
         await login(unverifiedUser as any);
         return;
       }
+      
+      // Log other errors
+      console.error('❌ Login error:', err);
       
       let errorMessage = 'Login failed';
       
