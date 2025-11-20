@@ -7,7 +7,7 @@ import { useAuthStore, useThemeStore, useChatStore } from './src/store';
 import { lightTheme, darkTheme } from './src/theme';
 import { apiService, socketService } from './src/services';
 import RootNavigator from './src/navigation/RootNavigator';
-import { LoginScreen, RegisterScreen } from './src/screens';
+import { LoginScreen, RegisterScreen, EmailVerificationScreen } from './src/screens';
 
 export default function App() {
   const { user, isLoading, loadUser } = useAuthStore();
@@ -129,8 +129,14 @@ export default function App() {
           <StatusBar style={isDarkMode ? 'light' : 'dark'} />
           
           {user ? (
-            // User is logged in - show main navigation
-            <RootNavigator />
+            // Check if email is verified
+            user.isEmailVerified === false ? (
+              // User logged in but email not verified - show verification screen
+              <EmailVerificationScreen email={user.email} />
+            ) : (
+              // User is logged in and verified - show main navigation
+              <RootNavigator />
+            )
           ) : (
             // User is not logged in - show auth screens
             <>

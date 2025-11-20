@@ -37,6 +37,25 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
     } catch (err: any) {
       console.error('❌ Login error:', err);
       
+      // Check if this is an email verification error (403 with requiresEmailVerification)
+      if (err.response?.status === 403 && err.response?.data?.requiresEmailVerification) {
+        console.log('📧 User needs to verify email');
+        
+        // Create a temporary user object for the EmailVerificationScreen
+        const unverifiedUser = {
+          email: err.response.data.email || '',
+          username: username,
+          userId: username, // Use username as temporary ID
+          isEmailVerified: false,
+          accessToken: 'temp',
+          refreshToken: 'temp'
+        };
+        
+        // Log them in with unverified status so App.tsx shows EmailVerificationScreen
+        await login(unverifiedUser as any);
+        return;
+      }
+      
       let errorMessage = 'Login failed';
       
       if (err.code === 'ECONNABORTED') {

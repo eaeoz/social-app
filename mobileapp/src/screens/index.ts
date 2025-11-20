@@ -1,5 +1,6 @@
 export { default as LoginScreen } from './LoginScreen';
 export { default as RegisterScreen } from './RegisterScreen';
+export { default as EmailVerificationScreen } from './EmailVerificationScreen';
 export { default as RoomsScreen } from './RoomsScreen';
 export { default as ChatsScreen } from './ChatsScreen';
 export { default as PrivateChatScreen } from './PrivateChatScreen';
