@@ -22,6 +22,7 @@ export interface AuthUser extends User {
   accessToken: string;
   refreshToken: string;
   isPremium?: boolean;
+  bio?: string;
 }
 
 export interface LoginCredentials {

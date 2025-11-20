@@ -105,7 +105,14 @@ class ApiService {
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    await this.api.put('/auth/change-password', { oldPassword, newPassword });
+    const payload = { currentPassword: oldPassword, newPassword };
+    console.log('🔐 Change password request:', { 
+      hasCurrentPassword: !!oldPassword, 
+      hasNewPassword: !!newPassword,
+      currentPasswordLength: oldPassword?.length,
+      newPasswordLength: newPassword?.length
+    });
+    await this.api.put('/auth/change-password', payload);
   }
 
   // Room endpoints

@@ -22,6 +22,8 @@ export type RootStackParamList = {
   ChatRoom: { room: Room };
   PrivateChat: { chat: PrivateChat };
   UserProfile: { user: User };
+  EditProfile: undefined;
+  ChangePassword: undefined;
 };
 
 // Navigation props

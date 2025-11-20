@@ -2,11 +2,14 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Button, Avatar, Switch, Divider } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore, useThemeStore } from '../store';
 import { apiService } from '../services';
+import { RootNavigationProp } from '../navigation/types';
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const navigation = useNavigation<RootNavigationProp>();
   const { user, logout } = useAuthStore();
   const { isDarkMode, setDarkMode } = useThemeStore();
 
@@ -161,7 +164,7 @@ export default function ProfileScreen() {
       <View style={styles.actionsContainer}>
         <Button
           mode="outlined"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('EditProfile')}
           style={styles.button}
           icon="account-edit"
         >
@@ -169,7 +172,7 @@ export default function ProfileScreen() {
         </Button>
         <Button
           mode="outlined"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('ChangePassword')}
           style={styles.button}
           icon="lock"
         >

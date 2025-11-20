@@ -4,6 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { useTheme } from 'react-native-paper';
 import MainTabNavigator from './MainTabNavigator';
 import { ChatRoomScreen, PrivateChatScreen } from '../screens';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -44,6 +46,20 @@ export default function RootNavigator() {
           options={({ route }) => ({
             title: route.params.chat.otherUser?.displayName || route.params.chat.otherUser?.username || 'Chat',
           })}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
+          options={{
+            title: 'Edit Profile',
+          }}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
+          options={{
+            title: 'Change Password',
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
