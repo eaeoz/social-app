@@ -33,9 +33,10 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  fullName?: string;
   displayName?: string;
-  age?: number;
-  gender?: 'male' | 'female' | 'other';
+  age?: number | string;
+  gender?: string;
 }
 
 export interface UserPresence {
