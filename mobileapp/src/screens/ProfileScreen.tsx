@@ -39,11 +39,19 @@ export default function ProfileScreen() {
           ) : (
             <Avatar.Text 
               size={80} 
-              label={(user.username || user.displayName || 'U').substring(0, 2).toUpperCase()} 
+              label={(user.nickName || user.username || 'U').substring(0, 2).toUpperCase()} 
             />
           )}
           <View style={styles.profileInfo}>
-            <Text variant="headlineSmall">{user.displayName || user.username}</Text>
+            <Text 
+              variant="headlineSmall" 
+              style={{ 
+                color: user.gender === 'Male' ? '#2196F3' : user.gender === 'Female' ? '#F44336' : theme.colors.onSurface,
+                fontWeight: 'bold'
+              }}
+            >
+              {user.nickName || user.username}
+            </Text>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               @{user.username}
             </Text>
@@ -75,10 +83,24 @@ export default function ProfileScreen() {
           <Divider style={styles.divider} />
           <View style={styles.infoRow}>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              User ID
+              Age
             </Text>
-            <Text variant="bodyMedium" numberOfLines={1} style={{ maxWidth: 200 }}>
-              {user.userId}
+            <Text variant="bodyMedium">
+              {user.age ? `${user.age} years old` : 'Not specified'}
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.infoRow}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              Gender
+            </Text>
+            <Text 
+              variant="bodyMedium"
+              style={{ 
+                color: user.gender === 'Male' ? '#2196F3' : user.gender === 'Female' ? '#F44336' : theme.colors.onSurface 
+              }}
+            >
+              {user.gender || 'Not specified'}
             </Text>
           </View>
           <Divider style={styles.divider} />

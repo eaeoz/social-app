@@ -2,10 +2,11 @@ export interface User {
   userId: string;
   username: string;
   displayName?: string;
+  nickName?: string;
   email: string;
   profilePicture?: string;
   age?: number;
-  gender?: 'male' | 'female' | 'other';
+  gender?: 'Male' | 'Female';
   isOnline: boolean;
   lastSeen?: Date;
   createdAt: Date;
@@ -47,7 +48,7 @@ export interface UserPresence {
 }
 
 export interface UserFilter {
-  gender?: 'male' | 'female' | 'other' | 'all';
+  gender?: 'Male' | 'Female' | 'all';
   minAge?: number;
   maxAge?: number;
   onlineOnly?: boolean;
