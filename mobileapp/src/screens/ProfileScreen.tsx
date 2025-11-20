@@ -12,7 +12,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<RootNavigationProp>();
   const { user, logout } = useAuthStore();
   const { isDarkMode, setDarkMode } = useThemeStore();
-  const [statistics, setStatistics] = React.useState({ totalChats: 0, totalMessages: 0 });
+  const [statistics, setStatistics] = React.useState({ reportCount: 0, totalMessages: 0 });
   const [loadingStats, setLoadingStats] = React.useState(true);
 
   React.useEffect(() => {
@@ -188,10 +188,10 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.statItem}>
               <Text variant="headlineSmall">
-                {loadingStats ? '...' : statistics.totalChats}
+                {loadingStats ? '...' : statistics.reportCount}
               </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Total Chats
+                Reports
               </Text>
             </View>
           </View>

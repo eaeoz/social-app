@@ -1083,14 +1083,14 @@ export async function getUserStatistics(req, res) {
     const db = getDatabase();
     const usersCollection = db.collection('users');
 
-    // Get user document to access openChats array
+    // Get user document to access reports array
     const user = await usersCollection.findOne(
       { _id: new ObjectId(userId) },
-      { projection: { openChats: 1 } }
+      { projection: { reports: 1 } }
     );
 
-    // Count total chats from openChats array
-    const totalChats = user?.openChats?.length || 0;
+    // Count reports against this user
+    const reportCount = user?.reports?.length || 0;
 
     // Count total messages sent by user (both room and private messages)
     const roomMessages = await db.collection('messages').countDocuments({
@@ -1103,12 +1103,12 @@ export async function getUserStatistics(req, res) {
 
     const totalMessages = roomMessages + privateMessages;
 
-    console.log(`📊 User statistics for ${userId}: ${totalChats} chats (from openChats array), ${totalMessages} messages`);
+    console.log(`📊 User statistics for ${userId}: ${reportCount} reports, ${totalMessages} messages`);
 
     res.json({
       success: true,
       statistics: {
-        totalChats,
+        reportCount,
         totalMessages
       }
     });
