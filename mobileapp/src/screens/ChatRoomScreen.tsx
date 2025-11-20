@@ -42,11 +42,19 @@ export default function ChatRoomScreen() {
         currentRoomId: room.roomId,
         content: message.content,
         sender: message.senderUsername,
+        senderId: message.senderId,
+        currentUserId: user?.userId,
         allKeys: Object.keys(message)
       });
       
+      // Skip messages from current user - they were already added optimistically
+      if (message.senderId === user?.userId) {
+        console.log('⏭️ Skipping own message (already added optimistically)');
+        return;
+      }
+      
       // Accept the message - don't check roomId since it might be undefined
-      console.log('✅ Adding message to UI (accepting all messages for now)');
+      console.log('✅ Adding message to UI from other user');
       setMessages((prev) => {
         // Avoid duplicates
         const messageId = message._id || message.messageId || `${Date.now()}-${Math.random()}`;

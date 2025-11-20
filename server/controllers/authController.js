@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import { InputFile, ID } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
 import crypto from 'crypto';
+import { sendVerificationEmail } from '../utils/emailService.js';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -267,27 +268,18 @@ export async function register(req, res) {
       profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
     }
 
-    // Send verification email via Netlify function (non-blocking)
-    try {
-      const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
-      
-      await fetch(emailFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email,
-          username,
-          verificationToken: emailVerificationToken
-        })
+    // Send verification email directly via SMTP (non-blocking)
+    sendVerificationEmail(email, username, emailVerificationToken)
+      .then((result) => {
+        if (result.success) {
+          console.log('✅ Verification email sent to:', email);
+        } else {
+          console.error('❌ Failed to send verification email:', result.error);
+        }
+      })
+      .catch((emailError) => {
+        console.error('❌ Failed to send verification email:', emailError);
       });
-      console.log('✅ Verification email sent via Netlify function to:', email);
-    } catch (emailError) {
-      console.error('❌ Failed to send verification email:', emailError);
-      // Don't fail registration if email fails
-    }
 
     // Return user data (without password)
     const userResponse = {
@@ -729,27 +721,15 @@ export async function resendVerificationEmail(req, res) {
     const newResendCount = currentResendCount + 1;
     const remainingAttempts = maxResendAttempts - newResendCount;
 
-    // Send verification email via Netlify function
-    try {
-      const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      const emailFunctionUrl = `${frontendUrl}/.netlify/functions/verify-email`;
-      
-      await fetch(emailFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email,
-          username: user.username,
-          verificationToken: emailVerificationToken
-        })
-      });
-      console.log(`✅ Verification email resent via Netlify function to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
-    } catch (emailError) {
-      console.error('❌ Failed to resend verification email:', emailError);
+    // Send verification email directly via SMTP
+    const emailResult = await sendVerificationEmail(email, user.username, emailVerificationToken);
+    
+    if (!emailResult.success) {
+      console.error('❌ Failed to resend verification email:', emailResult.error);
       return res.status(500).json({ error: 'Failed to send verification email' });
     }
+    
+    console.log(`✅ Verification email resent to: ${email} (Attempt ${newResendCount}/${maxResendAttempts})`);
 
     res.json({
       message: `Verification email sent! Please check your inbox. (${remainingAttempts} attempts remaining)`,
@@ -1093,5 +1073,48 @@ export async function resetPassword(req, res) {
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ error: 'Failed to reset password' });
+  }
+}
+
+// Get user statistics
+export async function getUserStatistics(req, res) {
+  try {
+    const userId = req.user.userId;
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Get user document to access reports array
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { reports: 1 } }
+    );
+
+    // Count reports against this user
+    const reportCount = user?.reports?.length || 0;
+
+    // Count total messages sent by user (both room and private messages)
+    const roomMessages = await db.collection('messages').countDocuments({
+      senderId: new ObjectId(userId)
+    });
+
+    const privateMessages = await db.collection('privatemessages').countDocuments({
+      senderId: new ObjectId(userId)
+    });
+
+    const totalMessages = roomMessages + privateMessages;
+
+    console.log(`📊 User statistics for ${userId}: ${reportCount} reports, ${totalMessages} messages`);
+
+    res.json({
+      success: true,
+      statistics: {
+        reportCount,
+        totalMessages
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user statistics error:', error);
+    res.status(500).json({ error: 'Failed to get user statistics' });
   }
 }

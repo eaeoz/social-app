@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getCurrentUser, logout, updateProfile, uploadMiddleware, verifyEmail, resendVerificationEmail, getResendAttempts, changePassword, resetPassword, updateDoNotDisturb } from '../controllers/authController.js';
+import { register, login, getCurrentUser, logout, updateProfile, uploadMiddleware, verifyEmail, resendVerificationEmail, getResendAttempts, changePassword, resetPassword, updateDoNotDisturb, getUserStatistics } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -14,6 +14,7 @@ router.post('/reset-password', resetPassword);
 
 // Protected routes
 router.get('/me', authenticateToken, getCurrentUser);
+router.get('/statistics', authenticateToken, getUserStatistics);
 router.post('/logout', authenticateToken, logout);
 router.put('/update-profile', authenticateToken, uploadMiddleware, updateProfile);
 router.put('/change-password', authenticateToken, changePassword);

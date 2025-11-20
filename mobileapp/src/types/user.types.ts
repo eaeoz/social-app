@@ -2,10 +2,11 @@ export interface User {
   userId: string;
   username: string;
   displayName?: string;
+  nickName?: string;
   email: string;
   profilePicture?: string;
   age?: number;
-  gender?: 'male' | 'female' | 'other';
+  gender?: 'Male' | 'Female';
   isOnline: boolean;
   lastSeen?: Date;
   createdAt: Date;
@@ -22,6 +23,7 @@ export interface AuthUser extends User {
   accessToken: string;
   refreshToken: string;
   isPremium?: boolean;
+  bio?: string;
 }
 
 export interface LoginCredentials {
@@ -33,9 +35,10 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  fullName?: string;
   displayName?: string;
-  age?: number;
-  gender?: 'male' | 'female' | 'other';
+  age?: number | string;
+  gender?: string;
 }
 
 export interface UserPresence {
@@ -45,7 +48,7 @@ export interface UserPresence {
 }
 
 export interface UserFilter {
-  gender?: 'male' | 'female' | 'other' | 'all';
+  gender?: 'Male' | 'Female' | 'all';
   minAge?: number;
   maxAge?: number;
   onlineOnly?: boolean;

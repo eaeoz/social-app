@@ -18,7 +18,12 @@ import { configurePassport } from './config/passport.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
+// Load .env from the server directory
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+console.log('🔧 Environment configuration loaded from:', path.join(__dirname, '.env'));
+console.log('🔧 SMTP_USER:', process.env.SMTP_USER ? '✅ Set' : '❌ Not set');
+console.log('🔧 SMTP_PASS:', process.env.SMTP_PASS ? `✅ Set (length: ${process.env.SMTP_PASS.length})` : '❌ Not set');
 
 const app = express();
 

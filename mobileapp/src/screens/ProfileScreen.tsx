@@ -2,13 +2,34 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Button, Avatar, Switch, Divider } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore, useThemeStore } from '../store';
 import { apiService } from '../services';
+import { RootNavigationProp } from '../navigation/types';
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const navigation = useNavigation<RootNavigationProp>();
   const { user, logout } = useAuthStore();
   const { isDarkMode, setDarkMode } = useThemeStore();
+  const [statistics, setStatistics] = React.useState({ reportCount: 0, totalMessages: 0 });
+  const [loadingStats, setLoadingStats] = React.useState(true);
+
+  React.useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
+    try {
+      setLoadingStats(true);
+      const stats = await apiService.getUserStatistics();
+      setStatistics(stats);
+    } catch (error) {
+      console.error('Failed to load statistics:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -36,11 +57,19 @@ export default function ProfileScreen() {
           ) : (
             <Avatar.Text 
               size={80} 
-              label={(user.username || user.displayName || 'U').substring(0, 2).toUpperCase()} 
+              label={(user.nickName || user.username || 'U').substring(0, 2).toUpperCase()} 
             />
           )}
           <View style={styles.profileInfo}>
-            <Text variant="headlineSmall">{user.displayName || user.username}</Text>
+            <Text 
+              variant="headlineSmall" 
+              style={{ 
+                color: user.gender === 'Male' ? '#2196F3' : user.gender === 'Female' ? '#F44336' : theme.colors.onSurface,
+                fontWeight: 'bold'
+              }}
+            >
+              {user.nickName || user.username}
+            </Text>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               @{user.username}
             </Text>
@@ -72,10 +101,24 @@ export default function ProfileScreen() {
           <Divider style={styles.divider} />
           <View style={styles.infoRow}>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              User ID
+              Age
             </Text>
-            <Text variant="bodyMedium" numberOfLines={1} style={{ maxWidth: 200 }}>
-              {user.userId}
+            <Text variant="bodyMedium">
+              {user.age ? `${user.age} years old` : 'Not specified'}
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.infoRow}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              Gender
+            </Text>
+            <Text 
+              variant="bodyMedium"
+              style={{ 
+                color: user.gender === 'Male' ? '#2196F3' : user.gender === 'Female' ? '#F44336' : theme.colors.onSurface 
+              }}
+            >
+              {user.gender || 'Not specified'}
             </Text>
           </View>
           <Divider style={styles.divider} />
@@ -136,21 +179,19 @@ export default function ProfileScreen() {
           </Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text variant="headlineSmall">0</Text>
+              <Text variant="headlineSmall">
+                {loadingStats ? '...' : statistics.totalMessages}
+              </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Messages
+                Total Messages
               </Text>
             </View>
             <View style={styles.statItem}>
-              <Text variant="headlineSmall">0</Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Chats
+              <Text variant="headlineSmall">
+                {loadingStats ? '...' : statistics.reportCount}
               </Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text variant="headlineSmall">0</Text>
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Rooms
+                Reports
               </Text>
             </View>
           </View>
@@ -161,7 +202,7 @@ export default function ProfileScreen() {
       <View style={styles.actionsContainer}>
         <Button
           mode="outlined"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('EditProfile')}
           style={styles.button}
           icon="account-edit"
         >
@@ -169,7 +210,7 @@ export default function ProfileScreen() {
         </Button>
         <Button
           mode="outlined"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('ChangePassword')}
           style={styles.button}
           icon="lock"
         >

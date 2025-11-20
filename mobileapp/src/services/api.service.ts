@@ -105,7 +105,19 @@ class ApiService {
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    await this.api.put('/auth/change-password', { oldPassword, newPassword });
+    const payload = { currentPassword: oldPassword, newPassword };
+    console.log('🔐 Change password request:', { 
+      hasCurrentPassword: !!oldPassword, 
+      hasNewPassword: !!newPassword,
+      currentPasswordLength: oldPassword?.length,
+      newPasswordLength: newPassword?.length
+    });
+    await this.api.put('/auth/change-password', payload);
+  }
+
+  async getUserStatistics(): Promise<{ totalChats: number; totalMessages: number }> {
+    const response = await this.api.get('/auth/statistics');
+    return response.data.statistics;
   }
 
   // Room endpoints
@@ -176,6 +188,16 @@ class ApiService {
       },
     });
     return response.data.profilePictureUrl;
+  }
+
+  // Update profile with FormData (for age, gender, nickName)
+  async updateProfileWithForm(formData: FormData): Promise<{ user: User }> {
+    const response = await this.api.put('/auth/update-profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   }
 }
 
