@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { databases, config } from '../config/appwrite';
 import { Article } from '../types/article';
 import ArticleCard from '../components/ArticleCard';
+import SocialPlatformAd from '../components/SocialPlatformAd';
 import { Loader, Search, X } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Query } from 'appwrite';
@@ -129,6 +130,9 @@ export default function Home() {
             }
           </p>
         </div>
+
+        {/* Social Platform Advertisement */}
+        <SocialPlatformAd />
 
         {/* Real-time Search Input */}
         <div className="search-section">
