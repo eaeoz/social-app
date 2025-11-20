@@ -132,6 +132,29 @@
   cursor: not-allowed;
 }
 
+.recaptcha-notice {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.recaptcha-notice a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.recaptcha-notice a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     width: 95%;
