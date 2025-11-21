@@ -4,6 +4,28 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import App from './App.tsx'
 import './index.css'
 
+// Initialize Google Tag Manager
+const initGoogleTagManager = () => {
+  const gtmId = import.meta.env.VITE_GOOGLE_GTM;
+  
+  if (gtmId) {
+    // Initialize dataLayer
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    (window as any).dataLayer.push({
+      'gtm.start': new Date().getTime(),
+      event: 'gtm.js'
+    });
+
+    // Create and append GTM script
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${gtmId}`;
+    
+    const firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode?.insertBefore(script, firstScript);
+  }
+};
+
 // Initialize Google Analytics
 const initGoogleAnalytics = () => {
   const googleTagId = import.meta.env.VITE_GOOGLETAG_ID;
@@ -28,7 +50,8 @@ const initGoogleAnalytics = () => {
   }
 };
 
-// Initialize Google Analytics on app load
+// Initialize Google Tag Manager and Analytics on app load
+initGoogleTagManager();
 initGoogleAnalytics();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
