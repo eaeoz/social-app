@@ -10,6 +10,11 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/vite.svg"
+  to = "/favicon.ico"
+  status = 301
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
