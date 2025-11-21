@@ -34,7 +34,24 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
     
-    <div id="root"></div>
+    <div id="root">
+      <!-- SEO Fallback Content (hidden once React loads) -->
+      <noscript>
+        <main style="max-width: 1200px; margin: 0 auto; padding: 2rem; font-family: system-ui, -apple-system, sans-serif;">
+          <header>
+            <h1>Sedat's Blog - Modern Tech Articles</h1>
+            <p>Welcome to our technology blog featuring articles about software development, programming, and web technologies.</p>
+          </header>
+          <section>
+            <h2>About Our Blog</h2>
+            <p>Discover insightful articles on technology, programming, and software development. Our blog covers web development, mobile apps, software architecture, and best practices.</p>
+          </section>
+          <footer>
+            <p>This site requires JavaScript to display content. Please enable JavaScript in your browser.</p>
+          </footer>
+        </main>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
