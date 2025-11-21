@@ -28,23 +28,8 @@ const initGoogleAnalytics = () => {
   }
 };
 
-// Initialize Google AdSense
-const initGoogleAdSense = () => {
-  const adsenseClientId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
-  
-  if (adsenseClientId) {
-    // Create and append AdSense script
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`;
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-  }
-};
-
-// Initialize Google Analytics and AdSense on app load
+// Initialize Google Analytics on app load
 initGoogleAnalytics();
-initGoogleAdSense();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
