@@ -349,6 +349,81 @@ See [Deployment Success Guide](docs/mobileapp/DEPLOYMENT-SUCCESS.md) for detaile
 
 ---
 
+## 💻 Desktop App
+
+A powerful Electron-based desktop application for managing blog articles and viewing documentation offline.
+
+### Quick Start
+
+```bash
+cd desktopapp
+npm install
+npm start
+```
+
+### Documentation
+
+Comprehensive desktop app documentation and build guides:
+
+#### Getting Started
+- [README - Blog Manager](desktopapp/README-BLOG-MANAGER.md) - Overview and features
+- [Build Guide](desktopapp/BUILD-GUIDE.md) - Complete build instructions
+- [Build Instructions](desktopapp/BUILD-INSTRUCTIONS.md) - Step-by-step build process
+
+#### Building & Distribution
+- [Build Simple](desktopapp/build-simple.bat) - Quick build script
+- [Build Executable](desktopapp/build-executable.bat) - Create standalone executable
+- [Build Portable](desktopapp/build-portable.bat) - Build portable version
+- [Build NSIS Installer](desktopapp/build-nsis-installer.bat) - Create Windows installer
+- [NSIS Installer Guide](desktopapp/NSIS-INSTALLER-GUIDE.md) - Installer creation guide
+- [Distribution Security](desktopapp/DISTRIBUTION-SECURITY.md) - Security best practices
+
+#### Configuration & Troubleshooting
+- [Icon Guide](desktopapp/ICON-GUIDE.md) - Application icon setup
+- [Fix Build Error](desktopapp/FIX-BUILD-ERROR.md) - Common build issues and solutions
+- [Clear Config Before Build](desktopapp/clear-config-before-build.bat) - Clean build preparation
+
+### Features
+
+✅ **Blog Management:**
+- Offline blog article viewer
+- Backend API integration
+- JSON data management
+- Standalone article viewing
+
+✅ **Documentation Viewer:**
+- Offline documentation access
+- Fast search and navigation
+- Markdown rendering
+- Local file browsing
+
+### Technology Stack
+
+- Electron - Cross-platform desktop framework
+- Node.js - Backend runtime
+- HTML/CSS/JavaScript - UI
+- NSIS - Windows installer creator
+
+### Platform Support
+
+- **Windows** - Full support with installer
+- **macOS** - Portable build available
+- **Linux** - Portable build available
+
+### Launching Applications
+
+```bash
+# Start Blog Manager
+cd desktopapp
+start-blog-manager.bat
+
+# Start Documentation Viewer
+cd desktopapp
+start-docs-viewer.bat
+```
+
+---
+
 ## 🧪 Testing
 
 Test users are available for development. See [TEST_USERS.md](docs/TEST_USERS.md).
