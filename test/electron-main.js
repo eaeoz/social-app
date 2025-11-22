@@ -67,7 +67,7 @@ function createWindow() {
     show: false
   });
 
-  mainWindow.loadFile('blog-articles-standalone.html');
+  mainWindow.loadFile('blog-articles-json.html');
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
