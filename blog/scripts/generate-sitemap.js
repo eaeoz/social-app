@@ -129,10 +129,11 @@ function generateSitemap(articles) {
     xml += '  </url>\n';
   });
   
-  // Add blog articles section
+  // Add blog articles section (newest first)
   if (articlePages.length > 0) {
     xml += '  \n  <!-- Blog Articles -->\n';
     
+    // Keep articles in original order (newest first)
     articlePages.forEach(article => {
       xml += '  <url>\n';
       xml += `    <loc>${SITE_URL}${article.path}</loc>\n`;
