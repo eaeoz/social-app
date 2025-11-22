@@ -127,43 +127,78 @@ export async function syncBlogData() {
       console.log('📁 Created data directory');
     }
 
-    // Check if content has changed before writing
-    let hasChanges = true;
+    // Read old articles for comparison and stats
     let oldArticles = [];
+    let hasChanges = true;
     try {
       const existingData = await fs.readFile(jsonPath, 'utf8');
       oldArticles = JSON.parse(existingData);
-      
-      // Compare article counts and content
-      if (oldArticles.length === articlesForJson.length) {
-        // Deep compare the articles (comparing only relevant fields, not Appwrite metadata timestamps)
-        const oldArticlesComparable = oldArticles.map(a => ({
-          id: a.id,
-          title: a.title,
-          author: a.author,
-          date: a.date,
-          tags: a.tags,
-          logo: a.logo,
-          excerpt: a.excerpt,
-          content: a.content
-        }));
-        
-        const newArticlesComparable = articlesForJson.map(a => ({
-          id: a.id,
-          title: a.title,
-          author: a.author,
-          date: a.date,
-          tags: a.tags,
-          logo: a.logo,
-          excerpt: a.excerpt,
-          content: a.content
-        }));
-        
-        hasChanges = JSON.stringify(oldArticlesComparable) !== JSON.stringify(newArticlesComparable);
-      }
     } catch {
-      // File doesn't exist or is invalid, treat as changes
+      // File doesn't exist, treat as new
+      oldArticles = [];
+    }
+
+    // Calculate what changed
+    let created = 0;
+    let updated = 0;
+    let deleted = 0;
+    let skipped = 0;
+
+    if (oldArticles.length === 0) {
+      // All new articles
+      created = articlesForJson.length;
       hasChanges = true;
+    } else {
+      // Build maps of old and new articles by ID for comparison
+      const oldArticlesMap = new Map(oldArticles.map(a => [a.id, a]));
+      const newArticlesMap = new Map(articlesForJson.map(a => [a.id, a]));
+      
+      // Check for new and updated articles
+      for (const newArticle of articlesForJson) {
+        const oldArticle = oldArticlesMap.get(newArticle.id);
+        
+        if (!oldArticle) {
+          // New article - ID exists in new but not in old
+          created++;
+          hasChanges = true;
+        } else {
+          // Article exists in both, check if content changed
+          const oldComparable = {
+            title: oldArticle.title,
+            author: oldArticle.author,
+            date: oldArticle.date,
+            tags: JSON.stringify(oldArticle.tags || []),
+            logo: oldArticle.logo,
+            excerpt: oldArticle.excerpt,
+            content: oldArticle.content
+          };
+          
+          const newComparable = {
+            title: newArticle.title,
+            author: newArticle.author,
+            date: newArticle.date,
+            tags: JSON.stringify(newArticle.tags || []),
+            logo: newArticle.logo,
+            excerpt: newArticle.excerpt,
+            content: newArticle.content
+          };
+          
+          if (JSON.stringify(oldComparable) !== JSON.stringify(newComparable)) {
+            updated++;
+            hasChanges = true;
+          } else {
+            skipped++;
+          }
+        }
+      }
+      
+      // Check for deleted articles (exist in old but not in new)
+      for (const oldArticle of oldArticles) {
+        if (!newArticlesMap.has(oldArticle.id)) {
+          deleted++;
+          hasChanges = true;
+        }
+      }
     }
 
     if (!hasChanges) {
@@ -180,13 +215,9 @@ export async function syncBlogData() {
       };
     }
 
+    // Write updated cache
     await fs.writeFile(jsonPath, JSON.stringify(articlesForJson, null, 2), 'utf8');
     console.log(`✅ Updated JSON cache with ${articlesForJson.length} articles`);
-
-    // Calculate what changed
-    const created = Math.max(0, articlesForJson.length - oldArticles.length);
-    const updated = oldArticles.length > 0 && articlesForJson.length === oldArticles.length ? articlesForJson.length : 0;
-    const deleted = Math.max(0, oldArticles.length - articlesForJson.length);
 
     // Regenerate sitemap only when articles changed
     const sitemapResult = await generateSitemap();
@@ -208,7 +239,7 @@ export async function syncBlogData() {
       created,
       updated,
       deleted,
-      skipped: 0
+      skipped
     };
 
   } catch (error) {
