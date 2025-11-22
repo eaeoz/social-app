@@ -544,6 +544,7 @@
       </div>
       <div class="header-actions">
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+        <button class="header-btn" onclick="exportArticles()" title="Export All Articles">💾 Export JSON</button>
         <button class="header-btn close-btn" onclick="closeWindow()" title="Close">✕</button>
       </div>
     </div>
@@ -832,6 +833,34 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function exportArticles() {
+      try {
+        const { dialog } = require('electron').remote;
+        
+        // Show save dialog
+        const filePath = dialog.showSaveDialogSync({
+          title: 'Export Articles to JSON',
+          defaultPath: 'articles.json',
+          filters: [
+            { name: 'JSON Files', extensions: ['json'] },
+            { name: 'All Files', extensions: ['*'] }
+          ]
+        });
+        
+        if (filePath) {
+          // Write articles to the selected file
+          const jsonData = JSON.stringify(articles, null, 2);
+          fs.writeFileSync(filePath, jsonData, 'utf-8');
+          
+          // Show success message
+          alert(`✅ Successfully exported ${articles.length} articles to:\n${filePath}`);
+        }
+      } catch (error) {
+        alert(`❌ Export failed: ${error.message}`);
+        console.error('Export error:', error);
+      }
     }
 
     document.addEventListener('keydown', (event) => {

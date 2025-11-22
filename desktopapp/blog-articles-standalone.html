@@ -614,6 +614,29 @@
     .empty-icon {
       font-size: 64px;
       margin-bottom: 20px;
+      opacity: 0.8;
+    }
+
+    .empty-state h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .empty-state p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+
+    .empty-state .btn {
+      margin-top: 8px;
+      padding: 12px 24px;
+      font-size: 14px;
     }
 
     /* Fullscreen Reader Modal */
@@ -875,6 +898,7 @@
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
         <button class="header-btn" onclick="openConfigModal()">⚙️ Config</button>
         <button class="header-btn" onclick="openImportModal()">📥 Import</button>
+        <button class="header-btn" onclick="exportArticles()">💾 Export</button>
         <button class="header-btn" onclick="openNewArticleModal()">➕ New Article</button>
         <button class="header-btn close-btn" onclick="closeWindow()" title="Close">✕</button>
       </div>
@@ -1829,6 +1853,48 @@
       setTimeout(() => {
         document.getElementById('importButton').disabled = false;
       }, 2000);
+    }
+
+    function exportArticles() {
+      if (articles.length === 0) {
+        showNotification('No articles to export', 'error');
+        return;
+      }
+
+      try {
+        // Create export data in the exact format you specified
+        const exportData = articles.map(article => ({
+          id: article.id,
+          title: article.title,
+          author: article.author,
+          date: article.date,
+          tags: article.tags,
+          logo: article.logo,
+          excerpt: article.excerpt,
+          content: article.content,
+          $id: article.$id,
+          $createdAt: new Date().toISOString(),
+          $updatedAt: new Date().toISOString()
+        }));
+
+        // Convert to JSON with pretty formatting
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `articles-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showNotification(`✅ Exported ${articles.length} articles successfully!`, 'success');
+      } catch (error) {
+        showNotification('Export failed: ' + error.message, 'error');
+      }
     }
 
     document.addEventListener('keydown', (event) => {
