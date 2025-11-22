@@ -54,7 +54,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     frame: false,
-    transparent: true,
+    transparent: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -63,7 +63,7 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'blog-icon.png'),
     title: 'Blog Articles Manager',
-    backgroundColor: '#00000000',
+    backgroundColor: '#ffffff',
     show: false
   });
 

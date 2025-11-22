@@ -14,12 +14,12 @@ Click **"Add a variable"** for each of these:
 
 #### SMTP_USER
 - **Key:** `SMTP_USER`
-- **Value:** Your email address (e.g., `sedatergoz@yandex.com`)
+- **Value:** Your email address (e.g., `your-email@yandex.com`)
 - **Scopes:** Check all deployment contexts (Production, Deploy Previews, Branch deploys)
 
 #### SMTP_PASS
 - **Key:** `SMTP_PASS`
-- **Value:** Your SMTP password or app-specific password (e.g., `ihinuaqtejpjnjhm`)
+- **Value:** Your SMTP password or app-specific password (e.g., `your-app-password`)
 - **Scopes:** Check all deployment contexts
 
 #### SMTP_HOST (Optional)
@@ -36,19 +36,19 @@ Click **"Add a variable"** for each of these:
 
 #### RECIPIENT_EMAIL
 - **Key:** `RECIPIENT_EMAIL`
-- **Value:** Email address to receive contact form submissions (e.g., `sedatergoz@gmail.com`)
+- **Value:** Email address to receive contact form submissions (e.g., `your-email@gmail.com`)
 - **Scopes:** Check all deployment contexts
 
-## Your Configuration
+## Example Configuration
 
-Based on your MongoDB settings, here are your values:
+Here's an example of what your values might look like:
 
 ```
-SMTP_USER = sedatergoz@yandex.com
-SMTP_PASS = ihinuaqtejpjnjhm
+SMTP_USER = your-email@yandex.com
+SMTP_PASS = your-app-specific-password
 SMTP_HOST = smtp.yandex.com
 SMTP_PORT = 587
-RECIPIENT_EMAIL = sedatergoz@gmail.com
+RECIPIENT_EMAIL = your-email@gmail.com
 ```
 
 ## Step-by-Step Setup
@@ -89,7 +89,7 @@ After adding all variables, you should see:
 
 ## Common SMTP Providers
 
-### Yandex Mail (your current setup)
+### Yandex Mail
 ```
 SMTP_HOST = smtp.yandex.com
 SMTP_PORT = 587
@@ -159,11 +159,11 @@ To see detailed debug logs:
 For local testing with Netlify CLI:
 1. Create `.env` file in `client` directory:
    ```
-   SMTP_USER=sedatergoz@yandex.com
-   SMTP_PASS=ihinuaqtejpjnjhm
+   SMTP_USER=your-email@yandex.com
+   SMTP_PASS=your-app-password
    SMTP_HOST=smtp.yandex.com
    SMTP_PORT=587
-   RECIPIENT_EMAIL=sedatergoz@gmail.com
+   RECIPIENT_EMAIL=your-email@gmail.com
    ```
 
 2. Run Netlify Dev:
