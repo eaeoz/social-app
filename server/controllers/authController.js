@@ -170,7 +170,7 @@ export async function register(req, res) {
       senderSound: siteSettings?.senderNotificationSound || 'pop'
     };
 
-    // Check if user already exists
+    // Check if user already exists (username or email)
     const existingUser = await usersCollection.findOne({
       $or: [{ username }, { email }]
     });
@@ -180,6 +180,15 @@ export async function register(req, res) {
         return res.status(400).json({ error: 'Username already taken' });
       }
       return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Check if username conflicts with existing nicknames
+    const userWithNickname = await usersCollection.findOne({
+      nickName: username
+    });
+
+    if (userWithNickname) {
+      return res.status(400).json({ error: 'Username already taken (conflicts with existing nickname)' });
     }
 
     // Hash password
@@ -822,14 +831,23 @@ export async function updateProfile(req, res) {
         return res.status(400).json({ error: 'Nickname must be 30 characters or less' });
       }
 
-      // Check if nickName is already taken by another user
-      const existingUser = await usersCollection.findOne({
+      // Check if nickName is already taken by another user's nickname
+      const existingUserWithNickname = await usersCollection.findOne({
         nickName: nickName,
         _id: { $ne: new ObjectId(userId) }
       });
 
-      if (existingUser) {
+      if (existingUserWithNickname) {
         return res.status(400).json({ error: 'This nickname is already taken by another user' });
+      }
+
+      // Check if nickName conflicts with existing username
+      const existingUserWithUsername = await usersCollection.findOne({
+        username: nickName
+      });
+
+      if (existingUserWithUsername) {
+        return res.status(400).json({ error: 'This nickname conflicts with an existing username' });
       }
 
       updateData.nickName = nickName;
