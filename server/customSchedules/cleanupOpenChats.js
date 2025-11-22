@@ -1,13 +1,48 @@
 /**
  * Simple Test Script for OpenChats Cleanup
- * This bypasses .env loading and uses direct connection
+ * Loads environment variables from .env file
  */
 
 import { MongoClient, ObjectId } from 'mongodb';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Direct MongoDB URI (replace with your actual connection string)
-const MONGODB_URI = 'mongodb+srv://sedat:Sedat_mongodb_12@cluster0.aqhcv7a.mongodb.net/social-app?retryWrites=true&w=majority';
-const DB_NAME = 'social-app';
+// Get directory name for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from server/.env
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+// Get MongoDB connection details from environment
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = process.env.MONGODB_DB_NAME || process.env.DB_NAME;
+
+// Extract database name from MongoDB URI if DB_NAME is not set
+function extractDbNameFromUri(uri) {
+  if (!uri) return null;
+  const match = uri.match(/\/([^/?]+)(\?|$)/);
+  return match ? match[1] : null;
+}
+
+const DATABASE_NAME = DB_NAME || extractDbNameFromUri(MONGODB_URI);
+
+// Validate configuration
+if (!MONGODB_URI) {
+  console.error('❌ Error: MONGODB_URI not found in environment variables');
+  console.error('Please ensure your .env file exists in the server/ directory with MONGODB_URI set');
+  process.exit(1);
+}
+
+if (!DATABASE_NAME) {
+  console.error('❌ Error: Could not determine database name');
+  console.error('Please set DB_NAME in your .env file or ensure your MONGODB_URI includes the database name');
+  process.exit(1);
+}
+
+console.log('✅ Environment loaded');
+console.log('📊 Using database:', DATABASE_NAME);
 
 async function cleanupOpenChats() {
   let client;
@@ -28,7 +63,7 @@ async function cleanupOpenChats() {
     await client.connect();
     console.log('✅ Connected to MongoDB Atlas\n');
     
-    const db = client.db(DB_NAME);
+    const db = client.db(DATABASE_NAME);
     
     // Test connection
     await db.command({ ping: 1 });
