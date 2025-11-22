@@ -36,6 +36,7 @@ A modern, feature-rich social media platform with real-time messaging, video cal
 - 📱 **Mobile App** - React Native mobile application
 - 🌐 **SEO Optimized** - Meta tags, sitemaps, and structured data
 - ♿ **Accessible** - WCAG 2.1 AA compliant
+- 💾 **Supabase Backup** - Automated database backup solution
 
 ---
 
@@ -217,6 +218,45 @@ Comprehensive documentation is available in the [`/docs`](docs/) folder:
 - [SEO Improvements](docs/SEO-IMPROVEMENTS.md)
 - [Accessibility Improvements](docs/ACCESSIBILITY-IMPROVEMENTS.md)
 
+### Client (Frontend) Documentation
+- [Client README](docs/client/README.md) - Frontend overview
+- [SEO Guide](docs/client/SEO-GUIDE.md) - SEO implementation details
+- [Netlify Email Setup](docs/client/NETLIFY-EMAIL-SETUP.md) - Email function configuration
+- [Profanity Filter Guide](docs/client/PROFANITY-FILTER-GUIDE.md) - Content filtering setup
+- [Verification Setup](docs/client/VERIFICATION-SETUP.md) - Email verification configuration
+
+### Admin Dashboard Documentation
+- [Admin Client README](docs/admin-client/README.md) - Admin dashboard overview
+- [Deployment Guide](docs/admin-client/DEPLOYMENT.md) - Admin deployment instructions
+- [Security Features](docs/admin-client/SECURITY-FEATURES.md) - Admin security implementation
+- [SEO Implementation](docs/admin-client/SEO-IMPLEMENTATION.md) - Admin SEO setup
+
+### Blog Platform Documentation
+- [Blog README](docs/blog/README.md) - Blog platform overview
+- [Deployment Guide](docs/blog/DEPLOYMENT-GUIDE.md) - Blog deployment instructions
+- [Final Summary](docs/blog/FINAL-SUMMARY.md) - Blog feature summary
+- [Backend API Integration](docs/blog/BACKEND-API-INTEGRATION.md) - API integration guide
+- [SEO Improvements](docs/blog/SEO-IMPROVEMENTS.md) - Blog SEO enhancements
+- [SEO URL Implementation](docs/blog/SEO-URL-IMPLEMENTATION.md) - SEO-friendly URLs
+- [Sitemap Guide](docs/blog/SITEMAP-GUIDE.md) - Sitemap generation
+- [Google Analytics Setup](docs/blog/GOOGLE-ANALYTICS-SETUP.md) - Analytics integration
+- [Google AdSense Setup](docs/blog/GOOGLE-ADSENSE-SETUP.md) - Monetization setup
+- [reCAPTCHA Setup](docs/blog/RECAPTCHA-SETUP.md) - Bot protection
+- [Appwrite CORS Fix](docs/blog/APPWRITE-CORS-FIX.md) - CORS configuration
+- [Appwrite Search Setup](docs/blog/APPWRITE-SEARCH-SETUP.md) - Search functionality
+
+### Mobile App Documentation
+- [Mobile App Guide](docs/mobileapp/MOBILE-APP-GUIDE.md) - Complete setup guide
+- [Mobile App README](docs/mobileapp/README.md) - Overview and quick start
+- [Deployment Success](docs/mobileapp/DEPLOYMENT-SUCCESS.md) - Production deployment
+- [Mobile Authentication](docs/mobileapp/MOBILE-AUTH-IMPLEMENTATION.md) - Auth implementation
+- [Email Verification](docs/mobileapp/MOBILE-EMAIL-VERIFICATION.md) - Email verification flow
+- [Profile Management](docs/mobileapp/PROFILE-MANAGEMENT-IMPLEMENTATION.md) - Profile features
+- [Photo Editing Feature](docs/mobileapp/PHOTO-EDITING-FEATURE.md) - Photo upload
+- [Calling Implementation Plan](docs/mobileapp/CALLING-IMPLEMENTATION-PLAN.md) - Call architecture
+- [Calling Quick Start](docs/mobileapp/CALLING-QUICK-START.md) - WebRTC integration
+- [Calling UI Complete](docs/mobileapp/CALLING-UI-COMPLETE.md) - Call interface
+
 [View all documentation →](docs/)
 
 ---
@@ -242,7 +282,9 @@ If you discover a security vulnerability, please email security@yourapp.com. Do 
 
 ## 📱 Mobile App
 
-A React Native mobile app is available in the `mobileapp/` directory.
+A fully-featured React Native mobile application built with Expo, providing complete feature parity with the web application.
+
+### Quick Start
 
 ```bash
 cd mobileapp
@@ -250,7 +292,60 @@ npm install
 npx expo start
 ```
 
-See [Mobile App Guide](docs/mobileapp/MOBILE-APP-GUIDE.md) for detailed setup instructions.
+### Documentation
+
+Comprehensive mobile app documentation is available:
+
+#### Getting Started
+- [Mobile App Guide](docs/mobileapp/MOBILE-APP-GUIDE.md) - Complete setup and development guide
+- [Mobile App README](docs/mobileapp/README.md) - Overview and quick start
+- [Deployment Success](docs/mobileapp/DEPLOYMENT-SUCCESS.md) - Production deployment guide
+
+#### Features
+- [Mobile Authentication](docs/mobileapp/MOBILE-AUTH-IMPLEMENTATION.md) - Login/registration implementation
+- [Email Verification](docs/mobileapp/MOBILE-EMAIL-VERIFICATION.md) - Email verification flow
+- [Profile Management](docs/mobileapp/PROFILE-MANAGEMENT-IMPLEMENTATION.md) - Edit profile and change password
+- [Photo Editing Feature](docs/mobileapp/PHOTO-EDITING-FEATURE.md) - Profile picture upload with camera/gallery
+
+#### Advanced Features
+- [Calling Implementation Plan](docs/mobileapp/CALLING-IMPLEMENTATION-PLAN.md) - Voice/video calling architecture
+- [Calling Quick Start](docs/mobileapp/CALLING-QUICK-START.md) - WebRTC integration guide
+- [Calling UI Complete](docs/mobileapp/CALLING-UI-COMPLETE.md) - Call interface implementation
+
+### Features
+
+✅ **Core Features:**
+- Authentication (Login/Register)
+- Real-time messaging (Socket.IO)
+- Public chat rooms
+- Private messaging
+- User profiles with photos
+- Location sharing
+- Emoji picker
+- Dark/Light theme support
+
+✅ **Ready to Enable:**
+- Voice calling (WebRTC)
+- Video calling (WebRTC)
+- Push notifications
+
+### Technology Stack
+
+- React Native + Expo SDK 51+
+- TypeScript
+- React Native Paper (Material Design 3)
+- Socket.IO Client
+- Zustand (State Management)
+- Axios (API)
+- AsyncStorage (Persistence)
+
+### App Store Submission
+
+The mobile app is production-ready and can be submitted to:
+- **iOS App Store** - via EAS Build or Xcode
+- **Google Play Store** - via EAS Build or Android Studio
+
+See [Deployment Success Guide](docs/mobileapp/DEPLOYMENT-SUCCESS.md) for detailed instructions.
 
 ---
 
@@ -299,6 +394,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Appwrite](https://appwrite.io/) - Backend as a Service
 - [MongoDB Atlas](https://www.mongodb.com/atlas) - Database hosting
+- [Supabase](https://supabase.com/) - Database backup solution
 - [Netlify](https://www.netlify.com/) - Frontend hosting
 - [Railway](https://railway.app/) - Backend hosting
 - [Cloudflare](https://www.cloudflare.com/) - CDN & Security
