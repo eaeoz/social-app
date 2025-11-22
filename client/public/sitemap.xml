@@ -40,12 +40,6 @@
   
   <!-- Blog Articles -->
   <url>
-    <loc>https://netcify.netlify.app/posts/test</loc>
-    <lastmod>2025-11-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://netcify.netlify.app/posts/command-manager-opensource-gui-management-for-ssh-clients-designed-developed-by-sedat-e</loc>
     <lastmod>2025-11-14</lastmod>
     <changefreq>monthly</changefreq>
@@ -635,6 +629,12 @@
   </url>
   <url>
     <loc>https://netcify.netlify.app/posts/security-headers-implementation-summary-report</loc>
+    <lastmod>2025-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netcify.netlify.app/posts/security-headers-fix-deployment-guide</loc>
     <lastmod>2025-11-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
