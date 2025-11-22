@@ -250,7 +250,7 @@ npm install
 npx expo start
 ```
 
-See [Mobile App Guide](docs/MOBILE-APP-GUIDE.md) for detailed setup instructions.
+See [Mobile App Guide](docs/mobileapp/MOBILE-APP-GUIDE.md) for detailed setup instructions.
 
 ---
 
