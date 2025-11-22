@@ -194,12 +194,40 @@ function convertMarkdownToArticles() {
   // Sort by date
   articles.sort((a, b) => new Date(a.date) - new Date(b.date));
   
-  // Write to JSON file
-  const outputPath = path.join(__dirname, 'articles.json');
-  fs.writeFileSync(outputPath, JSON.stringify(articles, null, 2), 'utf-8');
+  // Read existing articles from server/data/blogArticles.json if it exists
+  const outputPath = path.join(__dirname, 'server', 'data', 'blogArticles.json');
+  let existingArticles = [];
   
-  console.log(`\n✓ Successfully converted ${articles.length} articles to ${outputPath}`);
-  console.log(`✓ Date range: ${articles[0].date} to ${articles[articles.length - 1].date}`);
+  if (fs.existsSync(outputPath)) {
+    try {
+      const existingData = fs.readFileSync(outputPath, 'utf-8');
+      existingArticles = JSON.parse(existingData);
+      console.log(`\n✓ Found ${existingArticles.length} existing articles`);
+    } catch (error) {
+      console.warn(`⚠ Error reading existing articles: ${error.message}`);
+    }
+  }
+  
+  // Merge articles - keep existing ones and add new ones
+  // Create a Set of existing article titles to avoid duplicates
+  const existingTitles = new Set(existingArticles.map(a => a.title));
+  const newArticles = articles.filter(a => !existingTitles.has(a.title));
+  
+  const allArticles = [...existingArticles, ...newArticles];
+  
+  // Sort all articles by date
+  allArticles.sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
+  
+  // Write to JSON file
+  fs.writeFileSync(outputPath, JSON.stringify(allArticles, null, 2), 'utf-8');
+  
+  console.log(`\n✓ Successfully merged articles to ${outputPath}`);
+  console.log(`✓ Existing articles: ${existingArticles.length}`);
+  console.log(`✓ New articles added: ${newArticles.length}`);
+  console.log(`✓ Total articles: ${allArticles.length}`);
+  if (articles.length > 0) {
+    console.log(`✓ Date range: ${articles[0].date} to ${articles[articles.length - 1].date}`);
+  }
 }
 
 // Run the conversion
