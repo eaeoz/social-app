@@ -145,6 +145,7 @@ function App() {
     // Listen for activity events to update last activity time
     const updateActivityTime = () => {
       lastActivityTime = Date.now();
+      console.log('🔄 Activity detected - updating last activity time');
     };
     
     // Track user interactions to detect activity
@@ -152,6 +153,14 @@ function App() {
     window.addEventListener('keydown', updateActivityTime);
     window.addEventListener('click', updateActivityTime);
     window.addEventListener('touchstart', updateActivityTime);
+    
+    // Listen for custom activity events from Call/Backgammon components
+    // This ensures that socket heartbeats during calls/games count as activity
+    const handleCustomActivity = () => {
+      lastActivityTime = Date.now();
+      console.log('💓 Heartbeat activity detected (call/game active)');
+    };
+    window.addEventListener('user-activity-heartbeat', handleCustomActivity);
     
     const checkTokenInterval = setInterval(() => {
       const token = localStorage.getItem('accessToken');
@@ -172,7 +181,7 @@ function App() {
           console.warn('⚠️ Token expired and user inactive - logging out');
           handleAutoLogout();
         } else {
-          console.log('🔄 Token expired but user is active - skipping auto-logout');
+          console.log('🔄 Token expired but user is active (last activity ' + Math.round(timeSinceLastActivity / 1000) + 's ago) - skipping auto-logout');
         }
       }
     }, 60000); // Check every minute
@@ -183,6 +192,7 @@ function App() {
       window.removeEventListener('keydown', updateActivityTime);
       window.removeEventListener('click', updateActivityTime);
       window.removeEventListener('touchstart', updateActivityTime);
+      window.removeEventListener('user-activity-heartbeat', handleCustomActivity);
     };
   }, [user, socket, navigate]);
 

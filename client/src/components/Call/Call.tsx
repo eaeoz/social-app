@@ -92,6 +92,8 @@ function Call({ socket, user, otherUser, callType, isInitiator, onCallEnd }: Cal
       activityInterval = setInterval(() => {
         if (socket) {
           socket.emit('activity', { userId: user.userId });
+          // Dispatch custom event to notify App.tsx that user is active
+          window.dispatchEvent(new Event('user-activity-heartbeat'));
         }
       }, 30000);
     }

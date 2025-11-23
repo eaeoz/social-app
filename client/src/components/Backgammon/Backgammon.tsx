@@ -134,11 +134,14 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     const activityInterval = setInterval(() => {
       console.log('🎲 Backgammon: Sending activity heartbeat for user:', user.userId);
       socket.emit('activity', { userId: user.userId });
+      // Dispatch custom event to notify App.tsx that user is active
+      window.dispatchEvent(new Event('user-activity-heartbeat'));
     }, 30000);
     
     // Send immediate activity on mount
     console.log('🎲 Backgammon: Sending initial activity heartbeat');
     socket.emit('activity', { userId: user.userId });
+    window.dispatchEvent(new Event('user-activity-heartbeat'));
 
     return () => {
       // Only remove listeners, DON'T leave the game
