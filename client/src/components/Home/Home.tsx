@@ -1957,7 +1957,8 @@ function Home({ user, socket, onLogout }: HomeProps) {
     ringtoneManager.stopRingtone();
     
     socket.emit('call-rejected', {
-      to: incomingCall.from
+      to: incomingCall.from,
+      from: user.userId
     });
     
     setIncomingCall(null);

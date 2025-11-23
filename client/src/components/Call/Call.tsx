@@ -703,24 +703,38 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
   };
 
   const endCall = () => {
-    if (socket && callState !== 'ended') {
+    const currentCallState = callState;
+    
+    if (socket && currentCallState !== 'ended') {
       socket.emit('end-call', { 
         to: otherUser.userId,
-        callState: callState // Pass current call state to backend
+        callState: currentCallState // Pass current call state to backend
       });
     }
     
     cleanup();
     setCallState('ended');
     
-    // Send call log message only if call was connected
-    if (socket && callStartTimeRef.current && callState === 'connected') {
-      const duration = Math.floor((Date.now() - callStartTimeRef.current) / 1000);
-      socket.emit('call-ended-log', {
-        receiverId: otherUser.userId,
-        callType,
-        duration
-      });
+    // Send call log message if call was connected OR if call was cancelled/missed during ringing
+    if (socket) {
+      if (callStartTimeRef.current && currentCallState === 'connected') {
+        // Call was connected - log with duration
+        const duration = Math.floor((Date.now() - callStartTimeRef.current) / 1000);
+        socket.emit('call-ended-log', {
+          receiverId: otherUser.userId,
+          callType,
+          duration,
+          callStatus: 'completed'
+        });
+      } else if (currentCallState === 'ringing') {
+        // Call was cancelled/missed during ringing - log without duration
+        socket.emit('call-ended-log', {
+          receiverId: otherUser.userId,
+          callType,
+          duration: 0,
+          callStatus: isInitiator ? 'cancelled' : 'missed'
+        });
+      }
     }
     
     setTimeout(() => {

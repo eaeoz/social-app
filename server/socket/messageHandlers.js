@@ -482,14 +482,59 @@ export function setupMessageHandlers(io, socket, userSockets) {
   });
 
   // Call rejected
-  socket.on('call-rejected', (data) => {
+  socket.on('call-rejected', async (data) => {
     try {
-      const { to } = data;
+      const { to, from } = data;
       const toSocketId = userSockets.get(to);
       
       if (toSocketId) {
         io.to(toSocketId).emit('call-rejected');
         console.log(`❌ Call rejected by user, notifying ${to}`);
+      }
+      
+      // Open chat for both users when call is rejected (so they can send messages)
+      if (from && to) {
+        // Get caller's openChats
+        const caller = await db.collection('users').findOne(
+          { _id: new ObjectId(from) },
+          { projection: { openChats: 1 } }
+        );
+        
+        let callerOpenChats = Array.isArray(caller?.openChats) ? caller.openChats : [];
+        const callerChatIndex = callerOpenChats.findIndex(oc => oc && oc.userId === to);
+        
+        if (callerChatIndex >= 0) {
+          callerOpenChats[callerChatIndex].state = true;
+        } else {
+          callerOpenChats.push({ userId: to, state: true });
+        }
+        
+        await db.collection('users').updateOne(
+          { _id: new ObjectId(from) },
+          { $set: { openChats: callerOpenChats } }
+        );
+        
+        // Get receiver's openChats
+        const receiver = await db.collection('users').findOne(
+          { _id: new ObjectId(to) },
+          { projection: { openChats: 1 } }
+        );
+        
+        let receiverOpenChats = Array.isArray(receiver?.openChats) ? receiver.openChats : [];
+        const receiverChatIndex = receiverOpenChats.findIndex(oc => oc && oc.userId === from);
+        
+        if (receiverChatIndex >= 0) {
+          receiverOpenChats[receiverChatIndex].state = true;
+        } else {
+          receiverOpenChats.push({ userId: from, state: true });
+        }
+        
+        await db.collection('users').updateOne(
+          { _id: new ObjectId(to) },
+          { $set: { openChats: receiverOpenChats } }
+        );
+        
+        console.log(`✅ Opened chat windows for both users after call rejection`);
       }
     } catch (error) {
       console.error('Error handling call rejection:', error);
@@ -568,33 +613,90 @@ export function setupMessageHandlers(io, socket, userSockets) {
   // Log call ended (for message history)
   socket.on('call-ended-log', async (data) => {
     try {
-      const { receiverId, callType, duration } = data;
+      const { receiverId, callType, duration, callStatus = 'completed' } = data;
       const userId = socket.userId;
       
       if (!userId) return;
+
+      // Ensure both users have the chat window open (state: true)
+      // Get sender's openChats
+      const sender = await db.collection('users').findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { username: 1, displayName: 1, nickName: 1, openChats: 1 } }
+      );
+      
+      let senderOpenChats = Array.isArray(sender?.openChats) ? sender.openChats : [];
+      const senderChatIndex = senderOpenChats.findIndex(oc => oc && oc.userId === receiverId);
+      
+      if (senderChatIndex >= 0) {
+        senderOpenChats[senderChatIndex].state = true;
+      } else {
+        senderOpenChats.push({ userId: receiverId, state: true });
+      }
+      
+      await db.collection('users').updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { openChats: senderOpenChats } }
+      );
+      
+      // Get receiver's openChats
+      const receiver = await db.collection('users').findOne(
+        { _id: new ObjectId(receiverId) },
+        { projection: { openChats: 1 } }
+      );
+      
+      let receiverOpenChats = Array.isArray(receiver?.openChats) ? receiver.openChats : [];
+      const receiverChatIndex = receiverOpenChats.findIndex(oc => oc && oc.userId === userId);
+      
+      if (receiverChatIndex >= 0) {
+        receiverOpenChats[receiverChatIndex].state = true;
+      } else {
+        receiverOpenChats.push({ userId: userId, state: true });
+      }
+      
+      await db.collection('users').updateOne(
+        { _id: new ObjectId(receiverId) },
+        { $set: { openChats: receiverOpenChats } }
+      );
+      
+      console.log(`✅ Ensured chat windows are open for both users after call`);
+
+      // Create appropriate message content based on call status
+      let content;
+      const callIcon = callType === 'video' ? '📹' : '📞';
+      const callTypeText = callType.charAt(0).toUpperCase() + callType.slice(1);
+      
+      if (callStatus === 'completed' && duration > 0) {
+        // Completed call with duration
+        content = `${callIcon} ${callTypeText} call - ${Math.floor(duration / 60)}m ${duration % 60}s`;
+      } else if (callStatus === 'cancelled') {
+        // Cancelled by caller during ringing
+        content = `${callIcon} Cancelled ${callType} call`;
+      } else if (callStatus === 'missed') {
+        // Missed by receiver (caller cancelled during ringing)
+        content = `${callIcon} Missed ${callType} call`;
+      } else {
+        // Fallback for any other status
+        content = `${callIcon} ${callTypeText} call`;
+      }
 
       // Store call log as a special message
       const message = {
         senderId: new ObjectId(userId),
         receiverId: new ObjectId(receiverId),
-        content: `${callType === 'video' ? '📹' : '📞'} ${callType.charAt(0).toUpperCase() + callType.slice(1)} call - ${Math.floor(duration / 60)}m ${duration % 60}s`,
+        content,
         messageType: 'call-log',
         isPrivate: true,
         isRead: false,
         isEdited: false,
         timestamp: new Date(),
         callDuration: duration,
-        callType
+        callType,
+        callStatus
       };
 
       const result = await db.collection('messages').insertOne(message);
-      console.log(`📝 Call log saved: ${callType} call, ${duration}s`);
-
-      // Get sender information
-      const sender = await db.collection('users').findOne(
-        { _id: new ObjectId(userId) },
-        { projection: { username: 1, displayName: 1, nickName: 1 } }
-      );
+      console.log(`📝 Call log saved: ${callType} call, status: ${callStatus}, duration: ${duration}s`);
 
       // Prepare message for broadcasting
       const broadcastMessage = {
