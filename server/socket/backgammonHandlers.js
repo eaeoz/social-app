@@ -85,6 +85,9 @@ function checkForLegalMoves(game, playerColor) {
     return false; // Can't enter from bar
   }
   
+  // Check if player can bear off
+  const canPlayerBearOff = canBearOff(game, playerColor);
+  
   // Check all points where player has checkers
   for (let fromPoint = 0; fromPoint < 24; fromPoint++) {
     const point = game.board.points[fromPoint];
@@ -103,13 +106,60 @@ function checkForLegalMoves(game, playerColor) {
       }
       
       // Check if move is within board
-      if (toPoint < 0 || toPoint > 23) continue;
+      if (toPoint >= 0 && toPoint <= 23) {
+        // Check if destination is available
+        const destPoint = game.board.points[toPoint];
+        if (!destPoint.color || destPoint.color === playerColor || destPoint.checkers <= 1) {
+          console.log(`✅ Legal move found: Point ${fromPoint} → ${toPoint} with die ${dieValue}`);
+          return true;
+        }
+      }
       
-      // Check if destination is available
-      const destPoint = game.board.points[toPoint];
-      if (!destPoint.color || destPoint.color === playerColor || destPoint.checkers <= 1) {
-        console.log(`✅ Legal move found: Point ${fromPoint} → ${toPoint} with die ${dieValue}`);
-        return true;
+      // Check if can bear off with this die
+      if (canPlayerBearOff) {
+        // Calculate distance needed to bear off
+        let distanceNeeded;
+        if (playerColor === 'white') {
+          distanceNeeded = 24 - fromPoint;
+        } else {
+          distanceNeeded = fromPoint + 1;
+        }
+        
+        // Can bear off with exact die
+        if (dieValue === distanceNeeded) {
+          console.log(`✅ Legal move found: Bear off from point ${fromPoint} with exact die ${dieValue}`);
+          return true;
+        }
+        
+        // Can bear off with higher die if no checkers behind
+        if (dieValue > distanceNeeded) {
+          let hasCheckersBehind = false;
+          
+          if (playerColor === 'white') {
+            // Check points 18 to fromPoint-1 (further from bearing off)
+            for (let i = 18; i < fromPoint; i++) {
+              const pt = game.board.points[i];
+              if (pt && pt.color === playerColor && pt.checkers > 0) {
+                hasCheckersBehind = true;
+                break;
+              }
+            }
+          } else {
+            // Check points fromPoint+1 to 5 (further from bearing off)
+            for (let i = fromPoint + 1; i <= 5; i++) {
+              const pt = game.board.points[i];
+              if (pt && pt.color === playerColor && pt.checkers > 0) {
+                hasCheckersBehind = true;
+                break;
+              }
+            }
+          }
+          
+          if (!hasCheckersBehind) {
+            console.log(`✅ Legal move found: Bear off from point ${fromPoint} with higher die ${dieValue} (no checkers behind)`);
+            return true;
+          }
+        }
       }
     }
     
