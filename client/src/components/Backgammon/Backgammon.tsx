@@ -194,7 +194,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     // If there are checkers on bar, can't move other checkers
     if (fromPoint >= 0 && playerBar > 0) return [];
     
-    // Check each die value
+    // Check each individual die value
     dice.forEach(dieValue => {
       let targetPoint;
       
@@ -224,6 +224,108 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         }
       }
     });
+    
+    // Check for combined moves (only if we have 2 different dice)
+    if (dice.length === 2 && dice[0] !== dice[1] && fromPoint >= 0) {
+      const combinedDistance = dice[0] + dice[1];
+      let combinedTarget;
+      
+      if (myColor === 'white') {
+        combinedTarget = fromPoint + combinedDistance;
+      } else {
+        combinedTarget = fromPoint - combinedDistance;
+      }
+      
+      // Check if combined move target is valid
+      if (combinedTarget >= 0 && combinedTarget <= 23) {
+        // Verify both intermediate steps are clear
+        let firstStep, secondStep;
+        if (myColor === 'white') {
+          firstStep = fromPoint + dice[0];
+          secondStep = fromPoint + dice[1];
+        } else {
+          firstStep = fromPoint - dice[0];
+          secondStep = fromPoint - dice[1];
+        }
+        
+        // Check if either path is valid
+        let pathValid = false;
+        
+        // Path 1: first die then second die
+        if (firstStep >= 0 && firstStep <= 23) {
+          const firstPoint = board.points[firstStep];
+          if (!firstPoint.color || firstPoint.color === myColor || firstPoint.checkers <= 1) {
+            const finalPoint = board.points[combinedTarget];
+            if (!finalPoint.color || finalPoint.color === myColor || finalPoint.checkers <= 1) {
+              pathValid = true;
+            }
+          }
+        }
+        
+        // Path 2: second die then first die (alternative)
+        if (!pathValid && secondStep >= 0 && secondStep <= 23) {
+          const secondPoint = board.points[secondStep];
+          if (!secondPoint.color || secondPoint.color === myColor || secondPoint.checkers <= 1) {
+            const finalPoint = board.points[combinedTarget];
+            if (!finalPoint.color || finalPoint.color === myColor || finalPoint.checkers <= 1) {
+              pathValid = true;
+            }
+          }
+        }
+        
+        if (pathValid && !moves.includes(combinedTarget)) {
+          moves.push(combinedTarget);
+        }
+      }
+    }
+    
+    // For doubles (e.g., 4,4,4,4), check for multiple combined moves
+    if (dice.length >= 2 && dice.every(d => d === dice[0]) && fromPoint >= 0) {
+      const dieValue = dice[0];
+      
+      // Try 2×, 3×, 4× the die value
+      for (let multiplier = 2; multiplier <= dice.length; multiplier++) {
+        const combinedDistance = dieValue * multiplier;
+        let combinedTarget;
+        
+        if (myColor === 'white') {
+          combinedTarget = fromPoint + combinedDistance;
+        } else {
+          combinedTarget = fromPoint - combinedDistance;
+        }
+        
+        if (combinedTarget >= 0 && combinedTarget <= 23) {
+          // Verify all intermediate steps are clear
+          let allStepsClear = true;
+          let currentPos = fromPoint;
+          
+          for (let step = 0; step < multiplier; step++) {
+            if (myColor === 'white') {
+              currentPos = currentPos + dieValue;
+            } else {
+              currentPos = currentPos - dieValue;
+            }
+            
+            if (currentPos >= 0 && currentPos <= 23) {
+              const checkPoint = board.points[currentPos];
+              if (checkPoint.color && checkPoint.color !== myColor && checkPoint.checkers > 1) {
+                allStepsClear = false;
+                break;
+              }
+            }
+          }
+          
+          if (allStepsClear) {
+            const finalPoint = board.points[combinedTarget];
+            if (!finalPoint.color || finalPoint.color === myColor || finalPoint.checkers <= 1) {
+              if (!moves.includes(combinedTarget)) {
+                moves.push(combinedTarget);
+              }
+            }
+          }
+        }
+      }
+    }
     
     return moves;
   };
