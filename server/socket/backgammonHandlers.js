@@ -443,6 +443,13 @@ function setupBackgammonHandlers(io, socket) {
             return;
           }
         }
+        
+        // Check if destination is blocked by opponent (2+ checkers)
+        const toPoint = game.board.points[to];
+        if (toPoint.color && toPoint.color !== player.color && toPoint.checkers > 1) {
+          socket.emit('backgammon:error', { message: 'Cannot enter - destination blocked by opponent' });
+          return;
+        }
       } else {
         // Regular move - calculate distance based on player direction
         if (player.color === 'white') {
@@ -628,8 +635,11 @@ function setupBackgammonHandlers(io, socket) {
         }
         
         // Place checker on destination
+        // Only set color if point is empty or already has our color
+        if (!toPoint.color) {
+          toPoint.color = player.color;
+        }
         toPoint.checkers++;
-        toPoint.color = player.color;
       } else {
         // Regular move from point to point
         const fromPoint = game.board.points[from];
@@ -652,8 +662,11 @@ function setupBackgammonHandlers(io, socket) {
         }
         
         // Place checker on destination
+        // Only set color if point is empty or already has our color
+        if (!toPoint.color) {
+          toPoint.color = player.color;
+        }
         toPoint.checkers++;
-        toPoint.color = player.color;
       }
       
       // Remove used dice
