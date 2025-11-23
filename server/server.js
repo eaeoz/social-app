@@ -415,6 +415,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
 import soundRoutes from './routes/soundRoutes.js';
 import { setupMessageHandlers } from './socket/messageHandlers.js';
+import { setupBackgammonHandlers } from './socket/backgammonHandlers.js';
 import { seedDefaultRooms } from './utils/seedRooms.js';
 import { initializeSiteSettings, getSiteSettings } from './utils/initializeSiteSettings.js';
 import { initializeReportingSystem } from './utils/initializeReportingSystem.js';
@@ -587,6 +588,9 @@ io.on('connection', (socket) => {
 
   // Set up message handlers
   setupMessageHandlers(io, socket, userSockets);
+  
+  // Set up backgammon handlers
+  setupBackgammonHandlers(io, socket);
 
   socket.on('disconnect', (reason) => {
     console.log(`❌ Client disconnected: ${socket.id}, Reason: ${reason}`);

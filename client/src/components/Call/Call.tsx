@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import Whiteboard from '../Whiteboard/Whiteboard';
+import Backgammon from '../Backgammon/Backgammon';
 import './Call.css';
 
 interface CallProps {
   socket: Socket | null;
+  user: any;
   otherUser: {
     userId: string;
     username: string;
@@ -16,7 +18,7 @@ interface CallProps {
   onCallEnd: () => void;
 }
 
-function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps) {
+function Call({ socket, user, otherUser, callType, isInitiator, onCallEnd }: CallProps) {
   const [callState, setCallState] = useState<'ringing' | 'connecting' | 'connected' | 'ended'>('ringing');
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
@@ -24,6 +26,7 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
+  const [isBackgammonOpen, setIsBackgammonOpen] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -788,6 +791,10 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
     }
   };
 
+  const toggleBackgammon = () => {
+    setIsBackgammonOpen(!isBackgammonOpen);
+  };
+
   // Listen for whiteboard toggle from remote user
   useEffect(() => {
     if (!socket) return;
@@ -976,6 +983,16 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
             </button>
             
             <button
+              className={`call-button call-backgammon-button ${isBackgammonOpen ? 'call-button-backgammon-active' : ''}`}
+              onClick={toggleBackgammon}
+              aria-label={isBackgammonOpen ? 'Close backgammon' : 'Play backgammon'}
+              style={{ display: window.innerWidth < 768 ? 'none' : 'flex' }}
+            >
+              <span className="button-icon" style={{ fontSize: '24px' }}>🎲</span>
+              <span className="button-label">{isBackgammonOpen ? 'Close Game' : 'Backgammon'}</span>
+            </button>
+            
+            <button
               className="call-button call-button-hangup"
               onClick={endCall}
               aria-label="End call"
@@ -1004,6 +1021,16 @@ function Call({ socket, otherUser, callType, isInitiator, onCallEnd }: CallProps
               });
             }
           }}
+        />
+      )}
+
+      {/* Backgammon Component */}
+      {socket && isBackgammonOpen && (
+        <Backgammon
+          socket={socket}
+          gameId={`call-${[otherUser.userId, user.userId].sort().join('-')}`}
+          user={user}
+          onClose={() => setIsBackgammonOpen(false)}
         />
       )}
     </div>

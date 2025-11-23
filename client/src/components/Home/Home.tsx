@@ -2830,6 +2830,7 @@ function Home({ user, socket, onLogout }: HomeProps) {
         <div className="call-overlay">
           <Call
             socket={socket}
+            user={user}
             isInitiator={isCallInitiator}
             callType={callType}
             otherUser={callPartner}
