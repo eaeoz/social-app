@@ -220,12 +220,34 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
           </span>
         </div>
         
-        {dice && (
-          <div className="dice-display">
-            <div className="die">{dice[0]}</div>
-            <div className="die">{dice[1]}</div>
+        <div className="dice-controls-area">
+          {dice && (
+            <div className="dice-display">
+              <div className="die">{dice[0]}</div>
+              <div className="die">{dice[1]}</div>
+            </div>
+          )}
+          
+          <div className="dice-buttons">
+            {gameState === 'ready' && (
+              <button className="dice-button" onClick={handleStartGame}>
+                Start Game
+              </button>
+            )}
+            
+            {gameState === 'rolling' && myColor === currentPlayer && (
+              <button className="dice-button" onClick={handleRollDice}>
+                🎲 Roll Dice
+              </button>
+            )}
+            
+            {gameState === 'game_over' && (
+              <button className="dice-button" onClick={onClose}>
+                Close Game
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="turn-indicator">
           {gameState === 'waiting' && 'Waiting for opponent...'}
@@ -265,25 +287,6 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         </div>
       </div>
 
-      <div className="game-controls">
-        {gameState === 'ready' && (
-          <button className="game-button" onClick={handleStartGame}>
-            Start Game
-          </button>
-        )}
-        
-        {gameState === 'rolling' && myColor === currentPlayer && (
-          <button className="game-button" onClick={handleRollDice}>
-            🎲 Roll Dice
-          </button>
-        )}
-        
-        {gameState === 'game_over' && (
-          <button className="game-button" onClick={onClose}>
-            Close Game
-          </button>
-        )}
-      </div>
     </div>
   );
 }
