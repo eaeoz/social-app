@@ -89,11 +89,11 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   useEffect(() => {
     console.log('🎲 Backgammon component mounted, gameId:', gameId);
     
-    // Request to join game
+    // Request to join game (or rejoin if reopening)
     socket.emit('backgammon:join', { gameId, userId: user.userId });
 
-    // Listen for game state updates
-    socket.on('backgammon:state', (data: {
+    // Handler for game state updates
+    const handleGameState = (data: {
       board: BoardState;
       playerColor: 'white' | 'black';
       currentPlayer: 'white' | 'black';
@@ -106,19 +106,29 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       setCurrentPlayer(data.currentPlayer);
       setDice(data.dice);
       setGameState(data.state);
-    });
+    };
 
-    socket.on('backgammon:error', (data: { message: string }) => {
+    const handleGameError = (data: { message: string }) => {
       console.error('❌ Backgammon error:', data.message);
       setError(data.message);
       setTimeout(() => setError(''), 3000);
-    });
+    };
 
-    socket.on('backgammon:game_over', (data: { winner: 'white' | 'black' }) => {
+    const handleGameOver = (data: { winner: 'white' | 'black' }) => {
       console.log('🏆 Game over! Winner:', data.winner);
       setWinner(data.winner);
       setGameState('game_over');
-    });
+    };
+
+    // Remove any existing listeners before adding new ones
+    socket.off('backgammon:state', handleGameState);
+    socket.off('backgammon:error', handleGameError);
+    socket.off('backgammon:game_over', handleGameOver);
+
+    // Add listeners
+    socket.on('backgammon:state', handleGameState);
+    socket.on('backgammon:error', handleGameError);
+    socket.on('backgammon:game_over', handleGameOver);
 
     // Send activity heartbeat every 30 seconds to prevent session timeout
     const activityInterval = setInterval(() => {
@@ -126,12 +136,16 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     }, 30000);
 
     return () => {
-      socket.off('backgammon:state');
-      socket.off('backgammon:error');
-      socket.off('backgammon:game_over');
+      // Only remove listeners, DON'T leave the game
+      // This allows reopening the window without disconnecting
+      socket.off('backgammon:state', handleGameState);
+      socket.off('backgammon:error', handleGameError);
+      socket.off('backgammon:game_over', handleGameOver);
       clearInterval(activityInterval);
-      // Leave game on unmount
-      socket.emit('backgammon:leave', { gameId });
+      
+      // NOTE: We DON'T call socket.emit('backgammon:leave') here
+      // so that toggling the window doesn't disconnect from the game
+      console.log('🎲 Backgammon component unmounted (game still active)');
     };
   }, [socket, gameId, user.userId]);
 
