@@ -278,7 +278,64 @@ export const getUnreadCount = (): number => {
 };
 
 /**
- * Handle new message notification (title, sound, and favicon badge)
+ * Request desktop notification permission
+ */
+export const requestNotificationPermission = async (): Promise<boolean> => {
+  if (!('Notification' in window)) {
+    console.log('❌ This browser does not support desktop notifications');
+    return false;
+  }
+  
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+  
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+  
+  return false;
+};
+
+/**
+ * Show desktop notification
+ */
+export const showDesktopNotification = (title: string, body: string, icon?: string) => {
+  if (!('Notification' in window)) {
+    console.log('❌ This browser does not support desktop notifications');
+    return;
+  }
+  
+  if (Notification.permission === 'granted') {
+    const notification = new Notification(title, {
+      body,
+      icon: icon || '/logo_sedatchat.gif',
+      badge: '/logo_sedatchat.gif',
+      tag: 'chat-message', // Replaces previous notification with same tag
+      requireInteraction: false,
+      silent: false // Let the system handle the sound
+    });
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
+    
+    // Focus window when notification is clicked
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+    
+    console.log('🔔 Desktop notification shown:', title);
+  } else if (Notification.permission === 'default') {
+    console.log('⚠️ Notification permission not granted yet');
+  }
+};
+
+/**
+ * Handle new message notification (title, sound, favicon badge, and desktop notification)
  */
 export const handleNewMessageNotification = (messageText: string = 'New message', senderId: string, currentUserId: string, doNotDisturb: boolean = false) => {
   // Don't notify for own messages
@@ -296,13 +353,18 @@ export const handleNewMessageNotification = (messageText: string = 'New message'
   // Only blink title if page is not visible/focused
   if (!isPageVisible()) {
     startTitleNotification(messageText);
+    
+    // Show desktop notification if page is not visible
+    showDesktopNotification('💬 New Message', messageText);
   }
 };
 
 /**
  * Reset notifications when user returns to page
+ * Only resets visual indicators (title, favicon), not actual message counts
  */
 export const resetNotifications = () => {
   stopTitleNotification();
-  resetUnreadCount();
+  // Don't reset the unread count here - it should only be reset when the user actually reads the messages
+  // The unread count in the UI should be managed separately from the notification badge
 };

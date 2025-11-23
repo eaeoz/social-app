@@ -175,8 +175,9 @@ export function setupMessageHandlers(io, socket, userSockets) {
         chatId = newChat.insertedId;
       }
 
-      // Ensure receiver's openChats array includes this chat with state=true (for new messages)
-      // This makes sure the chat appears in their private chats list
+      // Ensure receiver's openChats array includes this chat
+      // If receiver explicitly closed it (state: false), respect that choice
+      // Only add new entry if it doesn't exist yet
       const receiver = await db.collection('users').findOne(
         { _id: new ObjectId(receiverId) },
         { projection: { openChats: 1 } }
@@ -186,18 +187,20 @@ export function setupMessageHandlers(io, socket, userSockets) {
       const existingChatIndex = receiverOpenChats.findIndex(oc => oc && oc.userId === senderId);
 
       if (existingChatIndex >= 0) {
-        // Update existing entry to state: true (message received means chat should be visible)
-        receiverOpenChats[existingChatIndex].state = true;
+        // Entry exists - DO NOT change state
+        // If receiver closed it (state: false), keep it closed
+        // If receiver opened it (state: true), keep it open
+        // Respect the receiver's choice
       } else {
-        // Add new entry with state: true
+        // Add new entry with state: true (first message from this user)
         receiverOpenChats.push({ userId: senderId, state: true });
+        
+        // Update receiver's openChats array only if we added a new entry
+        await db.collection('users').updateOne(
+          { _id: new ObjectId(receiverId) },
+          { $set: { openChats: receiverOpenChats } }
+        );
       }
-
-      // Update receiver's openChats array
-      await db.collection('users').updateOne(
-        { _id: new ObjectId(receiverId) },
-        { $set: { openChats: receiverOpenChats } }
-      );
 
       // Prepare message for broadcasting
       const broadcastMessage = {

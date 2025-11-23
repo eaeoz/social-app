@@ -339,16 +339,26 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
         // Check if this chat should be visible based on openChats state
         const openChatEntry = openChats.find(oc => oc && oc.userId === otherUserId.toString());
         
-        // Chat visibility logic:
-        // - Hide ONLY if explicitly closed (state === false)
-        // - Show if: state === true OR state is undefined/null (not yet set) OR has unread messages
-        const isExplicitlyClosed = openChatEntry?.state === false;
-        
         // Check if user is in openChats array (chatted today indicator)
         const isInOpenChats = openChatEntry !== undefined;
         
-        // If user explicitly closed this chat, don't show it
-        if (isExplicitlyClosed) return null;
+        // Count unread messages FIRST (we need this to decide visibility)
+        const unreadCount = await db.collection('messages').countDocuments({
+          isPrivate: true,
+          receiverId: userId,
+          senderId: otherUserId,
+          isRead: false
+        });
+        
+        // Chat visibility logic:
+        // - ALWAYS show if there are unread messages (even if previously closed)
+        // - Show if state === true (explicitly opened)
+        // - Show if state is undefined/null (not yet set - first message)
+        // - Hide ONLY if explicitly closed (state === false) AND no unread messages
+        const isExplicitlyClosed = openChatEntry?.state === false;
+        
+        // If user explicitly closed this chat AND there are no unread messages, don't show it
+        if (isExplicitlyClosed && unreadCount === 0) return null;
 
         // Get other user's info
         const otherUser = await db.collection('users').findOne(
@@ -363,14 +373,6 @@ router.get('/private-chats', authenticateToken, async (req, res) => {
         if (otherUser.profilePictureId) {
           profilePictureUrl = `${process.env.APPWRITE_ENDPOINT}/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${otherUser.profilePictureId}/view?project=${process.env.APPWRITE_PROJECT_ID}&t=${Date.now()}`;
         }
-
-        // Count unread messages (messages sent by other user that we haven't read)
-        const unreadCount = await db.collection('messages').countDocuments({
-          isPrivate: true,
-          receiverId: userId,
-          senderId: otherUserId,
-          isRead: false
-        });
 
         // Get last message
         const lastMessage = await db.collection('messages')
