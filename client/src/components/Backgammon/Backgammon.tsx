@@ -75,10 +75,16 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       setGameState('game_over');
     });
 
+    // Send activity heartbeat every 30 seconds to prevent session timeout
+    const activityInterval = setInterval(() => {
+      socket.emit('activity', { userId: user.userId });
+    }, 30000);
+
     return () => {
       socket.off('backgammon:state');
       socket.off('backgammon:error');
       socket.off('backgammon:game_over');
+      clearInterval(activityInterval);
       // Leave game on unmount
       socket.emit('backgammon:leave', { gameId });
     };

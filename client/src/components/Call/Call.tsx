@@ -74,6 +74,8 @@ function Call({ socket, user, otherUser, callType, isInitiator, onCallEnd }: Cal
     isMountedRef.current = true;
     initializeCall();
 
+    let activityInterval: number | null = null;
+
     if (socket) {
       // Only initiator should listen to call-accepted
       if (isInitiator) {
@@ -85,6 +87,13 @@ function Call({ socket, user, otherUser, callType, isInitiator, onCallEnd }: Cal
       socket.on('call-answer', handleCallAnswer);
       socket.on('call-ended', handleRemoteCallEnd);
       socket.on('user-logged-out', handleUserLoggedOut);
+      
+      // Send activity heartbeat every 30 seconds to prevent session timeout
+      activityInterval = setInterval(() => {
+        if (socket) {
+          socket.emit('activity', { userId: user.userId });
+        }
+      }, 30000);
     }
 
     return () => {
@@ -94,6 +103,11 @@ function Call({ socket, user, otherUser, callType, isInitiator, onCallEnd }: Cal
       isProcessingOfferRef.current = false; // Reset processing flag
       pendingOfferRef.current = null;
       pendingCandidatesRef.current = []; // Clear candidate queue on unmount
+      
+      if (activityInterval) {
+        clearInterval(activityInterval);
+      }
+      
       cleanup();
       if (socket) {
         if (isInitiator) {
