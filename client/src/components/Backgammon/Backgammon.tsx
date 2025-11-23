@@ -147,16 +147,14 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   };
 
   const renderBoard = () => {
-    const points = [];
-    
-    for (let i = 0; i < 24; i++) {
+    const renderPoint = (i: number, isTopRow: boolean) => {
       const point = board.points[i];
       const isSelected = selectedPoint === i;
       
-      points.push(
+      return (
         <div
           key={i}
-          className={`point ${isSelected ? 'selected' : ''}`}
+          className={`point ${isTopRow ? 'top-row' : 'bottom-row'} ${isSelected ? 'selected' : ''}`}
           onClick={() => handlePointClick(i)}
         >
           <div className="point-number">{i + 1}</div>
@@ -172,9 +170,35 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
           )}
         </div>
       );
-    }
+    };
 
-    return <div className="board-points">{points}</div>;
+    return (
+      <>
+        {/* Right section */}
+        <div className="board-section">
+          {/* Top row: 12-17 */}
+          <div className="board-row">
+            {[12, 13, 14, 15, 16, 17].map(i => renderPoint(i, true))}
+          </div>
+          {/* Bottom row: 11-6 (reverse) */}
+          <div className="board-row">
+            {[11, 10, 9, 8, 7, 6].map(i => renderPoint(i, false))}
+          </div>
+        </div>
+        
+        {/* Left section */}
+        <div className="board-section">
+          {/* Top row: 18-23 */}
+          <div className="board-row">
+            {[18, 19, 20, 21, 22, 23].map(i => renderPoint(i, true))}
+          </div>
+          {/* Bottom row: 5-0 (reverse) */}
+          <div className="board-row">
+            {[5, 4, 3, 2, 1, 0].map(i => renderPoint(i, false))}
+          </div>
+        </div>
+      </>
+    );
   };
 
   return (
