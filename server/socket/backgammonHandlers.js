@@ -635,10 +635,7 @@ function setupBackgammonHandlers(io, socket) {
         }
         
         // Place checker on destination
-        // Only set color if point is empty or already has our color
-        if (!toPoint.color) {
-          toPoint.color = player.color;
-        }
+        toPoint.color = player.color;
         toPoint.checkers++;
       } else {
         // Regular move from point to point
@@ -662,10 +659,7 @@ function setupBackgammonHandlers(io, socket) {
         }
         
         // Place checker on destination
-        // Only set color if point is empty or already has our color
-        if (!toPoint.color) {
-          toPoint.color = player.color;
-        }
+        toPoint.color = player.color;
         toPoint.checkers++;
       }
       

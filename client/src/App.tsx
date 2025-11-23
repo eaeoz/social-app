@@ -135,18 +135,55 @@ function App() {
   }, [navigate]);
 
   // Periodically check token expiration (every minute)
+  // But skip auto-logout if user has been recently active (to prevent logout during calls/games)
   useEffect(() => {
     if (!user) return;
 
+    // Track last activity time
+    let lastActivityTime = Date.now();
+    
+    // Listen for activity events to update last activity time
+    const updateActivityTime = () => {
+      lastActivityTime = Date.now();
+    };
+    
+    // Track user interactions to detect activity
+    window.addEventListener('mousemove', updateActivityTime);
+    window.addEventListener('keydown', updateActivityTime);
+    window.addEventListener('click', updateActivityTime);
+    window.addEventListener('touchstart', updateActivityTime);
+    
     const checkTokenInterval = setInterval(() => {
       const token = localStorage.getItem('accessToken');
       
-      if (!token || isTokenExpired(token)) {
+      if (!token) {
         handleAutoLogout();
+        return;
+      }
+      
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        // Only auto-logout if user has been inactive for more than 2 minutes
+        // This prevents logout during active calls/games where heartbeats are being sent
+        const timeSinceLastActivity = Date.now() - lastActivityTime;
+        const twoMinutesInMs = 2 * 60 * 1000;
+        
+        if (timeSinceLastActivity > twoMinutesInMs) {
+          console.warn('⚠️ Token expired and user inactive - logging out');
+          handleAutoLogout();
+        } else {
+          console.log('🔄 Token expired but user is active - skipping auto-logout');
+        }
       }
     }, 60000); // Check every minute
 
-    return () => clearInterval(checkTokenInterval);
+    return () => {
+      clearInterval(checkTokenInterval);
+      window.removeEventListener('mousemove', updateActivityTime);
+      window.removeEventListener('keydown', updateActivityTime);
+      window.removeEventListener('click', updateActivityTime);
+      window.removeEventListener('touchstart', updateActivityTime);
+    };
   }, [user, socket, navigate]);
 
   // Initialize Socket.IO connection when user is authenticated
