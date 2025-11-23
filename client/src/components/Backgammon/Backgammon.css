@@ -186,12 +186,12 @@
   border-radius: 12px;
   padding: 25px 15px;
   margin: 10px 0;
-  flex: 0 0 560px;
+  flex: 0 0 640px;
   display: flex;
   gap: 80px;
   justify-content: center;
   align-items: stretch;
-  height: 560px;
+  height: 640px;
   overflow: hidden;
   box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -208,7 +208,7 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 6px;
-  height: 260px;
+  height: 300px;
 }
 
 .point {
@@ -289,6 +289,9 @@
   justify-content: flex-start;
   min-height: 0;
   margin-top: 2px;
+  overflow: hidden;
+  max-height: 220px;
+  position: relative;
 }
 
 .bottom-row .checkers {
@@ -335,21 +338,27 @@
 }
 
 .checker-count {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: white;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 4px 10px;
-  border-radius: 15px;
-  margin-top: 6px;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 4px 8px;
+  border-radius: 12px;
   font-weight: bold;
   flex-shrink: 0;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  position: absolute;
+  z-index: 200;
+  min-width: 28px;
+  text-align: center;
+}
+
+.top-row .checker-count {
+  bottom: 8px;
 }
 
 .bottom-row .checker-count {
-  margin-top: 0;
-  margin-bottom: 6px;
+  top: 8px;
 }
 
 .bar {

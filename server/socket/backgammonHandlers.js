@@ -243,24 +243,41 @@ function setupBackgammonHandlers(io, socket) {
       
       console.log(`📏 Calculated distance: ${distance} for ${player.color}${isFromBar ? ' (from bar)' : ''}`);
       
-      // Validate distance matches one of the dice OR sum of dice (for non-doubles)
+      // Validate distance matches dice combination
       let diceToUse = [];
       
+      // Check if distance matches a single die
       if (game.dice.includes(distance)) {
-        // Direct match - single die
         diceToUse = [distance];
-      } else if (game.dice.length === 2 && game.dice[0] !== game.dice[1]) {
-        // Check if distance equals sum of both different dice
+      }
+      // For doubles (e.g., 4,4,4,4), allow any valid combination
+      else if (game.dice.length >= 2 && game.dice.every(d => d === game.dice[0])) {
+        const dieValue = game.dice[0];
+        const availableDice = game.dice.length;
+        
+        // Check if distance is a multiple of the die value
+        if (distance % dieValue === 0) {
+          const diceNeeded = distance / dieValue;
+          
+          // Check if we have enough dice
+          if (diceNeeded <= availableDice && diceNeeded > 0) {
+            diceToUse = Array(diceNeeded).fill(dieValue);
+            console.log(`🎯 Doubles combined move: ${diceNeeded}×${dieValue} = ${distance}`);
+          }
+        }
+      }
+      // For two different dice, allow combining them
+      else if (game.dice.length === 2 && game.dice[0] !== game.dice[1]) {
         const sum = game.dice[0] + game.dice[1];
         if (distance === sum) {
-          diceToUse = [...game.dice]; // Use both dice
+          diceToUse = [...game.dice];
           console.log(`🎯 Combined move: ${game.dice[0]} + ${game.dice[1]} = ${distance}`);
         }
       }
       
       if (diceToUse.length === 0) {
         socket.emit('backgammon:error', { 
-          message: `Invalid move - distance ${distance} doesn't match dice ${game.dice}` 
+          message: `Invalid move - distance ${distance} doesn't match available dice ${game.dice}` 
         });
         return;
       }
@@ -327,8 +344,14 @@ function setupBackgammonHandlers(io, socket) {
         const dieIndex = game.dice.indexOf(diceToUse[0]);
         game.dice.splice(dieIndex, 1);
       } else {
-        // Both dice used (combined move)
-        game.dice = [];
+        // Multiple dice used (combined move)
+        // Remove the exact number of dice that were used
+        for (let i = 0; i < diceToUse.length; i++) {
+          const dieIndex = game.dice.indexOf(diceToUse[i]);
+          if (dieIndex !== -1) {
+            game.dice.splice(dieIndex, 1);
+          }
+        }
       }
       
       console.log(`✅ Move successful! Remaining dice: ${game.dice}`);
