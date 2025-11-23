@@ -278,6 +278,59 @@ function setupBackgammonHandlers(io, socket) {
     }
   });
 
+  // Restart the game
+  socket.on('backgammon:restart', async ({ gameId }) => {
+    try {
+      const game = activeGames.get(gameId);
+      if (!game) {
+        socket.emit('backgammon:error', { message: 'Game not found' });
+        return;
+      }
+      
+      if (game.players.length !== 2) {
+        socket.emit('backgammon:error', { message: 'Need 2 players to restart' });
+        return;
+      }
+      
+      console.log(`🔄 Restarting game ${gameId}`);
+      
+      // Reset the board to initial state
+      game.board = initializeBoard();
+      game.state = 'rolling';
+      game.currentPlayer = 'white';
+      game.dice = null;
+      
+      // Re-initialize the core game library
+      try {
+        game.coreGame = Game.createNewGame(
+          { userId: game.players[0].userId, isRobot: false },
+          { userId: game.players[1].userId, isRobot: false }
+        );
+        console.log('✅ Core game re-initialized');
+      } catch (error) {
+        console.error('Error re-initializing core game:', error);
+      }
+      
+      // Notify all players about the reset
+      io.to(gameId).emit('backgammon:game_reset');
+      
+      // Send fresh game state to each player
+      game.players.forEach(p => {
+        io.to(p.socketId).emit('backgammon:state', {
+          board: game.board,
+          playerColor: p.color,
+          currentPlayer: game.currentPlayer,
+          dice: game.dice,
+          state: game.state
+        });
+      });
+      
+    } catch (error) {
+      console.error('Error in backgammon:restart:', error);
+      socket.emit('backgammon:error', { message: 'Failed to restart game' });
+    }
+  });
+
   // Start the game
   socket.on('backgammon:start', async ({ gameId }) => {
     try {

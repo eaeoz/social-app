@@ -39,6 +39,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [error, setError] = useState<string>('');
   const [winner, setWinner] = useState<'white' | 'black' | null>(null);
+  const [availableMoves, setAvailableMoves] = useState<number[]>([]);
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -114,10 +115,18 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       setTimeout(() => setError(''), 3000);
     };
 
-    const handleGameOver = (data: { winner: 'white' | 'black' }) => {
+  const handleGameOver = (data: { winner: 'white' | 'black' }) => {
       console.log('🏆 Game over! Winner:', data.winner);
       setWinner(data.winner);
       setGameState('game_over');
+    };
+
+    const handleGameReset = () => {
+      console.log('🔄 Game reset by other player');
+      setWinner(null);
+      setSelectedPoint(null);
+      setAvailableMoves([]);
+      setError('');
     };
 
     // Remove any existing listeners before adding new ones
@@ -129,6 +138,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     socket.on('backgammon:state', handleGameState);
     socket.on('backgammon:error', handleGameError);
     socket.on('backgammon:game_over', handleGameOver);
+    socket.on('backgammon:game_reset', handleGameReset);
 
     // Send activity heartbeat every 30 seconds to prevent session timeout
     const activityInterval = setInterval(() => {
@@ -149,6 +159,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       socket.off('backgammon:state', handleGameState);
       socket.off('backgammon:error', handleGameError);
       socket.off('backgammon:game_over', handleGameOver);
+      socket.off('backgammon:game_reset', handleGameReset);
       clearInterval(activityInterval);
       
       // NOTE: We DON'T call socket.emit('backgammon:leave') here
@@ -162,10 +173,59 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     socket.emit('backgammon:start', { gameId });
   };
 
+  const handleRestartGame = () => {
+    console.log('🔄 Restarting game');
+    socket.emit('backgammon:restart', { gameId });
+  };
+
   const handleRollDice = () => {
     if (gameState !== 'rolling' || myColor !== currentPlayer) return;
     console.log('🎲 Rolling dice');
     socket.emit('backgammon:roll', { gameId });
+  };
+
+  // Calculate available moves when a point is selected
+  const calculateAvailableMoves = (fromPoint: number) => {
+    if (!dice || myColor !== currentPlayer) return [];
+    
+    const moves: number[] = [];
+    const playerBar = myColor === 'white' ? board.whiteBar : board.blackBar;
+    
+    // If there are checkers on bar, can't move other checkers
+    if (fromPoint >= 0 && playerBar > 0) return [];
+    
+    // Check each die value
+    dice.forEach(dieValue => {
+      let targetPoint;
+      
+      if (fromPoint === -1) {
+        // Moving from bar
+        if (myColor === 'white') {
+          targetPoint = dieValue - 1;
+        } else {
+          targetPoint = 24 - dieValue;
+        }
+      } else {
+        // Normal move
+        if (myColor === 'white') {
+          targetPoint = fromPoint + dieValue;
+        } else {
+          targetPoint = fromPoint - dieValue;
+        }
+      }
+      
+      // Check if target is valid
+      if (targetPoint >= 0 && targetPoint <= 23) {
+        const targetPointData = board.points[targetPoint];
+        if (!targetPointData.color || targetPointData.color === myColor || targetPointData.checkers <= 1) {
+          if (!moves.includes(targetPoint)) {
+            moves.push(targetPoint);
+          }
+        }
+      }
+    });
+    
+    return moves;
   };
 
   const handlePointClick = (pointIndex: number) => {
@@ -176,6 +236,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       const point = board.points[pointIndex];
       if (point && point.color === myColor && point.checkers > 0) {
         setSelectedPoint(pointIndex);
+        setAvailableMoves(calculateAvailableMoves(pointIndex));
         console.log(`✅ Selected point ${pointIndex}`);
       }
     } else {
@@ -183,6 +244,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       if (selectedPoint === pointIndex) {
         console.log(`↩️ Deselected point ${pointIndex}`);
         setSelectedPoint(null);
+        setAvailableMoves([]);
         return;
       }
       
@@ -194,6 +256,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         to: pointIndex
       });
       setSelectedPoint(null);
+      setAvailableMoves([]);
     }
   };
 
@@ -206,9 +269,11 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       if (selectedPoint === -1) {
         console.log(`↩️ Deselected bar`);
         setSelectedPoint(null);
+        setAvailableMoves([]);
       } else {
         console.log(`✅ Selected bar (${barCount} checkers)`);
-        setSelectedPoint(-1); // Use -1 to represent the bar
+        setSelectedPoint(-1);
+        setAvailableMoves(calculateAvailableMoves(-1));
       }
     }
   };
@@ -225,6 +290,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         to: -2 // -2 represents bearing off
       });
       setSelectedPoint(null);
+      setAvailableMoves([]);
     }
   };
 
@@ -232,18 +298,21 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     const renderPoint = (i: number, isTopRow: boolean) => {
       const point = board.points[i];
       const isSelected = selectedPoint === i;
+      const isAvailable = availableMoves.includes(i);
       
       return (
         <div
           key={i}
-          className={`point ${isTopRow ? 'top-row' : 'bottom-row'} ${isSelected ? 'selected' : ''}`}
+          className={`point ${isTopRow ? 'top-row' : 'bottom-row'} ${isSelected ? 'selected' : ''} ${isAvailable ? 'available' : ''}`}
           onClick={() => handlePointClick(i)}
         >
           <div className="point-number">{i + 1}</div>
           {point && point.checkers > 0 && (
             <div className={`checkers ${point.color}`}>
               {Array.from({ length: Math.min(point.checkers, 5) }).map((_, idx) => (
-                <div key={idx} className="checker" />
+                <div key={idx} className="checker">
+                  <div className="checker-shine"></div>
+                </div>
               ))}
               {point.checkers > 5 && (
                 <div className="checker-count">+{point.checkers - 5}</div>
@@ -327,8 +396,8 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
             )}
             
             {gameState === 'game_over' && (
-              <button className="dice-button" onClick={onClose}>
-                Close Game
+              <button className="dice-button restart-button" onClick={handleRestartGame}>
+                🔄 New Game
               </button>
             )}
           </div>
@@ -343,7 +412,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
           )}
         </div>
 
-        <div className="turn-indicator">
+        <div className={`turn-indicator ${gameState === 'game_over' ? (winner === myColor ? 'winner-message' : 'loser-message') : ''}`}>
           {gameState === 'waiting' && 'Waiting for opponent...'}
           {gameState === 'ready' && 'Ready to start!'}
           {gameState === 'rolling' && myColor === currentPlayer && 'Your turn - Roll dice'}
@@ -351,7 +420,23 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
           {gameState === 'moving' && myColor === currentPlayer && 'Your turn - Move checkers'}
           {gameState === 'moving' && myColor !== currentPlayer && 'Opponent moving...'}
           {gameState === 'opponent_turn' && 'Opponent\'s turn...'}
-          {gameState === 'game_over' && winner && `🏆 ${winner === myColor ? 'You win!' : 'You lose!'}`}
+          {gameState === 'game_over' && winner && (
+            <div className="game-over-message">
+              {winner === myColor ? (
+                <>
+                  <span className="trophy-icon">🏆</span>
+                  <span className="win-text">VICTORY!</span>
+                  <span className="trophy-icon">🏆</span>
+                </>
+              ) : (
+                <>
+                  <span className="lose-icon">😔</span>
+                  <span className="lose-text">DEFEATED</span>
+                  <span className="lose-icon">😔</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
