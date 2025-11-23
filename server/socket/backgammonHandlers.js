@@ -243,8 +243,22 @@ function setupBackgammonHandlers(io, socket) {
       
       console.log(`📏 Calculated distance: ${distance} for ${player.color}${isFromBar ? ' (from bar)' : ''}`);
       
-      // Validate distance matches one of the dice
-      if (!game.dice || distance <= 0 || !game.dice.includes(distance)) {
+      // Validate distance matches one of the dice OR sum of dice (for non-doubles)
+      let diceToUse = [];
+      
+      if (game.dice.includes(distance)) {
+        // Direct match - single die
+        diceToUse = [distance];
+      } else if (game.dice.length === 2 && game.dice[0] !== game.dice[1]) {
+        // Check if distance equals sum of both different dice
+        const sum = game.dice[0] + game.dice[1];
+        if (distance === sum) {
+          diceToUse = [...game.dice]; // Use both dice
+          console.log(`🎯 Combined move: ${game.dice[0]} + ${game.dice[1]} = ${distance}`);
+        }
+      }
+      
+      if (diceToUse.length === 0) {
         socket.emit('backgammon:error', { 
           message: `Invalid move - distance ${distance} doesn't match dice ${game.dice}` 
         });
@@ -307,9 +321,15 @@ function setupBackgammonHandlers(io, socket) {
       toPoint.checkers++;
       toPoint.color = player.color;
       
-      // Remove used die
-      const dieIndex = game.dice.indexOf(distance);
-      game.dice.splice(dieIndex, 1);
+      // Remove used dice
+      if (diceToUse.length === 1) {
+        // Single die used
+        const dieIndex = game.dice.indexOf(diceToUse[0]);
+        game.dice.splice(dieIndex, 1);
+      } else {
+        // Both dice used (combined move)
+        game.dice = [];
+      }
       
       console.log(`✅ Move successful! Remaining dice: ${game.dice}`);
       
