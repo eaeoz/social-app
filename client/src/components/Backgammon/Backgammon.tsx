@@ -132,8 +132,13 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
 
     // Send activity heartbeat every 30 seconds to prevent session timeout
     const activityInterval = setInterval(() => {
+      console.log('🎲 Backgammon: Sending activity heartbeat for user:', user.userId);
       socket.emit('activity', { userId: user.userId });
     }, 30000);
+    
+    // Send immediate activity on mount
+    console.log('🎲 Backgammon: Sending initial activity heartbeat');
+    socket.emit('activity', { userId: user.userId });
 
     return () => {
       // Only remove listeners, DON'T leave the game
@@ -205,6 +210,21 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     }
   };
 
+  const handleBearOffClick = () => {
+    if (gameState !== 'moving' || myColor !== currentPlayer) return;
+    
+    // Can only bear off if a checker is selected
+    if (selectedPoint !== null && selectedPoint >= 0) {
+      console.log(`🏁 Attempting to bear off from point ${selectedPoint}`);
+      socket.emit('backgammon:move', {
+        gameId,
+        from: selectedPoint,
+        to: -2 // -2 represents bearing off
+      });
+      setSelectedPoint(null);
+    }
+  };
+
   const renderBoard = () => {
     const renderPoint = (i: number, isTopRow: boolean) => {
       const point = board.points[i];
@@ -268,10 +288,9 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     >
       <div className="backgammon-header">
         <h2>🎲 Backgammon</h2>
+        {error && <div className="error-message-inline">{error}</div>}
         <button className="close-button" onClick={onClose}>✕</button>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
 
       <div className="game-info">
         <div className="player-info">
@@ -310,6 +329,15 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
               </button>
             )}
           </div>
+          
+          {gameState === 'moving' && myColor === currentPlayer && dice && (
+            <button 
+              className="dice-button pass-turn-button" 
+              onClick={() => socket.emit('backgammon:pass', { gameId })}
+            >
+              ⏭️ Pass Turn
+            </button>
+          )}
         </div>
 
         <div className="turn-indicator">
@@ -340,13 +368,23 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
           )}
         </div>
         
-        <div className="off-board">
+        <div 
+          className={`off-board ${selectedPoint !== null && selectedPoint >= 0 ? 'clickable' : ''}`}
+          onClick={handleBearOffClick}
+          title={selectedPoint !== null && selectedPoint >= 0 ? 'Click to bear off selected checker' : ''}
+        >
+          <div className="off-label">🏁 BEAR OFF</div>
           <div className="off-white">
-            White Off: {board.whiteOff}
+            ⚪ White: {board.whiteOff}/15
           </div>
           <div className="off-black">
-            Black Off: {board.blackOff}
+            ⚫ Black: {board.blackOff}/15
           </div>
+          {selectedPoint !== null && selectedPoint >= 0 && gameState === 'moving' && myColor === currentPlayer && (
+            <div className="bear-off-hint">
+              ↑ Click here to bear off
+            </div>
+          )}
         </div>
       </div>
 
