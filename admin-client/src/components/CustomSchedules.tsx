@@ -165,6 +165,38 @@ function CustomSchedules() {
     }
   };
 
+  const handleManualRun = async (scheduleId: string) => {
+    if (!confirm('Are you sure you want to run this script manually now?')) return;
+
+    setMessage('Running script...');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/custom-schedules/${scheduleId}/run`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`✅ Script executed successfully! Result: ${JSON.stringify(data.result)}`);
+        fetchSchedules(); // Refresh to update last run time and count
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        const data = await response.json();
+        setMessage(`❌ ${data.error || 'Failed to run script'}`);
+        setTimeout(() => setMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('Error running schedule:', error);
+      setMessage('❌ An error occurred while running the script');
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Never';
     return new Date(dateStr).toLocaleString();
@@ -339,6 +371,19 @@ function CustomSchedules() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => handleManualRun(schedule._id)}
+                    className="btn-save"
+                    style={{ 
+                      flex: 1, 
+                      fontSize: '0.9em', 
+                      padding: '8px',
+                      background: '#28a745'
+                    }}
+                    title="Run script manually now"
+                  >
+                    ▶️ Run Now
+                  </button>
                   <button
                     onClick={() => handleEdit(schedule)}
                     className="btn-save"

@@ -2226,6 +2226,63 @@ router.put('/custom-schedules/:scheduleId', authenticateToken, requireAdmin, asy
   }
 });
 
+// Manually run a custom schedule script
+router.post('/custom-schedules/:scheduleId/run', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+    const db = getDatabase();
+    
+    const schedule = await db.collection('customSchedules').findOne({ 
+      _id: new ObjectId(scheduleId) 
+    });
+    
+    if (!schedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+    
+    console.log(`🚀 [Manual Run] Executing custom schedule: ${schedule.name}`);
+    
+    try {
+      // Import and execute the custom script
+      const scriptModule = await import(`../customSchedules/${schedule.scriptPath}`);
+      
+      if (scriptModule.execute && typeof scriptModule.execute === 'function') {
+        const result = await scriptModule.execute();
+        console.log(`✅ [Manual Run] ${schedule.name} completed:`, result);
+        
+        // Update last run time and count
+        await db.collection('customSchedules').updateOne(
+          { _id: new ObjectId(scheduleId) },
+          { 
+            $set: { lastRun: new Date() },
+            $inc: { runCount: 1 }
+          }
+        );
+        
+        res.json({ 
+          message: 'Script executed successfully',
+          result: result,
+          scriptName: schedule.name
+        });
+      } else {
+        console.error(`❌ [Manual Run] ${schedule.name}: Script does not export an 'execute' function`);
+        res.status(400).json({ 
+          error: 'Script does not export an execute function' 
+        });
+      }
+    } catch (scriptError) {
+      console.error(`❌ [Manual Run] ${schedule.name} failed:`, scriptError);
+      res.status(500).json({ 
+        error: 'Script execution failed',
+        details: scriptError.message 
+      });
+    }
+  } catch (error) {
+    console.error('Manual run custom schedule error:', error);
+    res.status(500).json({ error: 'Failed to run custom schedule' });
+  }
+});
+
 // Delete custom schedule
 router.delete('/custom-schedules/:scheduleId', authenticateToken, requireAdmin, async (req, res) => {
   try {
