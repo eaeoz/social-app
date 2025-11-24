@@ -46,6 +46,11 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 100, y: 100 });
+  
+  // Scale/Resize state
+  const [scale, setScale] = useState(0.4); // Default to 40%
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, initialScale: 0.4 });
 
   // Sound effects
   const playSound = (soundType: string) => {
@@ -79,6 +84,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.close-button')) return;
     if ((e.target as HTMLElement).closest('.dice-button')) return;
+    if ((e.target as HTMLElement).closest('.resize-handle')) return;
     
     const container = (e.currentTarget as HTMLElement);
     const rect = container.getBoundingClientRect();
@@ -88,6 +94,41 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     });
+  };
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      initialScale: scale
+    });
+  };
+
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+
+    // Calculate distance moved
+    const deltaX = e.clientX - resizeStart.x;
+    const deltaY = e.clientY - resizeStart.y;
+    
+    // Use the larger delta to determine scale change
+    const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+    
+    // Scale factor: 1px movement = 0.002 scale change
+    const scaleChange = delta * 0.002;
+    let newScale = resizeStart.initialScale + scaleChange;
+    
+    // Clamp scale between 0.2 and 2 (20% to 200%)
+    newScale = Math.max(0.2, Math.min(2, newScale));
+    
+    setScale(newScale);
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(false);
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -114,6 +155,18 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       };
     }
   }, [isDragging, dragOffset]);
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleResizeMove);
+      window.addEventListener('mouseup', handleResizeEnd);
+      
+      return () => {
+        window.removeEventListener('mousemove', handleResizeMove);
+        window.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [isResizing, resizeStart, scale]);
 
   // Initialize game
   useEffect(() => {
@@ -521,7 +574,12 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   return (
     <div 
       className="backgammon-container"
-      style={{ left: `${position.x}px`, top: `${position.y}px` }}
+      style={{ 
+        left: `${position.x}px`, 
+        top: `${position.y}px`,
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left'
+      }}
       onMouseDown={handleMouseDown}
     >
       <div className="backgammon-header">
@@ -534,6 +592,9 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         </button>
         <h2>🎲 Backgammon</h2>
         {error && <div className="error-message-inline">{error}</div>}
+        <div className="scale-indicator" title="Current scale">
+          {Math.round(scale * 100)}%
+        </div>
         <button className="close-button" onClick={onClose}>✕</button>
       </div>
 
@@ -650,6 +711,29 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Resize handles */}
+      <div 
+        className="resize-handle resize-bottom-right"
+        onMouseDown={handleResizeStart}
+        title="Drag to resize"
+      >
+        ⇲
+      </div>
+      <div 
+        className="resize-handle resize-top-right"
+        onMouseDown={handleResizeStart}
+        title="Drag to resize"
+      >
+        ⇱
+      </div>
+      <div 
+        className="resize-handle resize-bottom-left"
+        onMouseDown={handleResizeStart}
+        title="Drag to resize"
+      >
+        ⇲
       </div>
 
     </div>
