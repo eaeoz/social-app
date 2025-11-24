@@ -21,8 +21,8 @@ class NSFWValidator {
       { r: [80, 220], g: [50, 150], b: [40, 100] },   // Additional skin range
     ];
     
-    // Thresholds
-    this.maxSkinPercentage = 40; // Maximum % of skin-colored pixels allowed
+    // Thresholds - LOWERED to compensate for client-side compression (120x120 @ 95% quality)
+    this.maxSkinPercentage = 25; // Maximum % of skin-colored pixels allowed (lowered from 40% due to compression)
     this.minImageSize = 80 * 80; // Minimum image size to analyze
     
     console.log('✅ NSFW Validator initialized (Pure Node.js - no Python/APIs)');
