@@ -6,8 +6,6 @@ import About from '../Legal/About';
 import Contact from '../Legal/Contact';
 import Blog from '../Legal/Blog';
 import ImageCropper from './ImageCropper';
-import NSFWWarningModal from './NSFWWarningModal';
-import { nsfwDetector } from '../../utils/nsfwDetector';
 
 interface RegisterProps {
   onRegisterSuccess: (user: any, token: string) => void;
@@ -44,10 +42,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
   const [showBlog, setShowBlog] = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
-  const [showNSFWWarning, setShowNSFWWarning] = useState(false);
-  const [nsfwWarnings, setNsfwWarnings] = useState<string[]>([]);
-  const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [allowUserPictures, setAllowUserPictures] = useState(true);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
@@ -139,36 +133,10 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     }
   };
 
-  const handleCropComplete = async (croppedBlob: Blob) => {
+  const handleCropComplete = (croppedBlob: Blob) => {
     setShowImageCropper(false);
     setTempImageUrl('');
-    setIsAnalyzing(true);
-    setError('');
-
-    try {
-      // Analyze the image for NSFW content
-      const result = await nsfwDetector.analyzeImage(croppedBlob);
-      
-      if (result.isNSFW) {
-        // Show warning modal
-        setPendingCroppedBlob(croppedBlob);
-        setNsfwWarnings(result.warnings);
-        setShowNSFWWarning(true);
-      } else {
-        // Safe image - proceed with upload
-        proceedWithImageUpload(croppedBlob);
-      }
-    } catch (err: any) {
-      console.error('NSFW detection error:', err);
-      // If detection fails, allow upload but log the error
-      setError('Content detection unavailable. Proceeding with upload.');
-      proceedWithImageUpload(croppedBlob);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const proceedWithImageUpload = (croppedBlob: Blob) => {
+    
     // Convert blob to File
     const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
     setProfilePicture(file);
@@ -176,22 +144,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
     // Create preview from blob
     const url = URL.createObjectURL(croppedBlob);
     setPreviewUrl(url);
-  };
-
-  const handleNSFWContinue = () => {
-    if (pendingCroppedBlob) {
-      proceedWithImageUpload(pendingCroppedBlob);
-    }
-    setShowNSFWWarning(false);
-    setPendingCroppedBlob(null);
-    setNsfwWarnings([]);
-  };
-
-  const handleNSFWCancel = () => {
-    setShowNSFWWarning(false);
-    setPendingCroppedBlob(null);
-    setNsfwWarnings([]);
-    // Allow user to select a different image
   };
 
   const handleCropCancel = () => {
@@ -587,29 +539,6 @@ function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
         />
-      )}
-
-      {showNSFWWarning && nsfwWarnings.length > 0 && (
-        <NSFWWarningModal
-          warnings={nsfwWarnings}
-          onContinue={handleNSFWContinue}
-          onCancel={handleNSFWCancel}
-        />
-      )}
-
-      {isAnalyzing && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ textAlign: 'center' }}>
-            <div className="modal-icon">🔍</div>
-            <h2>Analyzing Image...</h2>
-            <p className="modal-message">
-              Checking image content for community guidelines compliance.
-            </p>
-            <div style={{ margin: '20px 0' }}>
-              <div className="loading-spinner"></div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

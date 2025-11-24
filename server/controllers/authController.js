@@ -8,6 +8,7 @@ import { InputFile, ID } from 'node-appwrite';
 import { storage, BUCKET_ID } from '../config/appwrite.js';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '../utils/emailService.js';
+import { nsfwValidator } from '../utils/nsfwValidator.js';
 
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -228,6 +229,25 @@ export async function register(req, res) {
     let profilePictureId = null;
     if (req.file) {
       try {
+        // Validate image for NSFW content before uploading
+        console.log(`🔍 Validating profile picture for NSFW content...`);
+        const validationResult = await nsfwValidator.validateImage(req.file.buffer);
+        
+        if (!validationResult.isValid) {
+          console.warn(`⚠️ NSFW content detected in profile picture for user: ${username}`);
+          // Delete the created user since validation failed
+          await usersCollection.deleteOne({ _id: new ObjectId(userId) });
+          await db.collection('userpresence').deleteOne({ userId: new ObjectId(userId) });
+          await db.collection('settings').deleteOne({ userId: new ObjectId(userId) });
+          
+          return res.status(400).json({ 
+            error: 'Inappropriate content detected in profile picture',
+            message: 'The uploaded image contains inappropriate content and cannot be used as a profile picture. Please choose a different image.',
+            details: validationResult.details
+          });
+        }
+        
+        console.log(`✅ Profile picture passed NSFW validation`);
         profilePictureId = await processAndUploadImage(req.file.buffer, username, userId);
         // Update user with profilePictureId
         await usersCollection.updateOne(
@@ -859,6 +879,21 @@ export async function updateProfile(req, res) {
         console.log(`📸 Processing profile picture for user: ${user.username}`);
         console.log(`📸 File size: ${req.file.size} bytes`);
         console.log(`📸 File mimetype: ${req.file.mimetype}`);
+        
+        // Validate image for NSFW content before uploading
+        console.log(`🔍 Validating profile picture for NSFW content...`);
+        const validationResult = await nsfwValidator.validateImage(req.file.buffer);
+        
+        if (!validationResult.isValid) {
+          console.warn(`⚠️ NSFW content detected in profile picture for user: ${user.username}`);
+          return res.status(400).json({ 
+            error: 'Inappropriate content detected in profile picture',
+            message: 'The uploaded image contains inappropriate content and cannot be used as a profile picture. Please choose a different image.',
+            details: validationResult.details
+          });
+        }
+        
+        console.log(`✅ Profile picture passed NSFW validation`);
         
         // Delete old profile picture if exists
         if (user.profilePictureId) {

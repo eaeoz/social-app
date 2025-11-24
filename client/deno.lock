@@ -12,6 +12,8 @@
     "packageJson": {
       "dependencies": [
         "npm:@eslint/js@^9.36.0",
+        "npm:@excalidraw/excalidraw@0.18",
+        "npm:@nodots-llc/backgammon-core@^4.6.2",
         "npm:@tensorflow/tfjs@^4.22.0",
         "npm:@types/bad-words@^3.0.3",
         "npm:@types/node@^24.6.0",
@@ -30,6 +32,7 @@
         "npm:react-dom@^19.1.1",
         "npm:react-markdown@^10.1.0",
         "npm:react-router-dom@^7.9.5",
+        "npm:react-use@^17.6.0",
         "npm:react@^19.1.1",
         "npm:rolldown-vite@7.1.14",
         "npm:socket.io-client@^4.8.1",

@@ -1,25 +1,19 @@
 /**
- * NSFW Content Detection Utility
- * Uses NSFW.js with TensorFlow.js for client-side image content detection
+ * NSFW Content Detection - Server-Side Only
  * 
- * Detection Categories:
- * - Porn: Explicit sexual content
- * - Sexy: Provocative/suggestive content
- * - Hentai: Animated explicit content
- * - Neutral: Safe content
- * - Drawing: Safe illustrations
+ * This is a placeholder file. NSFW detection is now handled entirely on the server.
+ * The server validates all uploaded images before accepting them.
+ * 
+ * Client-side detection has been removed because:
+ * 1. It can be bypassed by users
+ * 2. TensorFlow.js models are large and slow on client devices
+ * 3. Server-side validation is more secure and consistent
+ * 4. Better compatibility across all platforms (web, iOS, Android)
  */
-
-import * as nsfwjs from 'nsfwjs';
-
-interface NSFWPrediction {
-  className: 'Drawing' | 'Hentai' | 'Neutral' | 'Porn' | 'Sexy';
-  probability: number;
-}
 
 interface DetectionResult {
   isNSFW: boolean;
-  predictions: NSFWPrediction[];
+  predictions: any[];
   highestRisk: {
     category: string;
     probability: number;
@@ -28,171 +22,36 @@ interface DetectionResult {
 }
 
 class NSFWDetector {
-  private model: any = null;
-  private isLoading = false;
-  private loadPromise: Promise<void> | null = null;
-
-  // Thresholds for detection (adjustable)
-  private readonly THRESHOLDS = {
-    porn: 0.3,      // 30% confidence for porn
-    sexy: 0.5,      // 50% confidence for sexy/suggestive
-    hentai: 0.4,    // 40% confidence for hentai
-  };
-
   /**
-   * Load the NSFW detection model
-   */
-  async loadModel(): Promise<void> {
-    // If already loaded, return
-    if (this.model) {
-      return;
-    }
-
-    // If currently loading, wait for existing load
-    if (this.isLoading && this.loadPromise) {
-      return this.loadPromise;
-    }
-
-    // Start loading
-    this.isLoading = true;
-    this.loadPromise = (async () => {
-      try {
-        console.log('Loading NSFW detection model...');
-        // Load the MobileNetV2 model from CDN (more reliable than local files)
-        // First try local model, fall back to CDN if it fails
-        try {
-          this.model = await nsfwjs.load('/models/', { type: 'graph' });
-          console.log('NSFW detection model loaded successfully from local files');
-        } catch (localError) {
-          console.log('Local model not found, loading from CDN...');
-          // Load from CDN - nsfwjs will use its default hosted model
-          this.model = await nsfwjs.load();
-          console.log('NSFW detection model loaded successfully from CDN');
-        }
-      } catch (error) {
-        console.error('Failed to load NSFW detection model:', error);
-        throw new Error('Failed to initialize content safety detection');
-      } finally {
-        this.isLoading = false;
-      }
-    })();
-
-    return this.loadPromise;
-  }
-
-  /**
-   * Analyze an image for NSFW content
-   * @param imageSource - Can be an HTMLImageElement, File, or Blob
-   * @returns Detection results with warnings
+   * Server-side validation - This method is now a no-op
+   * All validation happens on the server when the image is uploaded
    */
   async analyzeImage(imageSource: HTMLImageElement | File | Blob): Promise<DetectionResult> {
-    // Ensure model is loaded
-    if (!this.model) {
-      await this.loadModel();
-    }
-
-    try {
-      let imageElement: HTMLImageElement;
-
-      // Convert File/Blob to Image element if needed
-      if (imageSource instanceof File || imageSource instanceof Blob) {
-        imageElement = await this.blobToImage(imageSource);
-      } else {
-        imageElement = imageSource;
-      }
-
-      // Run prediction
-      const predictions = await this.model.classify(imageElement) as NSFWPrediction[];
-      
-      // Analyze results
-      const result = this.analyzeResults(predictions);
-
-      // Clean up if we created a temporary image
-      if (imageSource instanceof File || imageSource instanceof Blob) {
-        URL.revokeObjectURL(imageElement.src);
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      throw new Error('Failed to analyze image content');
-    }
-  }
-
-  /**
-   * Analyze prediction results and determine if content is NSFW
-   */
-  private analyzeResults(predictions: NSFWPrediction[]): DetectionResult {
-    const warnings: string[] = [];
-    let isNSFW = false;
-
-    // Find highest probability category
-    const sorted = [...predictions].sort((a, b) => b.probability - a.probability);
-    const highestRisk = {
-      category: sorted[0].className,
-      probability: sorted[0].probability,
-    };
-
-    // Check each concerning category
-    predictions.forEach((pred) => {
-      const category = pred.className.toLowerCase();
-      const probability = pred.probability;
-
-      if (category === 'porn' && probability >= this.THRESHOLDS.porn) {
-        isNSFW = true;
-        warnings.push(`⚠️ Explicit sexual content detected (${(probability * 100).toFixed(1)}% confidence)`);
-      } else if (category === 'hentai' && probability >= this.THRESHOLDS.hentai) {
-        isNSFW = true;
-        warnings.push(`⚠️ Explicit animated content detected (${(probability * 100).toFixed(1)}% confidence)`);
-      } else if (category === 'sexy' && probability >= this.THRESHOLDS.sexy) {
-        isNSFW = true;
-        warnings.push(`⚠️ Suggestive/provocative content detected (${(probability * 100).toFixed(1)}% confidence)`);
-      }
-    });
-
+    // Return safe result - server will handle actual validation
+    console.log('✓ Image will be validated by server during upload');
     return {
-      isNSFW,
-      predictions,
-      highestRisk,
-      warnings,
+      isNSFW: false,
+      predictions: [],
+      highestRisk: {
+        category: 'Neutral',
+        probability: 1.0,
+      },
+      warnings: [],
     };
   }
 
-  /**
-   * Convert Blob/File to HTMLImageElement
-   */
-  private blobToImage(blob: Blob): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(blob);
-
-      img.onload = () => resolve(img);
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('Failed to load image'));
-      };
-
-      img.src = url;
-    });
+  async loadModel(): Promise<void> {
+    // No-op - model loading happens on server
+    console.log('✓ NSFW validation is handled by server');
   }
 
-  /**
-   * Preload the model for faster first-time detection
-   */
   async preload(): Promise<void> {
-    try {
-      await this.loadModel();
-    } catch (error) {
-      console.warn('Failed to preload NSFW detection model:', error);
-      // Don't throw - allow the app to continue
-    }
+    // No-op
   }
 
-  /**
-   * Check if model is ready
-   */
   isReady(): boolean {
-    return this.model !== null;
+    // Always ready since we don't do client-side validation
+    return true;
   }
 }
 
@@ -200,4 +59,4 @@ class NSFWDetector {
 export const nsfwDetector = new NSFWDetector();
 
 // Export types
-export type { DetectionResult, NSFWPrediction };
+export type { DetectionResult };
