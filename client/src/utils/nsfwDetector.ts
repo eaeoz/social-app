@@ -26,7 +26,7 @@ class NSFWDetector {
    * Server-side validation - This method is now a no-op
    * All validation happens on the server when the image is uploaded
    */
-  async analyzeImage(imageSource: HTMLImageElement | File | Blob): Promise<DetectionResult> {
+  async analyzeImage(_imageSource: HTMLImageElement | File | Blob): Promise<DetectionResult> {
     // Return safe result - server will handle actual validation
     console.log('✓ Image will be validated by server during upload');
     return {
