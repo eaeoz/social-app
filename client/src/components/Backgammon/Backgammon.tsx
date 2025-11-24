@@ -40,11 +40,40 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
   const [error, setError] = useState<string>('');
   const [winner, setWinner] = useState<'white' | 'black' | null>(null);
   const [availableMoves, setAvailableMoves] = useState<number[]>([]);
+  const [isMuted, setIsMuted] = useState(false);
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 100, y: 100 });
+
+  // Sound effects
+  const playSound = (soundType: string) => {
+    if (isMuted) return;
+    
+    const soundMap: { [key: string]: string } = {
+      pick: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Stone pick
+      drop: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Stone drop
+      move: 'https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3', // Piece move
+      win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3', // Win fanfare
+      lose: 'https://assets.mixkit.co/active_storage/sfx/1943/1943-preview.mp3', // Lose sound
+      error: 'https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3', // Error beep
+      pass: 'https://assets.mixkit.co/active_storage/sfx/2574/2574-preview.mp3', // Pass turn
+      bearOff: 'https://assets.mixkit.co/active_storage/sfx/1434/1434-preview.mp3', // Bear off success
+      rollDice: 'https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3', // Dice roll
+      startGame: 'https://assets.mixkit.co/active_storage/sfx/1469/1469-preview.mp3', // Game start
+      newGame: 'https://assets.mixkit.co/active_storage/sfx/1433/1433-preview.mp3', // New game
+      capture: 'https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3', // Capture/hit opponent checker
+      barReturn: 'https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3', // Return from bar to board
+    };
+    
+    const soundUrl = soundMap[soundType];
+    if (soundUrl) {
+      const audio = new Audio(soundUrl);
+      audio.volume = 0.5;
+      audio.play().catch(err => console.log('Sound play failed:', err));
+    }
+  };
 
   // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -112,6 +141,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     const handleGameError = (data: { message: string }) => {
       console.error('❌ Backgammon error:', data.message);
       setError(data.message);
+      playSound('error');
       setTimeout(() => setError(''), 3000);
     };
 
@@ -119,6 +149,13 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       console.log('🏆 Game over! Winner:', data.winner);
       setWinner(data.winner);
       setGameState('game_over');
+      
+      // Play win/lose sound
+      if (myColor === data.winner) {
+        playSound('win');
+      } else {
+        playSound('lose');
+      }
     };
 
     const handleGameReset = () => {
@@ -127,18 +164,33 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       setSelectedPoint(null);
       setAvailableMoves([]);
       setError('');
+      playSound('newGame');
+    };
+
+    const handleCapture = (data: { capturedBy: 'white' | 'black'; capturedColor: 'white' | 'black' }) => {
+      console.log(`💥 Capture! ${data.capturedBy} captured ${data.capturedColor}'s checker`);
+      playSound('capture');
+    };
+
+    const handleBarReturn = (data: { player: 'white' | 'black' }) => {
+      console.log(`🏠 Bar return! ${data.player} returned from bar`);
+      playSound('barReturn');
     };
 
     // Remove any existing listeners before adding new ones
     socket.off('backgammon:state', handleGameState);
     socket.off('backgammon:error', handleGameError);
     socket.off('backgammon:game_over', handleGameOver);
+    socket.off('backgammon:capture', handleCapture);
+    socket.off('backgammon:bar_return', handleBarReturn);
 
     // Add listeners
     socket.on('backgammon:state', handleGameState);
     socket.on('backgammon:error', handleGameError);
     socket.on('backgammon:game_over', handleGameOver);
     socket.on('backgammon:game_reset', handleGameReset);
+    socket.on('backgammon:capture', handleCapture);
+    socket.on('backgammon:bar_return', handleBarReturn);
 
     // Send activity heartbeat every 30 seconds to prevent session timeout
     const activityInterval = setInterval(() => {
@@ -160,6 +212,8 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       socket.off('backgammon:error', handleGameError);
       socket.off('backgammon:game_over', handleGameOver);
       socket.off('backgammon:game_reset', handleGameReset);
+      socket.off('backgammon:capture', handleCapture);
+      socket.off('backgammon:bar_return', handleBarReturn);
       clearInterval(activityInterval);
       
       // NOTE: We DON'T call socket.emit('backgammon:leave') here
@@ -170,17 +224,20 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
 
   const handleStartGame = () => {
     console.log('🎮 Starting game');
+    playSound('startGame');
     socket.emit('backgammon:start', { gameId });
   };
 
   const handleRestartGame = () => {
     console.log('🔄 Restarting game');
+    playSound('newGame');
     socket.emit('backgammon:restart', { gameId });
   };
 
   const handleRollDice = () => {
     if (gameState !== 'rolling' || myColor !== currentPlayer) return;
     console.log('🎲 Rolling dice');
+    playSound('rollDice');
     socket.emit('backgammon:roll', { gameId });
   };
 
@@ -337,6 +394,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       // Select a point if it has our checkers
       const point = board.points[pointIndex];
       if (point && point.color === myColor && point.checkers > 0) {
+        playSound('pick');
         setSelectedPoint(pointIndex);
         setAvailableMoves(calculateAvailableMoves(pointIndex));
         console.log(`✅ Selected point ${pointIndex}`);
@@ -352,6 +410,10 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       
       // Try to move to this point
       console.log(`🎯 Attempting move from ${selectedPoint} to ${pointIndex}`);
+      
+      // Play regular move sound (bar return sound will be handled by server event)
+      playSound('move');
+      
       socket.emit('backgammon:move', {
         gameId,
         from: selectedPoint,
@@ -373,6 +435,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         setSelectedPoint(null);
         setAvailableMoves([]);
       } else {
+        playSound('pick');
         console.log(`✅ Selected bar (${barCount} checkers)`);
         setSelectedPoint(-1);
         setAvailableMoves(calculateAvailableMoves(-1));
@@ -386,6 +449,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
     // Can only bear off if a checker is selected
     if (selectedPoint !== null && selectedPoint >= 0) {
       console.log(`🏁 Attempting to bear off from point ${selectedPoint}`);
+      playSound('bearOff');
       socket.emit('backgammon:move', {
         gameId,
         from: selectedPoint,
@@ -461,6 +525,13 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
       onMouseDown={handleMouseDown}
     >
       <div className="backgammon-header">
+        <button 
+          className="mute-button" 
+          onClick={() => setIsMuted(!isMuted)}
+          title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+        >
+          {isMuted ? '🔇' : '🔊'}
+        </button>
         <h2>🎲 Backgammon</h2>
         {error && <div className="error-message-inline">{error}</div>}
         <button className="close-button" onClick={onClose}>✕</button>
@@ -478,7 +549,7 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
         
         <div className="dice-controls-area">
           {dice && (
-            <div className="dice-display">
+            <div className={`dice-display ${gameState === 'moving' && myColor === currentPlayer ? 'animated' : ''}`}>
               <div className="die">{dice[0]}</div>
               <div className="die">{dice[1]}</div>
             </div>
@@ -507,7 +578,10 @@ function Backgammon({ socket, gameId, user, onClose }: BackgammonProps) {
           {gameState === 'moving' && myColor === currentPlayer && dice && (
             <button 
               className="dice-button pass-turn-button" 
-              onClick={() => socket.emit('backgammon:pass', { gameId })}
+              onClick={() => {
+                playSound('pass');
+                socket.emit('backgammon:pass', { gameId });
+              }}
             >
               ⏭️ Pass Turn
             </button>

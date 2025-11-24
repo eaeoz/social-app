@@ -46,6 +46,33 @@
   box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
 }
 
+.mute-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1.3rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.mute-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.15) rotate(5deg);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mute-button:active {
+  transform: scale(0.95);
+}
+
 .close-button {
   background: rgba(255, 255, 255, 0.2);
   border: none;
@@ -59,6 +86,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .close-button:hover {
@@ -219,6 +247,30 @@
   25% { transform: rotate(90deg); }
   50% { transform: rotate(180deg); }
   75% { transform: rotate(270deg); }
+}
+
+/* Animated dice during moving phase */
+.dice-display.animated .die {
+  animation: dice-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dice-pulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  25% {
+    transform: scale(1.15) rotate(-5deg);
+    box-shadow: 0 6px 16px rgba(139, 69, 19, 0.5);
+  }
+  50% {
+    transform: scale(1.1) rotate(0deg);
+    box-shadow: 0 8px 20px rgba(139, 69, 19, 0.6);
+  }
+  75% {
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 6px 16px rgba(139, 69, 19, 0.5);
+  }
 }
 
 .turn-indicator {

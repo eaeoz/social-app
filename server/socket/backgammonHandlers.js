@@ -724,10 +724,16 @@ function setupBackgammonHandlers(io, socket) {
         }
         console.log(`📤 ${player.color} moved from bar to point ${to}`);
         
+        // Emit bar return event to all players
+        io.to(gameId).emit('backgammon:bar_return', { 
+          player: player.color
+        });
+        
         // Handle capturing (hit) when entering from bar
         const toPoint = game.board.points[to];
         if (toPoint.color && toPoint.color !== player.color && toPoint.checkers === 1) {
           console.log(`💥 ${player.color} captured ${toPoint.color} checker!`);
+          const capturedColor = toPoint.color;
           if (toPoint.color === 'white') {
             game.board.whiteBar++;
           } else {
@@ -735,6 +741,12 @@ function setupBackgammonHandlers(io, socket) {
           }
           toPoint.checkers = 0;
           toPoint.color = null;
+          
+          // Emit capture event to all players
+          io.to(gameId).emit('backgammon:capture', { 
+            capturedBy: player.color,
+            capturedColor: capturedColor
+          });
         }
         
         // Place checker on destination
@@ -752,6 +764,7 @@ function setupBackgammonHandlers(io, socket) {
         const toPoint = game.board.points[to];
         if (toPoint.color && toPoint.color !== player.color && toPoint.checkers === 1) {
           console.log(`💥 ${player.color} captured ${toPoint.color} checker!`);
+          const capturedColor = toPoint.color;
           if (toPoint.color === 'white') {
             game.board.whiteBar++;
           } else {
@@ -759,6 +772,12 @@ function setupBackgammonHandlers(io, socket) {
           }
           toPoint.checkers = 0;
           toPoint.color = null;
+          
+          // Emit capture event to all players
+          io.to(gameId).emit('backgammon:capture', { 
+            capturedBy: player.color,
+            capturedColor: capturedColor
+          });
         }
         
         // Place checker on destination
