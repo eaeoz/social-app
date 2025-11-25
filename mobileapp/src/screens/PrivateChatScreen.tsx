@@ -187,44 +187,76 @@ export default function PrivateChatScreen() {
   };
 
   // Call handlers
-  const handleVoiceCall = () => {
-    Alert.alert(
-      '📞 Voice Call',
-      `Voice calling with ${otherUser?.displayName || otherUser?.username} coming soon!\n\nThis feature is currently under development and will be available in the next update.`,
-      [{ text: 'OK' }]
-    );
+  const handleVoiceCall = async () => {
+    if (!user || !otherUserId || !otherUser) return;
     
-    // Uncomment when WebRTC is integrated:
-    // if (user && otherUserId) {
-    //   socketService.initiateCall(otherUserId, 'voice', user.userId, user.displayName || user.username);
-    // }
+    try {
+      // Navigate to Call screen
+      navigation.navigate('Call', {
+        callType: 'voice',
+        otherUser: {
+          userId: otherUserId,
+          username: otherUser.username,
+          displayName: otherUser.displayName,
+          profilePicture: otherUser.profilePicture,
+        },
+        isIncoming: false,
+      });
+    } catch (error) {
+      console.error('Error initiating voice call:', error);
+      Alert.alert('Error', 'Failed to initiate voice call');
+    }
   };
 
-  const handleVideoCall = () => {
-    Alert.alert(
-      '📹 Video Call',
-      `Video calling with ${otherUser?.displayName || otherUser?.username} coming soon!\n\nThis feature is currently under development and will be available in the next update.`,
-      [{ text: 'OK' }]
-    );
+  const handleVideoCall = async () => {
+    if (!user || !otherUserId || !otherUser) return;
     
-    // Uncomment when WebRTC is integrated:
-    // if (user && otherUserId) {
-    //   socketService.initiateCall(otherUserId, 'video', user.userId, user.displayName || user.username);
-    // }
+    try {
+      // Navigate to Call screen
+      navigation.navigate('Call', {
+        callType: 'video',
+        otherUser: {
+          userId: otherUserId,
+          username: otherUser.username,
+          displayName: otherUser.displayName,
+          profilePicture: otherUser.profilePicture,
+        },
+        isIncoming: false,
+      });
+    } catch (error) {
+      console.error('Error initiating video call:', error);
+      Alert.alert('Error', 'Failed to initiate video call');
+    }
   };
 
   const acceptIncomingCall = () => {
     if (!incomingCall) return;
-    Alert.alert(
-      'Coming Soon',
-      'Call feature is currently under development and will be available soon!',
-      [{ text: 'OK' }]
-    );
+    
+    // Navigate to Call screen
+    navigation.navigate('Call', {
+      callType: incomingCall.callType,
+      otherUser: {
+        userId: incomingCall.from,
+        username: incomingCall.fromName,
+        displayName: incomingCall.fromName,
+        profilePicture: null,
+      },
+      isIncoming: true,
+    });
+    
     setIncomingCall(null);
   };
 
   const declineIncomingCall = () => {
-    if (!incomingCall) return;
+    if (incomingCall && user) {
+      // Send call-rejected event
+      if (socketService.isConnected()) {
+        const socket = (socketService as any).socket;
+        if (socket) {
+          socket.emit('call-rejected', { to: incomingCall.from });
+        }
+      }
+    }
     setIncomingCall(null);
   };
 

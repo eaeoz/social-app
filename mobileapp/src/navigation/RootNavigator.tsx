@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useTheme } from 'react-native-paper';
 import MainTabNavigator from './MainTabNavigator';
-import { ChatRoomScreen, PrivateChatScreen } from '../screens';
+import { ChatRoomScreen, PrivateChatScreen, CallScreen } from '../screens';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import { RootStackParamList } from './types';
@@ -59,6 +59,13 @@ export default function RootNavigator() {
           component={ChangePasswordScreen}
           options={{
             title: 'Change Password',
+          }}
+        />
+        <Stack.Screen
+          name="Call"
+          component={CallScreen}
+          options={{
+            headerShown: false,
           }}
         />
       </Stack.Navigator>

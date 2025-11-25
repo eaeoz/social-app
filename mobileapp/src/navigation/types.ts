@@ -24,6 +24,16 @@ export type RootStackParamList = {
   UserProfile: { user: User };
   EditProfile: undefined;
   ChangePassword: undefined;
+  Call: {
+    callType: 'voice' | 'video';
+    otherUser: {
+      userId: string;
+      username: string;
+      displayName?: string;
+      profilePicture?: string | null;
+    };
+    isIncoming?: boolean;
+  };
 };
 
 // Navigation props
@@ -35,3 +45,4 @@ export type RootNavigationProp = NavigationProp<RootStackParamList>;
 export type ChatRoomRouteProp = RouteProp<RootStackParamList, 'ChatRoom'>;
 export type PrivateChatRouteProp = RouteProp<RootStackParamList, 'PrivateChat'>;
 export type UserProfileRouteProp = RouteProp<RootStackParamList, 'UserProfile'>;
+export type CallRouteProp = RouteProp<RootStackParamList, 'Call'>;
