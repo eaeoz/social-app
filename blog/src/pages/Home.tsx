@@ -3,7 +3,7 @@ import { databases, config } from '../config/appwrite';
 import { Article } from '../types/article';
 import ArticleCard from '../components/ArticleCard';
 import SocialPlatformAd from '../components/SocialPlatformAd';
-import DiverterAd from '../components/DiverterAd';
+// import DiverterAd from '../components/DiverterAd';
 import { Loader, Search, X } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Query } from 'appwrite';
@@ -136,7 +136,7 @@ export default function Home() {
         <SocialPlatformAd />
 
         {/* Diverter Link Shortener Advertisement */}
-        <DiverterAd />
+        {/* <DiverterAd /> */}
 
         {/* Real-time Search Input */}
         <div className="search-section">
