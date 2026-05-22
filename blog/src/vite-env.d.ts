@@ -25,4 +25,7 @@ interface ImportMeta {
 interface Window {
   dataLayer: any[];
   gtag: (...args: any[]) => void;
+  umami?: {
+    track: (payload?: { url?: string; referrer?: string } | string) => void;
+  };
 }
