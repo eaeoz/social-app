@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
@@ -195,15 +195,6 @@ function App() {
       window.removeEventListener('user-activity-heartbeat', handleCustomActivity);
     };
   }, [user, socket, navigate]);
-
-  // Track page views with Umami on route change
-  const location = useLocation();
-  useEffect(() => {
-    const umami = (window as any).umami;
-    if (umami?.track) {
-      umami.track({ url: location.pathname + location.search });
-    }
-  }, [location]);
 
   // Initialize Socket.IO connection when user is authenticated
   useEffect(() => {
