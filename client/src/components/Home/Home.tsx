@@ -2501,17 +2501,18 @@ function Home({ user, socket, onLogout }: HomeProps) {
                   </div>
                 )}
                 
-                {showScrollButton && (
-                  <button
-                    className="scroll-to-bottom-button"
-                    onClick={() => scrollToBottom('smooth')}
-                    title="Scroll to bottom"
-                    aria-label="Scroll to bottom"
-                  >
-                    ↓
-                  </button>
-                )}
               </div>
+
+              {showScrollButton && (
+                <button
+                  className="scroll-to-bottom-button"
+                  onClick={() => scrollToBottom('smooth')}
+                  title="Scroll to bottom"
+                  aria-label="Scroll to bottom"
+                >
+                  ↓
+                </button>
+              )}
 
               <div className="message-input-container" ref={messageInputContainerRef}>
                 {showRateLimitWarning && (
