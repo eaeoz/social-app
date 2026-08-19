@@ -21,6 +21,10 @@ export async function sendPasswordRecoveryEmail(email, username, recoveryToken) 
       return await sendViaResend(email, username, recoveryLink);
     }
 
+    if (method === 'brevo') {
+      return await sendViaBrevo(email, username, recoveryLink);
+    }
+
     // Netlify function path
     const NETLIFY_FUNCTION_URL = process.env.NETLIFY_FUNCTION_URL;
     if (NETLIFY_FUNCTION_URL) {
@@ -118,6 +122,31 @@ async function sendViaResend(email, username, recoveryLink) {
   console.log(`✅ Password recovery email sent via Resend to: ${email}`);
   console.log(`📧 Message ID: ${info.data?.id || info.id}`);
   return { success: true, messageId: info.data?.id || info.id, method: 'resend' };
+}
+
+async function sendViaBrevo(email, username, recoveryLink) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL;
+  if (!apiKey || !senderEmail) throw new Error('Brevo not configured. Set BREVO_API_KEY and BREVO_SENDER_EMAIL.');
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'accept': 'application/json', 'content-type': 'application/json', 'api-key': apiKey },
+    body: JSON.stringify({
+      sender: { email: senderEmail, name: 'netcify' },
+      to: [{ email }],
+      subject: '🔐 Reset Your Password - netcify',
+      htmlContent: getPasswordResetHtml(recoveryLink, username, email),
+      textContent: getPasswordResetText(recoveryLink, username, email)
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || `Brevo API error: ${response.status}`);
+
+  console.log(`✅ Password recovery email sent via Brevo to: ${email}`);
+  console.log(`📧 Message ID: ${data.messageId}`);
+  return { success: true, messageId: data.messageId, method: 'brevo' };
 }
 
 function getPasswordResetHtml(recoveryLink, username, contactEmail) {
