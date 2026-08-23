@@ -132,6 +132,13 @@
   flex-shrink: 0;
 }
 
+.social-ad-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .social-ad-button {
   display: inline-flex;
   align-items: center;
@@ -185,6 +192,38 @@
 
 .social-ad-button:hover svg {
   transform: translateX(5px);
+}
+
+/* Secondary (CLI Chat) Button */
+.social-ad-button-secondary {
+  background: transparent;
+  border: 2px solid rgba(102, 126, 234, 0.5);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.social-ad-button-secondary::before {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(102, 126, 234, 0.15),
+    transparent
+  );
+}
+
+.social-ad-button-secondary:hover {
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(102, 126, 234, 0.8);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+}
+
+.social-ad-button-secondary:active {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.2);
+}
+
+.social-ad-button-secondary .feature-icon,
+.social-ad-button-secondary svg:first-child {
+  color: #667eea;
 }
 
 /* Decorative Background Elements */
@@ -285,6 +324,10 @@
     font-size: 0.9rem;
   }
 
+  .social-ad-buttons {
+    gap: 0.75rem;
+  }
+
   .social-ad-button {
     padding: 14px 28px;
     font-size: 1rem;
@@ -314,6 +357,11 @@
 
   .social-ad-feature {
     justify-content: center;
+  }
+
+  .social-ad-buttons {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .social-ad-button {

@@ -1,9 +1,13 @@
-import { ExternalLink, Users, MessageCircle, Heart, Sparkles } from 'lucide-react';
+import { ExternalLink, Users, MessageCircle, Heart, Sparkles, Terminal } from 'lucide-react';
 import '../styles/SocialPlatformAd.css';
 
 export default function SocialPlatformAd() {
   const handleVisit = () => {
     window.open('https://netcify.netlify.app', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCliChat = () => {
+    window.open('https://github.com/eaeoz/clchat', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -38,14 +42,25 @@ export default function SocialPlatformAd() {
           </div>
         </div>
 
-        <button 
-          className="social-ad-button"
-          onClick={handleVisit}
-          aria-label="Visit our social platform"
-        >
-          <span>Visit Platform</span>
-          <ExternalLink size={18} />
-        </button>
+        <div className="social-ad-buttons">
+          <button
+            className="social-ad-button"
+            onClick={handleVisit}
+            aria-label="Visit our social platform"
+          >
+            <span>Visit Platform</span>
+            <ExternalLink size={18} />
+          </button>
+
+          <button
+            className="social-ad-button social-ad-button-secondary"
+            onClick={handleCliChat}
+            aria-label="Download the CLChat CLI app on GitHub"
+          >
+            <Terminal size={18} />
+            <span>CLI Chat App</span>
+          </button>
+        </div>
       </div>
 
       <div className="social-ad-decoration">
