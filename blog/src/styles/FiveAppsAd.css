@@ -119,12 +119,20 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
-.fiveapps-ad-feature:hover {
+.fiveapps-ad-feature:hover,
+.fiveapps-ad-feature:focus-visible {
   background: rgba(255, 255, 255, 0.12);
   transform: translateX(6px);
   border-color: rgba(255, 255, 255, 0.15);
+}
+
+.fiveapps-ad-feature-bonus {
+  border-style: dashed;
 }
 
 .fiveapps-feature-icon-wrapper {
@@ -154,6 +162,36 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fiveapps-feature-bonus-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+.fiveapps-feature-link-icon {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  flex-shrink: 0;
+}
+
+.fiveapps-ad-feature:hover .fiveapps-feature-link-icon,
+.fiveapps-ad-feature:focus-visible .fiveapps-feature-link-icon {
+  opacity: 0.6;
 }
 
 .fiveapps-feature-desc {

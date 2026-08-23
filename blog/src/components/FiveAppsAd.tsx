@@ -1,41 +1,64 @@
-import { ExternalLink, Download, Film, Music, Youtube, Terminal, Newspaper, Sparkles, Star } from 'lucide-react';
+import { ExternalLink, Download, Film, Music, Youtube, Terminal, Newspaper, Sparkles, Star, MicVocal, Speech } from 'lucide-react';
 import '../styles/FiveAppsAd.css';
 
 const apps = [
   {
     name: 'YouTube Downloader',
     icon: Youtube,
-    desc: 'Download any YouTube video or playlist in HD quality with subtitle support',
+    desc: 'Download YouTube videos & audio with format browser, playlists, and system tray',
     benefit: 'Watch offline, save data',
-    color: '#ff4444'
+    color: '#ff4444',
+    repo: 'https://github.com/eaeoz/youtube-downloader'
   },
   {
     name: 'Movie Downloader',
     icon: Film,
-    desc: 'Search and download movies from multiple sources with one click',
+    desc: 'Torrent-based movie downloader with Letterboxd watchlist sync & built-in player',
     benefit: 'Your cinema, anytime',
-    color: '#a855f7'
+    color: '#a855f7',
+    repo: 'https://github.com/eaeoz/movie-downloader'
   },
   {
     name: 'Music Downloader',
     icon: Music,
-    desc: 'Find and download any song or album in high-quality audio formats',
+    desc: 'Search YouTube, fetch Deezer/iTunes metadata, and download high-quality MP3s',
     benefit: 'Fill your playlist',
-    color: '#22c55e'
+    color: '#1ed760',
+    repo: 'https://github.com/eaeoz/music-downloader'
   },
   {
     name: 'Command Manager',
     icon: Terminal,
-    desc: 'Organize, automate & run terminal commands via a clean Docker-powered UI',
+    desc: 'SSH command manager with GUI profiles & styled cards — Windows app or Docker',
     benefit: 'Boost productivity',
-    color: '#0ea5e9'
+    color: '#0db7ed',
+    repo: 'https://github.com/eaeoz/command-manager-docker'
+  },
+  {
+    name: 'VoiceEffect',
+    icon: MicVocal,
+    desc: 'Real-time voice changer with reverb, pitch shift & distortion at low latency',
+    benefit: 'Sound like anyone',
+    color: '#ff6bcb',
+    repo: 'https://github.com/eaeoz/VoiceEffect'
   },
   {
     name: 'Sondakika Haber',
     icon: Newspaper,
-    desc: 'Real-time breaking news reader pulling headlines from top Turkish sources',
+    desc: 'Breaking news reader pulling headlines from 10+ major Turkish sources',
     benefit: 'Stay informed',
-    color: '#f59e0b'
+    color: '#f59e0b',
+    repo: 'https://github.com/eaeoz/sondakika',
+    bonus: true
+  },
+  {
+    name: 'Speech Type',
+    icon: Speech,
+    desc: 'Offline speech-to-text powered by whisper.cpp — no internet required',
+    benefit: 'Type with your voice',
+    color: '#22d3ee',
+    repo: 'https://github.com/eaeoz/SpeechTypeProject',
+    bonus: true
   }
 ];
 
@@ -57,15 +80,23 @@ export default function FiveAppsAd() {
         </h2>
 
         <p className="fiveapps-ad-description">
-          A powerful collection of free desktop tools — download videos, movies, music, 
-          manage commands, and follow breaking news. All in one bundle. No ads, no limits.
+          A powerful collection of free desktop tools — download videos, movies & music,
+          manage commands, change your voice, read breaking news, and type by speaking.
+          5 main apps + 2 bonus tools. No ads, no limits.
         </p>
 
         <div className="fiveapps-ad-features">
           {apps.map((app, i) => {
             const Icon = app.icon;
             return (
-              <div key={i} className="fiveapps-ad-feature">
+              <a
+                key={i}
+                href={app.repo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`fiveapps-ad-feature${app.bonus ? ' fiveapps-ad-feature-bonus' : ''}`}
+                aria-label={`${app.name} on GitHub`}
+              >
                 <div
                   className="fiveapps-feature-icon-wrapper"
                   style={{ background: `${app.color}20`, borderColor: `${app.color}40` }}
@@ -73,22 +104,26 @@ export default function FiveAppsAd() {
                   <Icon size={20} style={{ color: app.color }} />
                 </div>
                 <div className="fiveapps-feature-text">
-                  <span className="fiveapps-feature-name">{app.name}</span>
+                  <span className="fiveapps-feature-name">
+                    {app.name}
+                    {app.bonus && <span className="fiveapps-feature-bonus-badge">Bonus</span>}
+                    <ExternalLink size={12} className="fiveapps-feature-link-icon" />
+                  </span>
                   <span className="fiveapps-feature-desc">{app.desc}</span>
                   <span className="fiveapps-feature-benefit">
                     <Star size={10} style={{ color: app.color }} />
                     {app.benefit}
                   </span>
                 </div>
-              </div>
+              </a>
             );
           })}
         </div>
 
         <div className="fiveapps-ad-stats">
           <div className="fiveapps-ad-stat">
-            <span className="fiveapps-stat-number">5</span>
-            <span className="fiveapps-stat-label">Free Apps</span>
+            <span className="fiveapps-stat-number">7</span>
+            <span className="fiveapps-stat-label">Projects</span>
           </div>
           <div className="fiveapps-ad-stat">
             <span className="fiveapps-stat-number">100%</span>
