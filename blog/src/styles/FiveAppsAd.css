@@ -122,13 +122,19 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
+  position: relative;
 }
 
 .fiveapps-ad-feature:hover,
 .fiveapps-ad-feature:focus-visible {
   background: rgba(255, 255, 255, 0.12);
   transform: translateX(6px);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 68, 68, 0.35);
+}
+
+.fiveapps-ad-feature:focus-visible {
+  outline: 2px solid rgba(255, 68, 68, 0.5);
+  outline-offset: 2px;
 }
 
 .fiveapps-ad-feature-bonus {
@@ -542,6 +548,400 @@
   }
 }
 
+/* Install Button */
+.fiveapps-feature-install {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.fiveapps-install-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.8), rgba(245, 158, 11, 0.8));
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+  position: relative;
+  overflow: hidden;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.fiveapps-install-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+  background: linear-gradient(135deg, #ff4444, #f59e0b);
+}
+
+.fiveapps-install-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(255, 68, 68, 0.3);
+}
+
+.fiveapps-install-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.4s ease;
+}
+
+.fiveapps-install-button:hover::before {
+  left: 100%;
+}
+
+/* Click Hint */
+.fiveapps-click-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: -1rem auto 2rem;
+  opacity: 0.8;
+}
+
+.fiveapps-click-hint svg {
+  animation: fiveappsHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes fiveappsHintPulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+/* Installation Instructions */
+.fiveapps-install-instructions {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+.fiveapps-instructions-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.fiveapps-instructions-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.fiveapps-instructions-toggle:active {
+  transform: translateY(0);
+}
+
+.fiveapps-instructions-content {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  margin-top: 1.25rem;
+  animation: fiveappsSlideDown 0.4s ease-out;
+}
+
+@keyframes fiveappsSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fiveapps-instructions-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #ff4444 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fiveapps-instructions-text {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 auto 1.75rem;
+  line-height: 1.5;
+  max-width: 480px;
+}
+
+.fiveapps-installation-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  max-width: 720px;
+  margin: 0 auto 1.75rem;
+}
+
+.fiveapps-installation-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.fiveapps-installation-step:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+  border-color: rgba(255, 68, 68, 0.3);
+  box-shadow: 0 8px 20px rgba(255, 68, 68, 0.15);
+}
+
+.fiveapps-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff4444 0%, #f59e0b 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.35);
+}
+
+.fiveapps-step-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fiveapps-step-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.fiveapps-installation-tip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.08), rgba(245, 158, 11, 0.08));
+  border-radius: 16px;
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  text-align: left;
+}
+
+.fiveapps-tip-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.fiveapps-tip-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fiveapps-tip-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fiveapps-tip-code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.fiveapps-tip-code {
+  flex: 1;
+  display: block;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-family: Consolas, 'Courier New', monospace;
+  color: #fbbf24;
+  word-break: break-all;
+  line-height: 1.5;
+  user-select: all;
+}
+
+.fiveapps-tip-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #ff4444 0%, #f59e0b 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fiveapps-tip-copy-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 68, 68, 0.45);
+}
+
+.fiveapps-tip-copy-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments for new elements */
+@media (max-width: 768px) {
+  .fiveapps-install-button {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    min-width: 100px;
+  }
+
+  .fiveapps-click-hint {
+    margin-bottom: 1.5rem;
+  }
+
+  .fiveapps-instructions-content {
+    padding-top: 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .fiveapps-instructions-title {
+    font-size: 1.1rem;
+  }
+
+  .fiveapps-instructions-text {
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .fiveapps-installation-steps {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .fiveapps-installation-step {
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+  }
+
+  .fiveapps-step-number {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+
+  .fiveapps-step-title {
+    font-size: 0.9rem;
+  }
+
+  .fiveapps-step-desc {
+    font-size: 0.8rem;
+  }
+
+  .fiveapps-installation-tip {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .fiveapps-tip-code-row {
+    flex-direction: column;
+  }
+
+  .fiveapps-tip-code {
+    font-size: 0.72rem;
+    user-select: all;
+  }
+}
+
+@media (max-width: 480px) {
+  .fiveapps-install-button {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    min-width: 90px;
+  }
+
+  .fiveapps-instructions-title {
+    font-size: 1rem;
+  }
+
+  .fiveapps-instructions-text {
+    font-size: 0.85rem;
+  }
+
+  .fiveapps-installation-steps {
+    gap: 0.6rem;
+  }
+
+  .fiveapps-step-number {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
+  }
+
+  .fiveapps-step-title {
+    font-size: 0.85rem;
+  }
+
+  .fiveapps-step-desc {
+    font-size: 0.75rem;
+  }
+
+  .fiveapps-tip-copy-button {
+    width: 100%;
+  }
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .fiveapps-ad-container {
@@ -567,4 +967,107 @@
   .fiveapps-ad-stat:hover {
     background: rgba(255, 255, 255, 0.08);
   }
+
+  .fiveapps-install-button {
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.6), rgba(245, 158, 11, 0.6));
+  }
+
+  .fiveapps-install-button:hover {
+    background: linear-gradient(135deg, #ff4444, #f59e0b);
+  }
+
+  .fiveapps-instructions-toggle {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .fiveapps-instructions-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .fiveapps-installation-step {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .fiveapps-installation-step:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Toast Notification */
+.fiveapps-toast-notification {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  background: rgba(22, 163, 74, 0.75);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35);
+  z-index: 9999;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  max-width: calc(100vw - 32px);
+  opacity: 1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  animation: fiveappsToastSlideIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.fiveapps-toast-exit {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-28px);
+}
+
+.fiveapps-toast-error {
+  background: rgba(220, 38, 38, 0.8);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
+}
+
+@keyframes fiveappsToastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.fiveapps-toast-notification svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .fiveapps-toast-notification {
+    top: 12px;
+    padding: 11px 16px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Code block styling */
+.fiveapps-instructions-content code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: Consolas, monospace;
+}
+
+.fiveapps-instructions-content kbd {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: Consolas, monospace;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
