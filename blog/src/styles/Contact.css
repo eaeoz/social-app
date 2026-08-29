@@ -152,6 +152,7 @@
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+  right: -400px !important;
 }
 
 .recaptcha-notice {
