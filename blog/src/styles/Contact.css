@@ -145,6 +145,15 @@
   cursor: not-allowed;
 }
 
+/* Hide the floating reCAPTCHA badge on all pages.
+   Google allows this when a text disclosure is shown instead (see .recaptcha-notice below).
+   Using visibility:hidden instead of display:none to keep the widget functional. */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .recaptcha-notice {
   margin-top: 1rem;
   padding: 0.75rem;
