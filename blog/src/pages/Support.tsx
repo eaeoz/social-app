@@ -34,7 +34,7 @@ const paymentMethods = [
     address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Landmark,
     gradient: 'linear-gradient(135deg, #627eea 0%, #3b5bd9 100%)',
-    note: 'ETH and ERC20 tokens are accepted on Ethereum Mainnet.'
+    note: 'ETH and ERC20 tokens are accepted on Ethereum Mainnet. Also accepted: BNB, SOL, USDC, DOGE, ADA.'
   }
 ];
 
