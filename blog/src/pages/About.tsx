@@ -34,7 +34,7 @@ const contactInfo = [
   { label: 'Phone', value: '+90 537 039 4310', icon: Phone, href: 'tel:+905370394310' },
   { label: 'Portfolio', value: 'sedat.netlify.app', icon: Globe, href: 'https://sedat.netlify.app' },
   { label: 'GitHub', value: 'github.com/eaeoz', icon: Github, href: 'https://github.com/eaeoz' },
-  { label: 'LinkedIn', value: 'Sedat Ergoz', icon: Linkedin, href: 'https://www.linkedin.com/in/sedat-ergoz-604527346/' }
+  { label: 'LinkedIn', value: 'Sedat Ergoz', icon: Linkedin, href: 'https://www.linkedin.com/in/sedatergoz/' }
 ];
 
 const journey = [
@@ -222,7 +222,9 @@ export default function About() {
       >
         {/* Hero */}
         <motion.section className="about-hero" variants={fadeUp}>
-          <div className="about-avatar">SE</div>
+          <div className="about-avatar">
+            <img src="/images/sedat.jpg" alt="Sedat Ergoz" />
+          </div>
           <span className="about-badge">
             <Sparkles size={14} />
             Remote Help Desk · Support Engineer · Full-Stack Developer
