@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { databases, config } from '../config/appwrite';
 import { Article } from '../types/article';
 import ArticleCard from '../components/ArticleCard';
-import SocialPlatformAd from '../components/SocialPlatformAd';
 import FiveAppsAd from '../components/FiveAppsAd';
 // import DiverterAd from '../components/DiverterAd';
 import { Loader, Search, X } from 'lucide-react';
@@ -132,9 +131,6 @@ export default function Home() {
             }
           </p>
         </div>
-
-        {/* Social Platform Advertisement */}
-        <SocialPlatformAd />
 
         {/* 5 Free Apps Bundle Advertisement */}
         <FiveAppsAd />

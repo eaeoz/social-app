@@ -45,6 +45,7 @@ export default function Header() {
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
           <Link to="/support">Support</Link>
+          <Link to="/donate">Donate</Link>
         </nav>
 
         {/* Theme Switcher */}
@@ -94,6 +95,7 @@ export default function Header() {
               <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
               <Link to="/support" onClick={() => setIsMenuOpen(false)}>Support</Link>
+              <Link to="/donate" onClick={() => setIsMenuOpen(false)}>Donate</Link>
             </nav>
           </motion.div>
         )}

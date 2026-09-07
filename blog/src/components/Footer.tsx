@@ -45,6 +45,7 @@ export default function Footer() {
               <Link to="/about">About</Link>
               <Link to="/contact">Contact</Link>
               <Link to="/support">Support</Link>
+              <Link to="/donate">Donate</Link>
             </nav>
           </div>
 

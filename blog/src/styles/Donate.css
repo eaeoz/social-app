@@ -1,0 +1,363 @@
+.support-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  min-height: calc(100vh - 200px);
+}
+
+/* Hero Section */
+.support-hero {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 3rem;
+}
+
+.support-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.support-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.support-hero-subtitle {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.support-hero-benefits {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.support-benefit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.support-benefit svg {
+  color: var(--accent);
+}
+
+/* Cards Grid */
+.support-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.support-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.support-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.support-card:hover {
+  box-shadow: 0 12px 40px var(--shadow);
+}
+
+.support-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.support-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 15px var(--shadow);
+  flex-shrink: 0;
+}
+
+.support-card-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.support-card-title h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.1rem;
+}
+
+.support-symbol {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.support-network {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* QR Code */
+.support-qr-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.support-qr-box {
+  position: relative;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 30px var(--shadow);
+  z-index: 1;
+}
+
+.support-qr-box svg {
+  display: block;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+.support-qr-hint {
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Address Row */
+.support-address {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.support-address-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+.support-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: var(--accent);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.support-copy-btn:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.support-copy-btn.copied {
+  background-color: var(--success);
+}
+
+.support-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+}
+
+/* Footnote */
+.support-footnote {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2.5rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.support-footnote::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  pointer-events: none;
+}
+
+.support-footnote-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  animation: supportPulse 2s ease-in-out infinite;
+}
+
+.support-footnote h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.support-footnote p {
+  position: relative;
+  z-index: 1;
+}
+
+.support-footnote a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.support-disclaimer {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+
+@keyframes supportPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(102, 126, 234, 0);
+  }
+}
+
+:root[data-theme="light"] .support-card-icon {
+  color: #ffffff;
+}
+
+:root[data-theme="light"] .support-copy-btn {
+  color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .support-page {
+    padding: 2rem 1rem;
+  }
+
+  .support-hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .support-hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .support-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .support-network {
+    max-width: 110px;
+  }
+}
+
+@media (max-width: 480px) {
+  .support-card {
+    padding: 1.5rem;
+  }
+
+  .support-qr-box {
+    padding: 1rem;
+  }
+
+  .support-qr-box svg {
+    width: 160px;
+    height: 160px;
+  }
+
+  .support-hero-benefits {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .support-address-text {
+    font-size: 0.72rem;
+  }
+}
