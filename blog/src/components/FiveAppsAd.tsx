@@ -16,7 +16,10 @@ import {
   Check,
   Info,
   AlertCircle,
-  MousePointerClick
+  MousePointerClick,
+  ShieldAlert,
+  ShieldCheck,
+  ChevronDown
 } from 'lucide-react';
 import '../styles/FiveAppsAd.css';
 
@@ -95,6 +98,7 @@ export default function FiveAppsAd() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [bulkCopied, setBulkCopied] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showSafetyInfo, setShowSafetyInfo] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [toastExiting, setToastExiting] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -291,6 +295,72 @@ export default function FiveAppsAd() {
           <span>Download Bundle</span>
           <ExternalLink size={16} />
         </button>
+
+        <div className="fiveapps-safety-info">
+          <button
+            className="fiveapps-safety-toggle"
+            onClick={() => setShowSafetyInfo(!showSafetyInfo)}
+            aria-expanded={showSafetyInfo}
+          >
+            <ShieldAlert size={16} />
+            <span>Why does Windows show a warning?</span>
+            <ChevronDown size={16} className={showSafetyInfo ? 'open' : ''} />
+          </button>
+
+          {showSafetyInfo && (
+            <div className="fiveapps-safety-content">
+              <p className="fiveapps-safety-intro">
+                All these apps are <strong>100% free and open source</strong>, and this site runs
+                without a payment gateway. Signing the downloadable executables requires a paid
+                code-signing certificate, so the ready-made build is shipped unsigned. That's why
+                Windows SmartScreen may show a red{' '}
+                <em>&quot;Windows protected your PC / Unknown publisher&quot;</em> warning when you
+                run a direct download — it's <strong>expected</strong>, not a sign of malware. If
+                you trust the source, click <strong>More info</strong> then{' '}
+                <strong>Run anyway</strong>.
+              </p>
+
+              <div className="fiveapps-safety-steps">
+                <div className="fiveapps-safety-step">
+                  <span className="fiveapps-safety-step-number">1</span>
+                  <div className="fiveapps-safety-step-body">
+                    <strong>View the source code</strong>
+                    <span>
+                      Click any app card above to open its GitHub repository and download every
+                      line of the code.
+                    </span>
+                  </div>
+                </div>
+                <div className="fiveapps-safety-step">
+                  <span className="fiveapps-safety-step-number">2</span>
+                  <div className="fiveapps-safety-step-body">
+                    <strong>Ask an AI bot to check it</strong>
+                    <span>
+                      Not sure? Paste the code into any AI assistant (ChatGPT, Claude, Gemini…) —
+                      the projects are small, clean and easy to review.
+                    </span>
+                  </div>
+                </div>
+                <div className="fiveapps-safety-step">
+                  <span className="fiveapps-safety-step-number">3</span>
+                  <div className="fiveapps-safety-step-body">
+                    <strong>Build or run it yourself</strong>
+                    <span>
+                      Each repo includes build instructions. Compile your own executable, or run it
+                      directly on a Node.js environment — no installer needed.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="fiveapps-safety-note">
+                <ShieldCheck size={15} />
+                Prefer a completely transparent install? Skip the direct download, grab the source
+                from the repo and build it yourself — the safest route, and every project runs on Node.
+              </p>
+            </div>
+          )}
+        </div>
 
         <div className="fiveapps-install-instructions">
           <button

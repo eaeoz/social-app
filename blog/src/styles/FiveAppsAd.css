@@ -333,6 +333,171 @@
   transform: translateX(5px);
 }
 
+/* Safety / Verification Info */
+.fiveapps-safety-info {
+  margin-top: 1.25rem;
+  padding: 1.5rem;
+  background: rgba(245, 158, 11, 0.06);
+  border-radius: 16px;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  transition: all 0.3s ease;
+}
+
+.fiveapps-safety-info:hover {
+  border-color: rgba(245, 158, 11, 0.38);
+}
+
+.fiveapps-safety-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fiveapps-safety-toggle:hover {
+  background: rgba(245, 158, 11, 0.16);
+  transform: translateY(-2px);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.fiveapps-safety-toggle:active {
+  transform: translateY(0);
+}
+
+.fiveapps-safety-toggle svg:first-child {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.fiveapps-safety-toggle svg:last-child {
+  color: var(--text-muted);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.fiveapps-safety-toggle svg:last-child.open {
+  transform: rotate(180deg);
+}
+
+.fiveapps-safety-content {
+  text-align: left;
+  padding-top: 1.5rem;
+  border-top: 1px dashed rgba(245, 158, 11, 0.3);
+  margin-top: 1.25rem;
+  animation: fiveappsSlideDown 0.4s ease-out;
+}
+
+.fiveapps-safety-intro {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fiveapps-safety-intro strong {
+  color: var(--text-primary);
+}
+
+.fiveapps-safety-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.fiveapps-safety-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 1.1rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  transition: all 0.3s ease;
+}
+
+.fiveapps-safety-step:hover {
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-3px);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.fiveapps-safety-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #ff4444 0%, #f59e0b 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
+}
+
+.fiveapps-safety-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fiveapps-safety-step-body strong {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.fiveapps-safety-step-body span {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.fiveapps-safety-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(255, 68, 68, 0.1));
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.fiveapps-safety-note svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+:root[data-theme="light"] .fiveapps-safety-step {
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme="light"] .fiveapps-safety-step:hover {
+  background: rgba(245, 158, 11, 0.1);
+}
+
 /* Decorative Background Elements */
 .fiveapps-ad-decoration {
   position: absolute;
@@ -847,6 +1012,23 @@
     margin-bottom: 1.5rem;
   }
 
+  .fiveapps-safety-info {
+    padding: 1.25rem;
+  }
+
+  .fiveapps-safety-steps {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .fiveapps-safety-step {
+    padding: 0.9rem 1rem;
+  }
+
+  .fiveapps-safety-intro {
+    font-size: 0.9rem;
+  }
+
   .fiveapps-instructions-content {
     padding-top: 1.25rem;
     margin-top: 1rem;
@@ -909,6 +1091,26 @@
     padding: 4px 10px;
     font-size: 0.7rem;
     min-width: 90px;
+  }
+
+  .fiveapps-safety-info {
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .fiveapps-safety-toggle {
+    font-size: 0.88rem;
+    padding: 10px 16px;
+  }
+
+  .fiveapps-safety-intro {
+    font-size: 0.85rem;
+  }
+
+  .fiveapps-safety-note {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.84rem;
   }
 
   .fiveapps-instructions-title {
@@ -981,6 +1183,14 @@
   }
 
   .fiveapps-instructions-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .fiveapps-safety-step {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .fiveapps-safety-step:hover {
     background: rgba(255, 255, 255, 0.08);
   }
 
