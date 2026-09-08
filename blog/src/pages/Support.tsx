@@ -16,7 +16,7 @@ import {
   Sparkles,
   Gamepad2,
   Cpu,
-  Plane,
+
   MessageCircle,
   Globe,
   ArrowRight,
@@ -53,12 +53,7 @@ const rooms = [
     icon: Cpu,
     color: '#0db7ed'
   },
-  {
-    name: 'Travel',
-    desc: 'Share travel stories, tips, photos and plan your next adventure.',
-    icon: Plane,
-    color: '#f59e0b'
-  }
+
 ];
 
 const features = [
