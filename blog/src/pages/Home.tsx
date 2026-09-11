@@ -3,6 +3,7 @@ import { databases, config } from '../config/appwrite';
 import { Article } from '../types/article';
 import ArticleCard from '../components/ArticleCard';
 import FiveAppsAd from '../components/FiveAppsAd';
+import TwitchStream from '../components/TwitchStream';
 // import DiverterAd from '../components/DiverterAd';
 import { Loader, Search, X } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -131,6 +132,9 @@ export default function Home() {
             }
           </p>
         </div>
+
+        {/* Live Twitch Stream */}
+        <TwitchStream />
 
         {/* 5 Free Apps Bundle Advertisement */}
         <FiveAppsAd />

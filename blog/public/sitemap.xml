@@ -7,7 +7,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://sedat.netlify.app/</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -15,37 +15,37 @@
   <!-- Information Pages -->
   <url>
     <loc>https://sedat.netlify.app/about</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sedat.netlify.app/contact</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sedat.netlify.app/support</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sedat.netlify.app/donate</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://sedat.netlify.app/privacy</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://sedat.netlify.app/terms</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
