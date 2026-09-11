@@ -9,6 +9,14 @@
   z-index: 9998;
 }
 
+.contact-hero {
+  text-align: center;
+}
+
+.contact-hero .open-contact-btn {
+  justify-content: center;
+}
+
 .modal-content {
   position: fixed;
   top: 50%;

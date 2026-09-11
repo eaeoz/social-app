@@ -82,8 +82,8 @@ export default function Contact() {
   return (
     <>
       <Helmet>
-        <title>Contact - {import.meta.env.VITE_SITE_NAME || "Sedat's Blog"}</title>
-        <meta name="description" content="Get in touch with us" />
+        <title>Contact Me - {import.meta.env.VITE_SITE_NAME || "Sedat's Blog"}</title>
+        <meta name="description" content="Get in touch with me" />
       </Helmet>
 
       <motion.div
@@ -93,7 +93,8 @@ export default function Contact() {
         transition={{ duration: 0.5 }}
       >
         <div className="static-page-content">
-          <h1>Contact Us</h1>
+          <div className="contact-hero">
+          <h1>Contact Me</h1>
           
           <section>
             <p>
@@ -109,6 +110,7 @@ export default function Contact() {
               Open Contact Form
             </button>
           </section>
+          </div>
 
           {/* Live Twitch Stream */}
           <TwitchStream />
