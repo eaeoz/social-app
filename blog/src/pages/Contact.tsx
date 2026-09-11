@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send } from 'lucide-react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import TwitchStream from '../components/TwitchStream';
 import '../styles/Contact.css';
 
 export default function Contact() {
@@ -108,6 +109,9 @@ export default function Contact() {
               Open Contact Form
             </button>
           </section>
+
+          {/* Live Twitch Stream */}
+          <TwitchStream />
         </div>
       </motion.div>
 
