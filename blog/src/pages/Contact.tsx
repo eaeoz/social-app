@@ -98,7 +98,7 @@ export default function Contact() {
           
           <section>
             <p>
-              Have a question, suggestion, or just want to say hello? We'd love to hear from you!
+              Have a question, suggestion, or just want to say hello? I'd love to hear from you!
               Click the button below to open the contact form.
             </p>
             
