@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Header from './components/Header';
+import DonateStats from './components/DonateStats';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ArticleDetail from './pages/ArticleDetail';
@@ -30,6 +31,7 @@ function App() {
               <Route path="/terms" element={<Terms />} />
             </Routes>
           </main>
+          <DonateStats />
           <Footer />
         </div>
       </Router>
