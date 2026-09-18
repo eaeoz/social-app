@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_SITE_DESCRIPTION: string
   readonly VITE_SOCIAL_GITHUB: string
   readonly VITE_SOCIAL_LINKEDIN: string
+  readonly VITE_SOCIAL_YOUTUBE: string
   readonly VITE_SOCIAL_TWITTER: string
   readonly VITE_SOCIAL_INSTAGRAM: string
   readonly VITE_ADSENSE_CLIENT_ID: string

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Github, Linkedin, Twitter, Instagram } from 'lucide-react';
+import { Github, Linkedin, Twitter, Instagram, Youtube } from 'lucide-react';
 import { motion } from 'framer-motion';
 import '../styles/Footer.css';
 
@@ -16,6 +16,11 @@ export default function Footer() {
       name: 'LinkedIn',
       icon: Linkedin,
       url: import.meta.env.VITE_SOCIAL_LINKEDIN,
+    },
+    {
+      name: 'YouTube',
+      icon: Youtube,
+      url: import.meta.env.VITE_SOCIAL_YOUTUBE,
     },
     {
       name: 'Twitter',
