@@ -14,7 +14,7 @@ const paymentMethods = [
     address: '14S98pyuGk6t6G43hDpYFQ9vUhhGQZvbuF',
     icon: Bitcoin,
     gradient: 'linear-gradient(135deg, #f7931a 0%, #b36b00 100%)',
-    note: 'Binance TR üzerinden bağış yapacaksanız: Menu > Wallet > Withdraw > BTC seçtikten sonra ağ olarak BTC (Bitcoin) ağını seçin ve yukarıdaki adresi kullanın. Ödemeler Bitcoin ağında onaylanır.'
+    note: 'If you’re donating through Binance TR: Go to Menu > Wallet > Withdraw > BTC, then select the BTC (Bitcoin) network and use the address provided above. Transactions are confirmed on the Bitcoin network.'
   },
   {
     id: 'bnb',
@@ -24,7 +24,7 @@ const paymentMethods = [
     address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Coins,
     gradient: 'linear-gradient(135deg, #f3ba2f 0%, #b8860b 100%)',
-    note: 'En kolay yol: Bu adrese yalnızca BNB (veya bu ağdaki USDT) gönderin. İşlem ücreti işlem başına birkaç cent (0.01 - 0.05) civarındadır, 1 dolarlık bağış bile erimeden ulaşır. Binance TR\'de Menu > Wallet > Withdraw > BNB veya USDT seçip ağ olarak BSC / BNB Smart Chain (BEP20) ağını seçin.'
+    note: 'The easiest option: Send only BNB (or USDT on the same network) to this address. Transaction fees are typically around a few cents ($0.01 - $0.05) per transaction, so even a $1 donation can arrive without losing much to fees. In Binance TR, go to Menu > Wallet > Withdraw > BNB or USDT, then select the BSC / BNB Smart Chain (BEP20) network.'
   },
   {
     id: 'eth',
@@ -34,7 +34,7 @@ const paymentMethods = [
     address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Landmark,
     gradient: 'linear-gradient(135deg, #627eea 0%, #3b5bd9 100%)',
-    note: 'Bağışları doğrudan Ethereum (ETH) olarak toplamak için ana ağ (ERC20) yerine Base veya Arbitrum ağını kullanın. Ethereum güncellemeleri sayesinde bu ağlarda ETH göndermek neredeyse bedavadır (0.001 - 0.01). Binance TR\'den Menu > Wallet > Withdraw > ETH yatırma adresi alırken ağ olarak BASE veya ARBITRUM seçin.'
+    note: 'To receive donations directly in ETH: Use the Base or Arbitrum network instead of Ethereum Mainnet (ERC20). Thanks to Ethereum\'s scaling improvements, sending ETH on these networks is very inexpensive (around $0.001 - $0.01). When withdrawing ETH from Binance TR, select the BASE or ARBITRUM network and use the corresponding receiving address.'
   }
 ];
 
