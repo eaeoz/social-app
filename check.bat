@@ -18,10 +18,8 @@ if not "%~1"=="" set "BTC_CODE=%~1"
 if not "%~2"=="" set "USDT_CODE=%~2"
 if not "%~3"=="" set "ETH_CODE=%~3"
 
-REM ---- Locate the site source file (Donate.tsx) ----
-set "SITE_FILE=%~dp0blog\src\pages\Donate.tsx"
-if not exist "%SITE_FILE%" set "SITE_FILE=%~dp0..\blog\src\pages\Donate.tsx"
-if not exist "%SITE_FILE%" set "SITE_FILE=%~dp0src\pages\Donate.tsx"
+REM ---- Live site to scrape (no local files needed) ----
+set "SITE_URL=https://sedat.netlify.app/donate"
 
 echo.
 echo ============================================================
@@ -29,26 +27,23 @@ echo            CRYPTO DONATION ADDRESS CHECK
 echo ============================================================
 echo.
 
-if not exist "%SITE_FILE%" (
-  echo [ERROR] Donate.tsx was not found.
-  echo         Looked for: %SITE_FILE%
-  echo.
-  pause
-  exit /b 1
-)
-
-echo Source file : %SITE_FILE%
+echo Source URL  : %SITE_URL%
+echo Fetching live addresses from the deployed site...
 echo.
 
-REM ---- Extract the 3 addresses from the site source code ----
+REM ---- Scrape the deployed React app ----
+REM  The /donate page is a single-page app, so the raw HTML only
+REM  contains the JS bundle reference. We download that bundle and
+REM  pull the wallet addresses out of it live.
 set /a idx=0
-for /f "tokens=2 delims='" %%A in ('findstr /c:"address: '" "%SITE_FILE%"') do (
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$h=(Invoke-WebRequest -UseBasicParsing '%SITE_URL%').Content;$m=[regex]::Match($h,'/assets/index-[^/]+\.js');if(-not $m.Success){exit 1};$u='https://sedat.netlify.app'+$m.Value;$j=(Invoke-WebRequest -UseBasicParsing $u).Content;$a=[regex]::Matches($j,'address:\x22([0-9A-Za-z]+)\x22');foreach($x in $a){$x.Groups[1].Value}"`) do (
   set /a idx+=1
   set "SITE_!idx!=%%A"
 )
 
 if !idx! LSS 3 (
-  echo [ERROR] Expected 3 addresses in the source but found !idx!.
+  echo [ERROR] Could not read 3 addresses from the live site ^(found !idx!^).
+  echo         Check your internet connection or the site: %SITE_URL%
   echo.
   pause
   exit /b 1
