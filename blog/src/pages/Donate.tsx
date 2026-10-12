@@ -14,7 +14,7 @@ const paymentMethods = [
     address: '14S98pyuGk6t6G43hDpYFQ9vUhhGQZvbuF',
     icon: Bitcoin,
     gradient: 'linear-gradient(135deg, #f7931a 0%, #b36b00 100%)',
-    note: 'Binance TR üzerinden bağış yapacaksanız: BTC seçtikten sonra ağ olarak BTC (Bitcoin) ağını seçin ve yukarıdaki adresi kullanın. Ödemeler Bitcoin ağında onaylanır.'
+    note: 'Binance TR üzerinden bağış yapacaksanız: Menu > Wallet > Withdraw > BTC seçtikten sonra ağ olarak BTC (Bitcoin) ağını seçin ve yukarıdaki adresi kullanın. Ödemeler Bitcoin ağında onaylanır.'
   },
   {
     id: 'bnb',
@@ -24,7 +24,7 @@ const paymentMethods = [
     address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Coins,
     gradient: 'linear-gradient(135deg, #f3ba2f 0%, #b8860b 100%)',
-    note: 'En kolay yol: Bu adrese yalnızca BNB (veya bu ağdaki USDT) gönderin. İşlem ücreti işlem başına birkaç cent (0.01 - 0.05) civarındadır, 1 dolarlık bağış bile erimeden ulaşır. Binance TR\'de Yatırma bölümünden BNB veya USDT seçip ağ olarak BSC / BNB Smart Chain (BEP20) ağını seçin.'
+    note: 'En kolay yol: Bu adrese yalnızca BNB (veya bu ağdaki USDT) gönderin. İşlem ücreti işlem başına birkaç cent (0.01 - 0.05) civarındadır, 1 dolarlık bağış bile erimeden ulaşır. Binance TR\'de Menu > Wallet > Withdraw > BNB veya USDT seçip ağ olarak BSC / BNB Smart Chain (BEP20) ağını seçin.'
   },
   {
     id: 'eth',
@@ -34,7 +34,7 @@ const paymentMethods = [
     address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Landmark,
     gradient: 'linear-gradient(135deg, #627eea 0%, #3b5bd9 100%)',
-    note: 'Bağışları doğrudan Ethereum (ETH) olarak toplamak için ana ağ (ERC20) yerine Base veya Arbitrum ağını kullanın. Ethereum güncellemeleri sayesinde bu ağlarda ETH göndermek neredeyse bedavadır (0.001 - 0.01). Binance TR\'den ETH yatırma adresi alırken ağ olarak BASE veya ARBITRUM seçin.'
+    note: 'Bağışları doğrudan Ethereum (ETH) olarak toplamak için ana ağ (ERC20) yerine Base veya Arbitrum ağını kullanın. Ethereum güncellemeleri sayesinde bu ağlarda ETH göndermek neredeyse bedavadır (0.001 - 0.01). Binance TR\'den Menu > Wallet > Withdraw > ETH yatırma adresi alırken ağ olarak BASE veya ARBITRUM seçin.'
   }
 ];
 
