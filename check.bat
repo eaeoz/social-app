@@ -60,7 +60,7 @@ echo ============================================================
 if "!MATCHES!"=="!TOTAL!" (
   echo   RESULT : ALL CODES MATCH THE SITE        [ OK ]
 ) else (
-  echo   RESULT : SOME CODES DO NOT MATCH THE SITE [ MISMATCH ]
+  echo   RESULT : SOME CODES DO NOT MATCH THE SITE [ X ]
 )
 echo   MATCHED: !MATCHES! / !TOTAL!
 echo ============================================================
@@ -81,10 +81,10 @@ echo   %NAME%
 echo     To check : %EXPECT%
 echo     On site  : %ACTUAL%
 if /i "%EXPECT%"=="%ACTUAL%" (
-  echo     Status   : MATCH
+  echo     Status   : [ OK ] MATCH
   set /a MATCHES+=1
 ) else (
-  echo     Status   : *** MISMATCH ***
+  echo     Status   : [ X ]  *** MISMATCH ***
 )
 echo.
 exit /b
