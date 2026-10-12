@@ -8,33 +8,33 @@ import '../styles/Donate.css';
 const paymentMethods = [
   {
     id: 'btc',
-    name: 'Bitcoin',
+    name: 'BTC',
     symbol: 'BTC',
     network: 'Bitcoin Network',
     address: '14S98pyuGk6t6G43hDpYFQ9vUhhGQZvbuF',
     icon: Bitcoin,
     gradient: 'linear-gradient(135deg, #f7931a 0%, #b36b00 100%)',
-    note: 'BTC payments are confirmed on the Bitcoin Network.'
+    note: 'Binance TR üzerinden bağış yapacaksanız: Yatırma > BTC seçtikten sonra ağ olarak BTC (Bitcoin) ağını seçin ve aşağıdaki adresi kullanın. Ödemeler Bitcoin ağında onaylanır.'
   },
   {
-    id: 'usdt',
-    name: 'USDT',
-    symbol: 'USDT',
-    network: 'TRC20 (TRON)',
-    address: 'TPcgKqs3sJqd62HQfv3RuVxURaGaVW35LQ',
+    id: 'bnb',
+    name: 'BNB (USDT)',
+    symbol: 'BNB',
+    network: 'BSC / BNB Smart Chain (BEP20)',
+    address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Coins,
-    gradient: 'linear-gradient(135deg, #26a17b 0%, #0f7a5c 100%)',
-    note: 'USDT payments are sent via the TRC20 network on TRON.'
+    gradient: 'linear-gradient(135deg, #f3ba2f 0%, #b8860b 100%)',
+    note: 'En kolay yol: Bu adrese yalnızca BNB (veya bu ağdaki USDT) gönderin. İşlem ücreti işlem başına birkaç cent (0.01 - 0.05) civarındadır, 1 dolarlık bağış bile erimeden ulaşır. Binance TR\'de Yatırma bölümünden BNB veya USDT seçip ağ olarak BSC / BNB Smart Chain (BEP20) ağını seçin.'
   },
   {
     id: 'eth',
-    name: 'Ethereum',
+    name: 'ETH',
     symbol: 'ETH',
-    network: 'Ethereum Mainnet (ERC20)',
+    network: 'BASE or ARBITRUM',
     address: '0xf840b7e4ea2d0123e35d4e32c8b2179b9db5e9d2',
     icon: Landmark,
     gradient: 'linear-gradient(135deg, #627eea 0%, #3b5bd9 100%)',
-    note: 'ETH and ERC20 tokens are accepted on Ethereum Mainnet. Also accepted: BNB, SOL, USDC, DOGE, ADA.'
+    note: 'Bağışları doğrudan Ethereum (ETH) olarak toplamak için ana ağ (ERC20) yerine Base veya Arbitrum ağını kullanın. Ethereum güncellemeleri sayesinde bu ağlarda ETH göndermek neredeyse bedavadır (0.001 - 0.01). Binance TR\'den ETH yatırma adresi alırken ağ olarak BASE veya ARBITRUM seçin.'
   }
 ];
 
@@ -73,7 +73,7 @@ export default function Donate() {
         <title>Donate - {import.meta.env.VITE_SITE_NAME || "Sedat's Blog"}</title>
         <meta
           name="description"
-          content="Support our work with a crypto donation. Scan the QR code or copy a wallet address to send Bitcoin, USDT or Ethereum."
+          content="Support our work with a crypto donation. Scan the QR code or copy a wallet address to send BTC, BNB (USDT) or ETH."
         />
       </Helmet>
 
