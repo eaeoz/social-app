@@ -14,7 +14,7 @@ const paymentMethods = [
     address: '14S98pyuGk6t6G43hDpYFQ9vUhhGQZvbuF',
     icon: Bitcoin,
     gradient: 'linear-gradient(135deg, #f7931a 0%, #b36b00 100%)',
-    note: 'Binance TR üzerinden bağış yapacaksanız: Yatırma > BTC seçtikten sonra ağ olarak BTC (Bitcoin) ağını seçin ve aşağıdaki adresi kullanın. Ödemeler Bitcoin ağında onaylanır.'
+    note: 'Binance TR üzerinden bağış yapacaksanız: Yatırma > BTC seçtikten sonra ağ olarak BTC (Bitcoin) ağını seçin ve yukarıdaki adresi kullanın. Ödemeler Bitcoin ağında onaylanır.'
   },
   {
     id: 'bnb',
